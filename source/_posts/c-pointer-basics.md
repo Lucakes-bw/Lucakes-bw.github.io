@@ -10,7 +10,6 @@ tags:
   - 指针
 order: 2
 description: 指针就是地址。理解指针变量、取地址、解引用，以及指针作为函数参数的用法。
-cover: /img/covers/cpp.svg
 top_group_list: true
 ---
 

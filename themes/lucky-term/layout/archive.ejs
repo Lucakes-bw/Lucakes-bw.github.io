@@ -1,0 +1,25 @@
+<%
+  const years = {};
+  page.posts.sort('-date').each(function (p) {
+    const y = date(p.date, 'YYYY');
+    (years[y] = years[y] || []).push(p);
+  });
+%>
+<div class="wrap page">
+  <h1 class="page-title"><span class="c-accent">$</span> ls -lt archives/ <span class="c-muted">| wc -l → <%= site.posts.length %></span></h1>
+  <% Object.keys(years).sort().reverse().forEach(function (y) { %>
+  <section class="chapter">
+    <h2 class="chapter-title"><span class="c-accent"><%= y %>/</span> <span class="c-muted chapter-count"><%= years[y].length %> 篇</span></h2>
+    <ul class="ls-list">
+      <% years[y].forEach(function (post) { const root = post.categories.toArray().find(c => !c.parent); %>
+      <li class="ls-row" data-read-url="<%- url_for(post.path) %>">
+        <span class="ls-date"><%= date(post.date, 'MM-DD') %></span>
+        <% if (root) { %><a class="ls-col" href="<%- url_for(root.path) %>"><%= root.name %></a><% } %>
+        <a class="ls-title" href="<%- url_for(post.path) %>"><%= post.title %></a>
+        <span class="read-mark" title="已读">✓</span>
+      </li>
+      <% }) %>
+    </ul>
+  </section>
+  <% }) %>
+</div>

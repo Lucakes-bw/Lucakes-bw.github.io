@@ -10,7 +10,6 @@ tags:
   - TCP/IP
 order: 1
 description: 网络为什么要分层？OSI 七层模型和 TCP/IP 四层模型各层的职责与常见协议。
-cover: /img/covers/network.svg
 top_group_list: true
 ---
 

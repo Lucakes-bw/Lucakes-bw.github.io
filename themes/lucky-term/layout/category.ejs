@@ -1,0 +1,6 @@
+<div class="wrap page">
+  <div class="post-path"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('/categories/') %>">categories</a>/<span class="c-fg"><%= page.category %></span></div>
+  <h1 class="page-title"><span class="c-accent">$</span> ls <%= page.category %>/ <span class="c-muted">| wc -l → <%= page.posts.length %></span></h1>
+  <%- partial('_partial/post-list', { posts: page.posts }) %>
+  <%- partial('_partial/pagination') %>
+</div>

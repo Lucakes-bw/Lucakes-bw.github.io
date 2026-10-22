@@ -1,0 +1,17 @@
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-line"><span class="c-accent">$</span> uptime</div>
+    <div class="footer-line c-muted">
+      © <%= theme.since %><%= new Date().getFullYear() > theme.since ? ' - ' + new Date().getFullYear() : '' %> <%= config.author %>
+      · <%= site.posts.length %> 篇文章
+      <% if (theme.busuanzi) { %>
+      · 访问 <span id="busuanzi_value_site_pv">-</span> 次 · 访客 <span id="busuanzi_value_site_uv">-</span> 人
+      <% } %>
+    </div>
+    <div class="footer-line c-muted">
+      Powered by <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a>
+      · Theme lucky-term
+      <% if (theme.github) { %>· <a href="<%- theme.github %>" target="_blank" rel="noopener">GitHub</a><% } %>
+    </div>
+  </div>
+</footer>

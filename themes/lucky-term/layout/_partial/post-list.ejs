@@ -1,0 +1,14 @@
+<ul class="ls-list">
+  <% posts.each(function (post) {
+    const cats = post.categories.toArray();
+    const root = cats.find(c => !c.parent);
+  %>
+  <li class="ls-row" data-read-url="<%- url_for(post.path) %>">
+    <span class="ls-date"><%= date(post.date, 'YYYY-MM-DD') %></span>
+    <% if (root) { %><a class="ls-col" href="<%- url_for(root.path) %>"><%= root.name %></a><% } %>
+    <a class="ls-title" href="<%- url_for(post.path) %>"><%= post.title %></a>
+    <span class="ls-size"><%= wordcount(post.content) %> 字</span>
+    <span class="read-mark" title="已读">✓</span>
+  </li>
+  <% }) %>
+</ul>

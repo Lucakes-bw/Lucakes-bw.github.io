@@ -1,0 +1,58 @@
+<%
+  const so = series_of(page);
+  const tocHtml = toc(page.content, { list_number: false, max_depth: 3 });
+  const url = url_for(page.path);
+%>
+<article class="wrap post">
+  <header class="post-head">
+    <div class="post-path">
+      <a href="<%- url_for('/') %>">~</a>/<% if (so) { %><a href="<%- url_for(so.series.path) %>">columns/<%= so.series.key %></a>/<%= so.item.chapter %>/<% } else { %>posts/<% } %><span class="c-fg"><%= page.slug %>.md</span>
+    </div>
+    <h1 class="post-title"><% if (so) { %><span class="post-no"><%= so.item.no %></span><% } %><%= page.title %></h1>
+    <div class="post-meta">
+      <span class="c-muted">-rw-r--r--</span>
+      <span><%= config.author %></span>
+      <span>发布 <time datetime="<%= date_xml(page.date) %>"><%= date(page.date, 'YYYY-MM-DD') %></time></span>
+      <% if (page.updated && date(page.updated, 'YYYY-MM-DD') !== date(page.date, 'YYYY-MM-DD')) { %><span>更新 <%= date(page.updated, 'YYYY-MM-DD') %></span><% } %>
+      <span><%= wordcount(page.content) %> 字</span>
+      <span>约 <%= min2read(page.content) %> 分钟</span>
+      <% if (theme.busuanzi) { %><span>阅读 <span id="busuanzi_value_page_pv">-</span></span><% } %>
+    </div>
+    <% if (page.tags && page.tags.length) { %>
+    <div class="post-tags">
+      <% page.tags.each(function (t) { %><a href="<%- url_for(t.path) %>">#<%= t.name %></a><% }) %>
+    </div>
+    <% } %>
+  </header>
+
+  <div class="post-body">
+    <div class="post-content md" id="post-content"><%- page.content %></div>
+    <% if (tocHtml) { %>
+    <aside class="toc" id="toc">
+      <div class="toc-title"><span class="c-accent">$</span> grep '^#' <%= page.slug %>.md</div>
+      <%- tocHtml %>
+    </aside>
+    <% } %>
+  </div>
+
+  <footer class="post-end">
+    <div class="mark-read" data-mark-read="<%- url %>">
+      <span class="c-accent">$</span> <span class="mark-text">touch .read</span>
+      <button type="button" class="btn" data-mark-btn>标记为已读</button>
+    </div>
+
+    <% if (so) { %>
+    <nav class="series-nav">
+      <% if (so.prev) { %>
+      <a class="sn-prev" href="<%- url_for(so.prev.post.path) %>"><span class="c-muted">← 上一篇 <%= so.prev.no %></span><span><%= so.prev.post.title %></span></a>
+      <% } else { %><span></span><% } %>
+      <a class="sn-up" href="<%- url_for(so.series.path) %>"><span class="c-muted">cd ..</span><span><%= so.series.name %> 目录</span></a>
+      <% if (so.next) { %>
+      <a class="sn-next" href="<%- url_for(so.next.post.path) %>"><span class="c-muted">下一篇 <%= so.next.no %> →</span><span><%= so.next.post.title %></span></a>
+      <% } else { %><span></span><% } %>
+    </nav>
+    <% } %>
+  </footer>
+
+  <%- partial('_partial/comments') %>
+</article>

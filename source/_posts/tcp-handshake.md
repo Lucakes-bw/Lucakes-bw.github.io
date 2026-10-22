@@ -10,7 +10,6 @@ tags:
   - TCP
 order: 1
 description: TCP 建立连接为什么需要三次握手，断开连接为什么需要四次挥手，以及 TIME_WAIT 状态的作用。
-cover: /img/covers/network.svg
 ---
 
 ## 1. TCP 的特点

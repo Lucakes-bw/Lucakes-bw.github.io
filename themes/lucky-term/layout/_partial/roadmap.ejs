@@ -1,0 +1,18 @@
+<% const all = series_all(); %>
+<ol class="roadmap">
+  <% all.forEach(function (s) { const total = s.items.length; %>
+  <li class="rm-node" data-series="<%= s.key %>">
+    <a class="rm-link" href="<%- url_for(s.path) %>">
+      <span class="rm-no"><%= String(s.index).padStart(2, '0') %></span>
+      <span class="rm-name"><%= s.name %></span>
+      <span class="rm-desc"><%= s.desc %></span>
+      <span class="rm-progress">
+        <span class="rm-bar" data-bar>[<%= '-'.repeat(10) %>]</span>
+        <span class="rm-count"><span data-count>0</span>/<%= total %> 篇</span>
+      </span>
+    </a>
+  </li>
+  <% }) %>
+</ol>
+<p class="resume" data-resume hidden><span class="c-accent">$</span> resume <span class="c-muted">→</span> <a href="#"></a></p>
+<script type="application/json" id="series-data"><%- series_json() %></script>

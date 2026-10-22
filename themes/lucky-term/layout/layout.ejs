@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="<%= config.language %>">
+<%- partial('_partial/head') %>
+<body>
+  <div class="read-progress" id="read-progress"></div>
+  <%- partial('_partial/header') %>
+  <main class="site-main">
+    <%- body %>
+  </main>
+  <%- partial('_partial/footer') %>
+  <%- partial('_partial/search') %>
+  <script src="<%- url_for('/js/main.js') %>"></script>
+  <% if (theme.busuanzi) { %>
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  <% } %>
+</body>
+</html>

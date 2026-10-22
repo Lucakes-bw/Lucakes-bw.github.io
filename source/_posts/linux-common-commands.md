@@ -10,7 +10,6 @@ tags:
   - 命令
 order: 1
 description: 文件和目录操作、查看文件内容、权限管理、查找、进程管理等最常用的 Linux 命令。
-cover: /img/covers/linux.svg
 top_group_list: true
 ---
 

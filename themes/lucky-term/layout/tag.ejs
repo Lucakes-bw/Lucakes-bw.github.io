@@ -1,0 +1,6 @@
+<div class="wrap page">
+  <div class="post-path"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('/tags/') %>">tags</a>/<span class="c-fg"><%= page.tag %></span></div>
+  <h1 class="page-title"><span class="c-accent">$</span> grep -l '#<%= page.tag %>' posts/* <span class="c-muted">| wc -l → <%= page.posts.length %></span></h1>
+  <%- partial('_partial/post-list', { posts: page.posts }) %>
+  <%- partial('_partial/pagination') %>
+</div>

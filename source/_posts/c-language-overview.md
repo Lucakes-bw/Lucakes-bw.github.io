@@ -10,7 +10,6 @@ tags:
   - 入门
 order: 1
 description: C 语言的特点、开发环境搭建，以及从源代码到可执行程序的完整过程。
-cover: /img/covers/cpp.svg
 top_group_list: true
 ---
 

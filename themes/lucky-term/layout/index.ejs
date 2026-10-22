@@ -1,0 +1,70 @@
+<%
+  const essay = (site.data.essay && site.data.essay[0]) || { essay_list: [] };
+  const starred = site.posts.filter(p => p.top_group_list).sort('-date').limit(6);
+  const tags = site.tags.sort('-length').limit(30);
+%>
+<div class="wrap">
+  <% if (!page.prev) { %>
+  <section class="term hero">
+    <div class="term-bar"><span>bash — <%= theme.prompt.user %>@<%= theme.prompt.host %></span><span class="c-muted">~</span></div>
+    <div class="term-body">
+      <p class="cmd"><span class="c-accent">$</span> whoami</p>
+      <p class="out"><strong class="hero-name"><%= config.title %></strong></p>
+      <p class="out c-muted"><%= theme.hero.intro %></p>
+      <p class="cmd"><span class="c-accent">$</span> cat roadmap.txt <span class="c-muted"># <%= theme.hero.roadmap_title %></span></p>
+      <%- partial('_partial/roadmap') %>
+    </div>
+  </section>
+
+  <% if (essay.essay_list.length) { %>
+  <section class="notice">
+    <span class="c-accent">$</span> tail -n 3 notice.log
+    <ul>
+      <% essay.essay_list.slice(0, 3).forEach(function (n) { %>
+      <li><span class="c-muted">[<%= date(n.date, 'YYYY-MM-DD') %>]</span> <%= n.content %><% if (n.link) { %> <a href="<%- url_for(n.link) %>">→</a><% } %></li>
+      <% }) %>
+    </ul>
+  </section>
+  <% } %>
+  <% } %>
+
+  <div class="layout-2col">
+    <section class="main-col">
+      <h2 class="sec-title"><span class="c-accent">$</span> ls -lt posts/<% if (page.prev) { %> <span class="c-muted">--page <%= page.current %></span><% } %></h2>
+      <%- partial('_partial/post-list', { posts: page.posts }) %>
+      <%- partial('_partial/pagination') %>
+    </section>
+
+    <aside class="side-col">
+      <% if (starred.length) { %>
+      <div class="side-box">
+        <h3 class="side-title">★ starred/</h3>
+        <ul class="side-list">
+          <% starred.each(function (p) { %>
+          <li data-read-url="<%- url_for(p.path) %>"><a href="<%- url_for(p.path) %>"><%= p.title %></a><span class="read-mark">✓</span></li>
+          <% }) %>
+        </ul>
+      </div>
+      <% } %>
+
+      <div class="side-box">
+        <h3 class="side-title"># tags</h3>
+        <div class="tag-cloud">
+          <% tags.each(function (t) { %><a href="<%- url_for(t.path) %>">#<%= t.name %><sup><%= t.length %></sup></a><% }) %>
+        </div>
+      </div>
+
+      <div class="side-box">
+        <h3 class="side-title">$ df -h</h3>
+        <dl class="stats">
+          <dt>文章</dt><dd><%= site.posts.length %> 篇</dd>
+          <dt>总字数</dt><dd><%= totalcount(site) %></dd>
+          <dt>已读</dt><dd><span data-read-total>0</span> 篇</dd>
+          <% if (theme.busuanzi) { %>
+          <dt>访问量</dt><dd><span id="busuanzi_value_site_pv">-</span></dd>
+          <% } %>
+        </dl>
+      </div>
+    </aside>
+  </div>
+</div>

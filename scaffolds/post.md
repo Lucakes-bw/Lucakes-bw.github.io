@@ -12,9 +12,7 @@ tags:
 order: 1
 # 文章摘要（首页卡片显示）
 description:
-# 封面：/img/covers/cpp.svg、data-structure.svg、network.svg、linux.svg
-cover: /img/covers/cpp.svg
-# 设为 true 会出现在首页「荐」卡片中
+# 设为 true 会出现在首页侧栏 ★ starred/ 中
 top_group_list: false
 ---
 

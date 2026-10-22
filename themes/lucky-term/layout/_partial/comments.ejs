@@ -1,0 +1,6 @@
+<% const g = theme.giscus; if (g && g.enable && g.repo_id && page.comments !== false) { %>
+<section class="comments">
+  <h2 class="sec-title"><span class="c-accent">$</span> cat comments.log</h2>
+  <div id="giscus" data-repo="<%= g.repo %>" data-repo-id="<%= g.repo_id %>" data-category="<%= g.category %>" data-category-id="<%= g.category_id %>" data-mapping="<%= g.mapping %>" data-lang="<%= g.lang %>"></div>
+</section>
+<% } %>

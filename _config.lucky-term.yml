@@ -1,0 +1,35 @@
+# lucky-term 主题配置
+
+# 顶部导航：cmd 是显示在前面的「命令」，name 是名称
+menu:
+  - { cmd: cd, name: 专栏, path: /column/ }
+  - { cmd: ls, name: 归档, path: /archives/ }
+  - { cmd: tag, name: 标签, path: /tags/ }
+  - { cmd: cat, name: 公告, path: /essay/ }
+
+# 终端提示符 user@host
+prompt:
+  user: lucky
+  host: notes
+
+# 首页
+hero:
+  intro: 记录 C/C++、数据结构、计算机网络与 Linux 的学习笔记。按专栏顺序读，从语法一路走到网络编程。
+  roadmap_title: 从零到 Linux 网络编程
+
+favicon: /img/logo.svg
+github: https://github.com/Lucakes-bw
+since: 2026
+
+# 不蒜子访问统计
+busuanzi: true
+
+# Giscus 评论 https://giscus.app
+giscus:
+  enable: true
+  repo: Lucakes-bw/Lucakes-bw.github.io
+  repo_id: R_kgDOVTXiiQ
+  category: Announcements
+  category_id: DIC_kwDOVTXiic4DJU9B
+  mapping: pathname
+  lang: zh-CN

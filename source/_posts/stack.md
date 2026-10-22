@@ -10,7 +10,6 @@ tags:
   - 栈
 order: 1
 description: 栈是后进先出（LIFO）的线性表。本文用数组实现一个顺序栈，并用它完成括号匹配。
-cover: /img/covers/data-structure.svg
 ---
 
 ## 1. 什么是栈

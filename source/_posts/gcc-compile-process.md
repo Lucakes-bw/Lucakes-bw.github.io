@@ -10,7 +10,6 @@ tags:
   - gcc
 order: 1
 description: 预处理、编译、汇编、链接，一步步看 hello.c 如何变成可执行程序，以及 gcc 常用参数。
-cover: /img/covers/linux.svg
 top_group_list: true
 ---
 

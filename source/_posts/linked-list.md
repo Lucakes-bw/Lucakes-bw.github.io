@@ -10,7 +10,6 @@ tags:
   - 链表
 order: 1
 description: 单链表的结构、头插法、遍历与删除，用 C 语言完整实现。
-cover: /img/covers/data-structure.svg
 top_group_list: true
 ---
 
