@@ -48,8 +48,9 @@
 /* ---------- 基础 ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + 16px); }
-/* 关闭等宽字体连字，避免 -> != 被显示成箭头和不等号 */
-html, html * { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+/* 关闭等宽字体连字，避免 -> != == 被显示成箭头和不等号。
+   需要 !important：下面很多规则用了 font 简写，它会把这两个属性重置为默认值 */
+html, html * { font-variant-ligatures: none !important; font-feature-settings: "liga" 0, "calt" 0 !important; }
 body {
   margin: 0;
   background: var(--bg);
