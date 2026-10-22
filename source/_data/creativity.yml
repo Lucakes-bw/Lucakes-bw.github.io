@@ -1,0 +1,33 @@
+# 首页左上角滚动的技术图标
+- class_name: 技术栈
+  creativity_list:
+    - name: C
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/c/c-original.svg
+    - name: C++
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/cplusplus/cplusplus-original.svg
+    - name: Linux
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/linux/linux-original.svg
+    - name: Bash
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/bash/bash-original.svg
+    - name: Git
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/git/git-original.svg
+    - name: CMake
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/cmake/cmake-original.svg
+    - name: VS Code
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/vscode/vscode-original.svg
+    - name: Ubuntu
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/ubuntu/ubuntu-original.svg
+    - name: MySQL
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/mysql/mysql-original.svg
+    - name: Qt
+      color: "#ffffff"
+      icon: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/qt/qt-original.svg

@@ -1,0 +1,15 @@
+# 公告 / 动态
+# home_essay: true 时首页顶部显示滚动公告条，最新的写在最前面
+- title: 公告
+  subTitle: 博客动态与更新记录
+  tips: 记录本站的更新和学习计划
+  buttonText: 去看专栏
+  buttonLink: /column/cpp/
+  limit: 30
+  home_essay: true
+  essay_list:
+    - content: 博客正式上线！C/C++、数据结构、计算机网络、Linux 基础四个专栏陆续更新中，敬请期待~
+      date: 2026/10/22
+    - content: 每个专栏都有按章节排列的学习目录，建议按顺序阅读。
+      date: 2026/10/22
+      link: /column/cpp/
