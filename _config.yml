@@ -71,7 +71,10 @@ category_map:
   C/C++: cpp
   C语言基础: c-basic
   C++基础: cpp-basic
-  C++新特性: modern-cpp
+  C++11: cpp11
+  C++14: cpp14
+  C++17: cpp17
+  C++20: cpp20
   数据结构: data-structure
   线性表: linear-list
   栈和队列: stack-queue

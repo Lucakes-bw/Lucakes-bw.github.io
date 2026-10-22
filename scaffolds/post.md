@@ -14,5 +14,7 @@ order: 1
 description:
 # 设为 true 会出现在首页侧栏 ★ starred/ 中
 top_group_list: false
+# 关闭模板引擎，避免代码中的 {{ }} 被当成模板语法
+disableNunjucks: true
 ---
 

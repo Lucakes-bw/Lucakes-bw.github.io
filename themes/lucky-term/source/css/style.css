@@ -341,6 +341,10 @@ kbd {
 .md th { font-family: var(--mono); font-size: 13px; color: var(--fg-2); white-space: nowrap; }
 .md tbody tr:nth-child(even) { background: color-mix(in srgb, var(--panel-2) 50%, transparent); }
 
+/* 文章中的示意图 */
+.md figure.diagram { margin: 0 0 1.4em; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); overflow-x: auto; }
+.md figure.diagram svg { display: block; width: 100%; min-width: 520px; height: auto; }
+
 /* 代码块（hexo highlight.js 输出） */
 .md figure.highlight {
   margin: 0 0 1.4em;
@@ -377,6 +381,8 @@ kbd {
 .md figure.highlight .gutter { width: 1%; user-select: none; }
 .md figure.highlight .gutter pre { padding: 14px 10px 14px 14px; text-align: right; color: var(--muted); opacity: .6; border-right: 1px solid var(--border); }
 .md figure.highlight .code pre { padding-left: 16px; padding-right: 16px; }
+/* 没有指定语言的块（程序输出、文本示意）不显示行号 */
+.md figure.highlight.plaintext .gutter { display: none; }
 .md figure.highlight .line { display: block; min-height: 1.7em; }
 .md figure.highlight pre br { display: none; }
 .md figure.highlight code { all: unset; }

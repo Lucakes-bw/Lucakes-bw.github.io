@@ -4,11 +4,14 @@
 #   chapters: 第二级分类，按这里的顺序显示；章节内的文章按 front-matter 的 order 升序排列
 cpp:
   category: C/C++
-  desc: 从 C 语言语法到现代 C++ 新特性，打好系统编程的基本功。
+  desc: 从 C 语言语法到现代 C++（C++11/14/17/20），每篇从零讲起，再深入到原理和进阶用法。
   chapters:
     - C语言基础
     - C++基础
-    - C++新特性
+    - C++11
+    - C++14
+    - C++17
+    - C++20
 
 data-structure:
   category: 数据结构
