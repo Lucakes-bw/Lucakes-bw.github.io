@@ -44,23 +44,21 @@ npx hexo new post my-article-slug
 
 ## 发布到 GitHub Pages
 
-1. 在 GitHub 新建公开仓库 `lucky.github.io`
+1. 在 GitHub 新建公开仓库 `Lucakes-bw.github.io`（仓库名必须是 `用户名.github.io`，否则网站会部署在子路径下，主题的部分链接会失效）
 2. 推送代码：
    ```bash
    git add -A && git commit -m "init blog"
    git branch -M main
-   git remote add origin https://github.com/lucky/lucky.github.io.git
+   git remote add origin https://github.com/Lucakes-bw/Lucakes-bw.github.io.git
    git push -u origin main
    ```
 3. 仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**
-4. 等 Actions 跑完，访问 https://lucky.github.io
+4. 等 Actions 跑完，访问 https://lucakes-bw.github.io
 
-## 开启评论（Giscus）
+## 评论（Giscus）
 
-1. 仓库 **Settings → General → Features** 勾选 **Discussions**
-2. 安装 [giscus app](https://github.com/apps/giscus) 并授权给该仓库
-3. 打开 https://giscus.app ，填写仓库 `lucky/lucky.github.io`，Discussion 分类选 **Announcements**
-4. 把页面生成的 `data-repo-id` 和 `data-category-id` 填到 `_config.anzhiyu.yml` 的 `giscus.repo_id` 和 `giscus.category_id`
+已开启仓库 Discussions，并在 `_config.anzhiyu.yml` 中填好 `repo_id` 和 `category_id`（Announcements 分类）。
+还需要安装 [giscus app](https://github.com/apps/giscus) 并授权给 `Lucakes-bw.github.io` 仓库，评论区才能正常加载。
 
 ## 访问统计
 

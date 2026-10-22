@@ -81,7 +81,7 @@ copy:
 # formal:
 #   name: link || icon
 social:
-  Github: https://github.com/lucky || anzhiyu-icon-github
+  Github: https://github.com/Lucakes-bw || anzhiyu-icon-github
   # Github: https://github.com/anzhiyu-c || anzhiyu-icon-github
   # BiliBili: https://space.bilibili.com/372204786 || anzhiyu-icon-bilibili
 
@@ -390,9 +390,9 @@ artalk:
 # giscus
 # https://giscus.app/
 giscus:
-  repo: lucky/lucky.github.io # GitHub repository name
-  repo_id: # GitHub repository id，在 https://giscus.app 生成后填写
-  category_id: # GitHub repository category id，在 https://giscus.app 生成后填写
+  repo: Lucakes-bw/Lucakes-bw.github.io # GitHub repository name
+  repo_id: R_kgDOVTXiiQ # GitHub repository id
+  category_id: DIC_kwDOVTXiic4DJU9B # Announcements 分类
   theme:
     light: light
     dark: dark
@@ -542,7 +542,7 @@ footer:
       enable: false
       link: /copyright
     linkList:
-      - link: https://github.com/lucky
+      - link: https://github.com/Lucakes-bw
         text: GitHub
       - link: https://github.com/anzhiyu-c/hexo-theme-anzhiyu
         text: 主题
@@ -1068,7 +1068,7 @@ home_top:
   timemode: date #date/updated
   title: 从零开始
   subTitle: 扎实学编程。
-  siteText: lucky.github.io
+  siteText: lucakes-bw.github.io
   category:
     - name: C/C++
       path: /column/cpp/
