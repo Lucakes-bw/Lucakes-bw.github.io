@@ -562,7 +562,7 @@ kbd {
 .dsviz svg text { font: 13px var(--mono); fill: var(--fg); }
 .dsviz .dv-item { transition: transform .35s ease, opacity .3s ease; }
 .dsviz .dv-item path, .dsviz .dv-item rect, .dsviz .dv-item circle { transition: fill .3s, stroke .3s, d .35s ease; }
-.dsviz .dv-box rect, .dsviz .dv-circ circle, .dsviz .dv-bar rect { fill: var(--panel-2); stroke: var(--border-2); stroke-width: 1.5; }
+.dsviz .dv-box rect, .dsviz .dv-circ circle, .dsviz .dv-column rect { fill: var(--panel-2); stroke: var(--border-2); stroke-width: 1.5; }
 .dsviz .dv-box line { stroke: var(--border-2); stroke-width: 1.5; }
 .dsviz .dv-sub, .dsviz .dv-w { font-size: 11px !important; fill: var(--muted) !important; }
 .dsviz .dv-arrow path, .dsviz .dv-line path { stroke: var(--fg-2); stroke-width: 1.6; }
@@ -589,3 +589,4 @@ kbd {
 .dsviz .dv-ptr.is-warn text { fill: var(--danger); }
 .dsviz .dv-ptr.is-warn path { stroke: var(--danger); }
 .dsviz .dv-box line.dv-nul { stroke: var(--muted); stroke-width: 1.5; }
+.dsviz .dv-column.is-ok text, .dsviz .dv-column.is-dim text { fill: var(--fg); }

@@ -46,7 +46,7 @@
   // 链表：nodes [{id, val, col, row, hl, sub}]，links [{from, to, hl, back}]，ptrs [{name, at, hl}]
   // next 为 NULL 的节点（没有出边）在指针域中画一条斜线
   R.list = function (s) {
-    var items = [], W = s.nodeW || 64, H = 36, GAP = s.gap || 96, X0 = s.x0 || 24, Y0 = s.top || 58, ROWH = 90;
+    var items = [], W = s.nodeW || 64, H = 36, GAP = s.gap || 96, X0 = s.x0 || 24, Y0 = s.top || 58, ROWH = s.rowH || 90;
     var pos = {}, hasOut = {};
     var FY = (s.links || []).some(function (l) { return l.back; }) ? 11 : H / 2;   // 双向链表：next 画在上半部分
     (s.links || []).forEach(function (l) { if (!l.back && l.to != null) hasOut[l.from] = true; });
@@ -100,11 +100,11 @@
 
   // 柱状图（排序）：values [], hl {下标: 类型}, ptrs
   R.bars = function (s) {
-    var items = [], n = s.values.length, W = Math.min(48, 600 / n), X0 = 24, BASE = (s.height || 220) - 40;
+    var items = [], n = s.values.length, W = Math.min(60, 640 / n), X0 = ((s.width || 720) - n * W) / 2, BASE = (s.height || 220) - 40;
     var max = Math.max.apply(null, s.values.map(function (v) { return v.v; }).concat([1]));
     s.values.forEach(function (c, i) {
       var bh = Math.max(6, (BASE - 30) * c.v / max);
-      items.push({ key: 'b' + c.id, type: 'bar', x: X0 + i * W + 3, y: BASE - bh, w: W - 6, h: bh, text: c.v, hl: c.hl });
+      items.push({ key: 'b' + c.id, type: 'column', x: X0 + i * W + 3, y: BASE - bh, w: W - 6, h: bh, text: c.v, hl: c.hl });
     });
     ptrs(items, s.ptrs, function (at) { return { x: X0 + at * W + W / 2, y: BASE + 4, below: true }; });
     return items;
@@ -240,8 +240,8 @@
   Stage.prototype.create = function (it) {
     var t = it.type, layer = (t === 'arrow' || t === 'line') ? this.layerE : (t === 'ptr' ? this.layerP : this.layerN);
     var g = el('g', { 'class': 'dv-item' }, layer);
-    if (t === 'box' || t === 'bar') {
-      g._rect = el('rect', { rx: t === 'bar' ? 3 : 6 }, g);
+    if (t === 'box' || t === 'column') {
+      g._rect = el('rect', { rx: t === 'column' ? 3 : 6 }, g);
       g._sep = el('line', {}, g);
       g._nul = el('line', { 'class': 'dv-nul' }, g);
       g._text = el('text', { 'text-anchor': 'middle' }, g);
@@ -266,7 +266,7 @@
     g.setAttribute('class', 'dv-item dv-' + it.type + (it.hl ? ' is-' + it.hl : '') + (it.cls ? ' dv-' + it.cls : ''));
     g.style.transition = animate ? '' : 'none';
     var t = it.type;
-    if (t === 'box' || t === 'bar') {
+    if (t === 'box' || t === 'column') {
       g.setAttribute('transform', 'translate(' + it.x + ',' + it.y + ')');
       g._rect.setAttribute('width', it.w); g._rect.setAttribute('height', it.h);
       if (t === 'box' && it.split) {   // 链表节点：右侧是 next 指针域
@@ -281,10 +281,10 @@
       } else g._nul.style.display = 'none';
       var tx = (t === 'box' && it.split) ? (it.w - 18) / 2 : it.w / 2;
       g._text.setAttribute('x', tx);
-      g._text.setAttribute('y', t === 'bar' ? -6 : it.h / 2 + 5);
+      g._text.setAttribute('y', t === 'column' ? -6 : it.h / 2 + 5);
       g._text.textContent = it.text == null ? '' : it.text;
       g._sub.setAttribute('x', it.w / 2);
-      g._sub.setAttribute('y', t === 'bar' ? it.h + 14 : (it.vertical ? it.h / 2 + 4 : it.h + 15));
+      g._sub.setAttribute('y', t === 'column' ? it.h + 14 : (it.vertical ? it.h / 2 + 4 : it.h + 15));
       if (it.vertical) { g._sub.setAttribute('x', -14); }
       g._sub.textContent = it.idx != null ? it.idx : (it.sub == null ? '' : it.sub);
     } else if (t === 'circ') {
