@@ -301,7 +301,11 @@ kbd {
 
 /* 配色切换：色块用 var() 取色，挂上 data-scheme 就显示对应方案的颜色 */
 .scheme-picker { position: relative; }
-.scheme-label { font: 13px/1 var(--mono); display: inline-flex; gap: 6px; }
+.scheme-btn { width: 34px; padding: 0; justify-content: center; }
+.i-palette circle:nth-of-type(1) { fill: var(--accent); }
+.i-palette circle:nth-of-type(2) { fill: var(--link); }
+.i-palette circle:nth-of-type(3) { fill: var(--warn); }
+.i-palette circle:nth-of-type(4) { fill: var(--danger); }
 .scheme-swatch {
   display: inline-flex; gap: 2px; flex: none;
   padding: 3px;
@@ -695,7 +699,7 @@ kbd {
   .p-path { max-width: 34vw; }
   .nav { order: 3; width: 100%; margin: 0 -10px; overflow-x: auto; scrollbar-width: none; }
   .nav::-webkit-scrollbar { display: none; }
-  .search-label, .search-btn kbd, .scheme-label { display: none; }
+  .search-label, .search-btn kbd { display: none; }
   .scheme-menu { width: min(260px, calc(100vw - 32px)); }
   .wrap { padding: 0 16px; }
   .site-main { padding-top: 20px; }

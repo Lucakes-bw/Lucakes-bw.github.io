@@ -21,7 +21,7 @@
     if (!s) return;
     html.setAttribute('data-scheme', id);
     html.setAttribute('data-theme', s.mode);
-    $$('[data-scheme-current]').forEach(el => { el.textContent = id; });
+    $$('[data-scheme-toggle]').forEach(el => { el.title = `配色：${s.name}`; });
     $$('.scheme-item').forEach(li => li.setAttribute('aria-selected', String(li.dataset.schemeId === id)));
     const meta = $('meta[name="theme-color"]');
     if (meta) meta.content = getComputedStyle(html).getPropertyValue('--bg').trim();
