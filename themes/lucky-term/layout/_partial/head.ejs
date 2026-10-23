@@ -5,6 +5,7 @@
   else if (is_tag()) title = '#' + page.tag + ' | ' + config.title;
   else if (is_archive()) title = '归档 | ' + config.title;
   const desc = page.description || config.description;
+  const schemes = theme.schemes || { light: 'default-light', dark: 'default-dark', list: [] };
 %>
 <head>
   <meta charset="utf-8">
@@ -17,13 +18,22 @@
   <link rel="canonical" href="<%- full_url_for(page.path.replace(/index\.html$/, '')) %>">
   <meta name="theme-color" content="#0e1116">
   <script>
+    window.LT = { root: <%- JSON.stringify(config.root) %>, search: <%- JSON.stringify(url_for((config.search && config.search.path) || 'search.xml')) %>, schemes: <%- JSON.stringify(schemes) %> };
+    // 首屏前定好配色，避免闪一下默认色
     (function () {
-      var t;
-      try { t = localStorage.getItem('lt-theme'); } catch (e) {}
-      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', t);
+      var S = window.LT.schemes, id, mode = {};
+      S.list.forEach(function (s) { mode[s.id] = s.mode; });
+      try {
+        id = localStorage.getItem('lt-scheme');
+        // 旧版只存了 light / dark
+        var old = localStorage.getItem('lt-theme');
+        if (!id && (old === 'light' || old === 'dark')) { id = S[old]; localStorage.setItem('lt-scheme', id); }
+        localStorage.removeItem('lt-theme');
+      } catch (e) {}
+      if (!mode[id]) id = S[matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'];
+      document.documentElement.setAttribute('data-scheme', id);
+      document.documentElement.setAttribute('data-theme', mode[id] || 'light');
     })();
-    window.LT = { root: <%- JSON.stringify(config.root) %>, search: <%- JSON.stringify(url_for((config.search && config.search.path) || 'search.xml')) %> };
   </script>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.1.0/400.css">

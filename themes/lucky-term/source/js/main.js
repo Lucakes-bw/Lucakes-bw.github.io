@@ -1,4 +1,4 @@
-/* lucky-term 主题脚本：深浅色、搜索、阅读进度、代码复制、目录高亮、评论 */
+/* lucky-term 主题脚本：配色方案、搜索、阅读进度、代码复制、目录高亮、评论 */
 (function () {
   'use strict';
 
@@ -9,16 +9,99 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 隐私模式下忽略 */ } }
   };
 
-  /* ---------- 深浅色 ---------- */
-  function setTheme(t) {
-    document.documentElement.setAttribute('data-theme', t);
-    try { localStorage.setItem('lt-theme', t); } catch (e) { /* ignore */ }
+  /* ---------- 配色方案 ---------- */
+  // 首屏的方案由 head 里的脚本设好；这里负责切换、预览和菜单
+  const html = document.documentElement;
+  const SCHEMES = window.LT.schemes;
+  const schemeById = new Map(SCHEMES.list.map(s => [s.id, s]));
+  let savedScheme = html.getAttribute('data-scheme');
+
+  function applyScheme(id) {
+    const s = schemeById.get(id);
+    if (!s) return;
+    html.setAttribute('data-scheme', id);
+    html.setAttribute('data-theme', s.mode);
+    $$('[data-scheme-current]').forEach(el => { el.textContent = id; });
+    $$('.scheme-item').forEach(li => li.setAttribute('aria-selected', String(li.dataset.schemeId === id)));
+    const meta = $('meta[name="theme-color"]');
+    if (meta) meta.content = getComputedStyle(html).getPropertyValue('--bg').trim();
+  }
+  // 预览只换颜色；setScheme 才保存，并同步评论区
+  function setScheme(id) {
+    if (!schemeById.has(id)) return;
+    applyScheme(id);
+    savedScheme = id;
+    try { localStorage.setItem('lt-scheme', id); } catch (e) { /* ignore */ }
     const frame = $('iframe.giscus-frame');
     if (frame) frame.contentWindow.postMessage({ giscus: { setConfig: { theme: giscusTheme() } } }, 'https://giscus.app');
   }
-  $$('[data-theme-toggle]').forEach(btn => btn.addEventListener('click', () => {
-    setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-  }));
+  const revertScheme = () => { if (html.getAttribute('data-scheme') !== savedScheme) applyScheme(savedScheme); };
+  applyScheme(savedScheme);
+
+  // 没手动选过时跟随系统深浅色
+  const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+  const followSystem = () => {
+    let picked = null;
+    try { picked = localStorage.getItem('lt-scheme'); } catch (e) { /* ignore */ }
+    if (picked) return;
+    savedScheme = SCHEMES[darkMQ.matches ? 'dark' : 'light'];
+    applyScheme(savedScheme);
+  };
+  if (darkMQ.addEventListener) darkMQ.addEventListener('change', followSystem);
+
+  const picker = $('[data-scheme-picker]');
+  if (picker) {
+    const toggle = $('[data-scheme-toggle]', picker);
+    const menu = $('[data-scheme-menu]', picker);
+    const list = $('.scheme-list', menu);
+    const items = $$('.scheme-item', menu);
+    let cur = -1;
+
+    const highlight = (i, preview) => {
+      cur = i;
+      items.forEach((li, j) => li.classList.toggle('is-active', j === i));
+      if (i < 0) return;
+      items[i].scrollIntoView({ block: 'nearest' });
+      if (preview) applyScheme(items[i].dataset.schemeId);
+    };
+    const openMenu = () => {
+      menu.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      highlight(items.findIndex(li => li.dataset.schemeId === savedScheme), false);
+      list.focus();
+    };
+    const closeMenu = (commit) => {
+      if (menu.hidden) return;
+      if (commit && cur >= 0) setScheme(items[cur].dataset.schemeId);
+      else revertScheme();
+      menu.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+    };
+
+    toggle.addEventListener('click', () => (menu.hidden ? openMenu() : closeMenu(false)));
+    items.forEach((li, i) => {
+      li.addEventListener('mouseenter', () => highlight(i, true));
+      li.addEventListener('click', () => { highlight(i, false); closeMenu(true); toggle.focus(); });
+    });
+    // 鼠标移出列表就恢复，键盘选中的那项留到 Enter 再说
+    list.addEventListener('mouseleave', () => { highlight(items.findIndex(li => li.dataset.schemeId === savedScheme), false); revertScheme(); });
+    list.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const d = e.key === 'ArrowDown' ? 1 : -1;
+        highlight((cur + d + items.length) % items.length, true);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        closeMenu(true);
+        toggle.focus();
+      } else if (e.key === 'Escape') {
+        e.stopPropagation();
+        closeMenu(false);
+        toggle.focus();
+      } else if (e.key === 'Tab') closeMenu(false);
+    });
+    document.addEventListener('click', e => { if (!picker.contains(e.target)) closeMenu(false); });
+  }
 
   /* ---------- 已读记录（保存在本机浏览器） ---------- */
   const READ_KEY = 'lt-read';
@@ -189,8 +272,23 @@
   const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const hl = (s, kws) => kws.reduce((acc, k) => acc.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`), esc(s));
 
+  // 搜索框里输入 `theme <名字>` 切换配色，选中项实时预览
+  function schemeSearch(arg) {
+    const kw = arg.toLowerCase();
+    const hits = SCHEMES.list.filter(s => s.id.includes(kw) || s.name.toLowerCase().includes(kw));
+    active = hits.length ? Math.max(0, hits.findIndex(s => s.id === savedScheme && !kw)) : -1;
+    results.innerHTML = hits.length
+      ? hits.map((s, i) => `<li class="sr-scheme${i === active ? ' is-active' : ''}" data-scheme-id="${esc(s.id)}"><a href="#"><span class="scheme-swatch" data-scheme="${esc(s.id)}"><i></i><i></i><i></i><i></i></span><span class="sr-title">${esc(s.name)}</span><span class="c-muted">${s.mode}${s.id === savedScheme ? ' · 当前' : ''}</span></a></li>`).join('')
+      : `<li class="sr-empty">theme: 没有叫「${esc(arg)}」的配色，输入 theme 查看全部</li>`;
+    if (hits.length) applyScheme(hits[active].id);
+    else revertScheme();
+  }
+
   async function doSearch() {
     const q = input.value.trim();
+    const cmd = q.match(/^theme(?:\s+(.*))?$/i);
+    if (cmd) { schemeSearch((cmd[1] || '').trim()); return; }
+    revertScheme();
     if (!q) { results.innerHTML = ''; return; }
     const kws = q.toLowerCase().split(/\s+/).filter(Boolean);
     const data = await loadIndex();
@@ -215,11 +313,14 @@
     document.body.style.overflow = 'hidden';
     input.focus();
     input.select();
+    if (input.value.trim()) doSearch();   // 上次没关掉的 theme 命令要重新预览
     loadIndex();
   }
   function closeSearch() {
     modal.hidden = true;
     document.body.style.overflow = '';
+    input.blur();
+    revertScheme();
   }
   function moveActive(d) {
     const items = $$('li:not(.sr-empty)', results);
@@ -227,6 +328,13 @@
     active = (active + d + items.length) % items.length;
     items.forEach((li, i) => li.classList.toggle('is-active', i === active));
     items[active].scrollIntoView({ block: 'nearest' });
+    if (items[active].dataset.schemeId) applyScheme(items[active].dataset.schemeId);
+  }
+  function pickScheme(li) {
+    setScheme(li.dataset.schemeId);
+    input.value = '';
+    results.innerHTML = '';
+    closeSearch();
   }
 
   if (modal) {
@@ -238,9 +346,15 @@
       if (e.key === 'ArrowDown') { e.preventDefault(); moveActive(1); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive(-1); }
       else if (e.key === 'Enter') {
-        const a = $$('li:not(.sr-empty) a', results)[active];
-        if (a) location.href = a.href;
+        const li = $$('li:not(.sr-empty)', results)[active];
+        if (!li) return;
+        if (li.dataset.schemeId) pickScheme(li);
+        else location.href = $('a', li).href;
       }
+    });
+    results.addEventListener('click', e => {
+      const li = e.target.closest('li[data-scheme-id]');
+      if (li) { e.preventDefault(); pickScheme(li); }
     });
     document.addEventListener('keydown', e => {
       const typing = /input|textarea|select/i.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
