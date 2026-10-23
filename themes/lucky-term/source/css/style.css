@@ -511,3 +511,81 @@ kbd {
   .md { font-size: 15.5px; }
   .md figure.highlight pre { font-size: 13px; }
 }
+
+/* ---------- dsviz：数据结构的逐步演示 ---------- */
+.md .dsviz {
+  margin: 0 0 1.6em; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); font: 13px/1.5 var(--mono); outline: none;
+}
+.md .dsviz:focus-visible { border-color: var(--accent); }
+.dv-head { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--panel-2); border-radius: 8px 8px 0 0; }
+.dv-title { color: var(--fg); font-weight: 700; }
+.dv-title::before { content: "▸ "; color: var(--accent); }
+.dv-count { color: var(--muted); white-space: nowrap; }
+.dv-body { display: grid; grid-template-columns: 1fr; }
+.dv-stage { padding: 6px 4px; overflow-x: auto; }
+.dv-stage svg { display: block; width: 100%; min-width: 520px; height: auto; }
+.dv-code { position: relative;
+  margin: 0; padding: 8px 0; border-top: 1px solid var(--border); background: var(--code-bg);
+  font: 12px/1.65 var(--mono); max-height: 236px; overflow: auto; color: var(--fg-2);
+}
+.dv-line { display: block; padding: 0 10px 0 0; white-space: pre; border-left: 3px solid transparent; }
+.dv-ln { display: inline-block; width: 2.6em; padding-right: .8em; text-align: right; color: var(--muted); user-select: none; }
+.dv-line.is-cur { background: var(--accent-soft); border-left-color: var(--accent); color: var(--fg); }
+.dv-msg { padding: 8px 12px; border-top: 1px solid var(--border); min-height: 2.6em; color: var(--fg); }
+.dv-step { color: var(--accent); margin-right: .8em; }
+.dv-err { color: var(--danger); }
+.dv-vars { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; }
+.dv-vars:empty { display: none; }
+.dv-var { border: 1px solid var(--border); border-radius: 4px; overflow: hidden; display: inline-flex; }
+.dv-k { padding: 0 6px; background: var(--panel-2); color: var(--muted); }
+.dv-v { padding: 0 6px; color: var(--fg); }
+.dv-bar, .dv-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--border); }
+.dv-acts:empty { display: none; }
+.dv-act { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-right: 10px; }
+.dv-act label { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+.dv-act input, .dv-speed {
+  font: 12px var(--mono); color: var(--fg); background: var(--bg);
+  border: 1px solid var(--border-2); border-radius: 5px; padding: 3px 6px;
+}
+.dv-btn {
+  font: 12px var(--mono); padding: 4px 10px; cursor: pointer;
+  border: 1px solid var(--border-2); border-radius: 5px; background: var(--panel); color: var(--fg);
+}
+.dv-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.dv-btn:disabled { opacity: .4; cursor: default; }
+.dv-play { min-width: 6.5em; }
+.dv-go { border-color: var(--accent); color: var(--accent); }
+@media (max-width: 760px) { .dv-code { max-height: 180px; } }
+
+/* SVG 图元 */
+.dsviz svg text { font: 13px var(--mono); fill: var(--fg); }
+.dsviz .dv-item { transition: transform .35s ease, opacity .3s ease; }
+.dsviz .dv-item path, .dsviz .dv-item rect, .dsviz .dv-item circle { transition: fill .3s, stroke .3s, d .35s ease; }
+.dsviz .dv-box rect, .dsviz .dv-circ circle, .dsviz .dv-bar rect { fill: var(--panel-2); stroke: var(--border-2); stroke-width: 1.5; }
+.dsviz .dv-box line { stroke: var(--border-2); stroke-width: 1.5; }
+.dsviz .dv-sub, .dsviz .dv-w { font-size: 11px !important; fill: var(--muted) !important; }
+.dsviz .dv-arrow path, .dsviz .dv-line path { stroke: var(--fg-2); stroke-width: 1.6; }
+.dsviz .dv-marker { fill: var(--fg-2); }
+.dsviz .dv-ptr text { fill: var(--link); font-weight: 700; font-size: 12px; }
+.dsviz .dv-ptr path { stroke: var(--link); stroke-width: 1.5; }
+.dsviz .dv-text.dv-muted text { fill: var(--muted); }
+/* 状态：cur 当前、cmp 比较、new 新建、del 删除、ok 完成、warn 注意、dim 淡化、empty 空位 */
+.dsviz .is-cur rect, .dsviz .is-cur circle { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.5; }
+.dsviz .is-cmp rect, .dsviz .is-cmp circle { fill: var(--mark); stroke: var(--warn); stroke-width: 2.5; }
+.dsviz .is-new rect, .dsviz .is-new circle { stroke: var(--link); stroke-width: 2.5; stroke-dasharray: 5 3; }
+.dsviz .is-del rect, .dsviz .is-del circle { stroke: var(--danger); stroke-width: 2.5; opacity: .75; }
+.dsviz .is-del text { fill: var(--danger); text-decoration: line-through; }
+.dsviz .is-ok rect, .dsviz .is-ok circle { fill: var(--accent); stroke: var(--accent); }
+.dsviz .is-ok text { fill: var(--bg); }
+.dsviz .is-ok .dv-sub { fill: var(--muted) !important; }
+.dsviz .is-warn rect, .dsviz .is-warn circle { stroke: var(--danger); stroke-width: 2.5; }
+.dsviz .is-dim { opacity: .35; }
+.dsviz .is-empty rect { fill: none; stroke-dasharray: 4 3; }
+.dsviz .dv-arrow.is-cur path, .dsviz .dv-line.is-cur path { stroke: var(--accent); stroke-width: 2.6; }
+.dsviz .dv-arrow.is-new path { stroke: var(--link); stroke-dasharray: 5 3; stroke-width: 2; }
+.dsviz .dv-arrow.is-del path, .dsviz .dv-line.is-del path { stroke: var(--danger); stroke-dasharray: 4 3; }
+.dsviz .dv-line.is-ok path { stroke: var(--accent); stroke-width: 3; }
+.dsviz .dv-ptr.is-warn text { fill: var(--danger); }
+.dsviz .dv-ptr.is-warn path { stroke: var(--danger); }
+.dsviz .dv-box line.dv-nul { stroke: var(--muted); stroke-width: 1.5; }

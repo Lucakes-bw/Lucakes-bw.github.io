@@ -56,3 +56,9 @@
 
   <%- partial('_partial/comments') %>
 </article>
+
+<% if (page.viz) { %>
+<script src="<%- url_for('/js/dsviz.js') %>"></script>
+<% [].concat(page.viz).forEach(function (v) { %><script src="<%- url_for('/js/viz/' + v + '.js') %>"></script>
+<% }) %>
+<% } %>
