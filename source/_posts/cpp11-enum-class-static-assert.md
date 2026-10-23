@@ -1,7 +1,7 @@
 ---
 title: enum class 与 static_assert
-date: 2026-10-23 15:00:00
-updated: 2026-10-23 15:00:00
+date: 2026-10-22 12:20:00
+updated: 2026-10-22 12:20:00
 categories:
   - C/C++
   - C++11

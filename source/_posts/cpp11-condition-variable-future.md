@@ -1,7 +1,7 @@
 ---
 title: 条件变量与 async / future
-date: 2026-10-24 10:00:00
-updated: 2026-10-24 10:00:00
+date: 2026-10-22 13:20:00
+updated: 2026-10-22 13:20:00
 categories:
   - C/C++
   - C++11

@@ -1,7 +1,7 @@
 ---
 title: auto 与 decltype：让编译器推导类型
-date: 2026-10-22 13:00:00
-updated: 2026-10-22 13:00:00
+date: 2026-10-22 09:00:00
+updated: 2026-10-22 09:00:00
 categories:
   - C/C++
   - C++11

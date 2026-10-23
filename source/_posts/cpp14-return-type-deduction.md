@@ -1,7 +1,7 @@
 ---
 title: 返回类型推导与 decltype(auto)
-date: 2026-10-24 14:00:00
-updated: 2026-10-24 14:00:00
+date: 2026-10-22 14:20:00
+updated: 2026-10-22 14:20:00
 categories:
   - C/C++
   - C++14

@@ -1,7 +1,7 @@
 ---
 title: C++20 常用标准库：span、format、jthread 等
-date: 2026-10-27 11:00:00
-updated: 2026-10-27 11:00:00
+date: 2026-10-22 20:20:00
+updated: 2026-10-22 20:20:00
 categories:
   - C/C++
   - C++20

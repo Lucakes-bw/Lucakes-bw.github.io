@@ -1,7 +1,7 @@
 ---
 title: 统一初始化与 std::initializer_list
-date: 2026-10-22 14:00:00
-updated: 2026-10-22 14:00:00
+date: 2026-10-22 09:20:00
+updated: 2026-10-22 09:20:00
 categories:
   - C/C++
   - C++11

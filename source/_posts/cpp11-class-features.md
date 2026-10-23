@@ -1,7 +1,7 @@
 ---
 title: 类的增强：default、delete、override、final 与委托构造
-date: 2026-10-23 14:00:00
-updated: 2026-10-23 14:00:00
+date: 2026-10-22 12:00:00
+updated: 2026-10-22 12:00:00
 categories:
   - C/C++
   - C++11

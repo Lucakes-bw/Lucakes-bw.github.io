@@ -1,7 +1,7 @@
 ---
 title: std::function 与 std::bind
-date: 2026-10-23 11:00:00
-updated: 2026-10-23 11:00:00
+date: 2026-10-22 11:20:00
+updated: 2026-10-22 11:20:00
 categories:
   - C/C++
   - C++11

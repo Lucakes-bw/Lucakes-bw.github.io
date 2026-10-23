@@ -1,7 +1,7 @@
 ---
 title: consteval、constinit 与更强大的 constexpr
-date: 2026-10-27 10:00:00
-updated: 2026-10-27 10:00:00
+date: 2026-10-22 20:00:00
+updated: 2026-10-22 20:00:00
 categories:
   - C/C++
   - C++20

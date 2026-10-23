@@ -1,7 +1,7 @@
 ---
 title: if/switch 初始化语句与 if constexpr
-date: 2026-10-25 10:00:00
-updated: 2026-10-25 10:00:00
+date: 2026-10-22 15:40:00
+updated: 2026-10-22 15:40:00
 categories:
   - C/C++
   - C++17
