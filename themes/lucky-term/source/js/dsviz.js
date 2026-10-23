@@ -120,9 +120,10 @@
       xs[id] = order++; ds[id] = d; if (d > maxDepth) maxDepth = d;
       walk(map[id].right, d + 1);
     })(s.root, 0);
-    var width = s.width || 640, gap = Math.min(56, (width - 60) / Math.max(order, 1)), X0 = (width - gap * (order - 1)) / 2;
-    var DY = Math.min(64, ((s.height || 260) - 70) / Math.max(maxDepth, 1));
-    function P(id) { return { x: X0 + xs[id] * gap, y: 44 + ds[id] * DY }; }
+    var width = s.treeWidth || s.width || 640, gap = Math.min(s.maxGap || 56, (width - 60) / Math.max(order, 1));
+    var X0 = (s.offsetX || 0) + (width - gap * (order - 1)) / 2, TOP = s.top || 44;
+    var DY = Math.min(s.maxDy || 64, ((s.treeHeight || s.height || 260) - TOP - 26) / Math.max(maxDepth, 1));
+    function P(id) { return { x: X0 + xs[id] * gap, y: TOP + ds[id] * DY }; }
     (s.nodes || []).forEach(function (n) {
       if (xs[n.id] == null) return;
       var p = P(n.id);
