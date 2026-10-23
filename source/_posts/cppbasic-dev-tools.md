@@ -586,21 +586,58 @@ project(calc CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)                # 使用 -std=c++17，而不是带编译器扩展的 -std=gnu++17
 
 add_executable(app main.cpp math_utils.cpp)
 target_compile_options(app PRIVATE -Wall -Wextra)
 ```
 
-构建的命令：
+构建分为两步。第一步**配置**，生成构建文件，放在 `build` 目录中：
 
 ```bash
-cmake -S . -B build                          # 生成构建文件，放在 build 目录中
-cmake --build build                          # 编译
-./build/app                                  # 运行
+cmake -S . -B build
 ```
 
-- 只需要列出源文件，**头文件的依赖关系由 CMake 自动分析**。
+```
+-- The CXX compiler identification is AppleClang 21.0.0.21000334
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: .../build
+```
+
+CMake 自动找到了系统中的编译器，并在 `build` 目录中生成了一个 `Makefile`（在 Windows + Visual Studio 上则会生成 `.sln` 项目文件）。第二步**编译**，然后运行：
+
+```bash
+cmake --build build
+./build/app
+```
+
+```
+[ 33%] Building CXX object CMakeFiles/app.dir/main.cpp.o
+[ 66%] Building CXX object CMakeFiles/app.dir/math_utils.cpp.o
+[100%] Linking CXX executable app
+[100%] Built target app
+add(2, 3) = 5
+mul(4, 5) = 20
+```
+
+修改了 `math_utils.h` 之后再执行 `cmake --build build`，两个 `.cpp` 都被重新编译了，因为它们都包含了这个头文件：
+
+```
+[ 33%] Building CXX object CMakeFiles/app.dir/main.cpp.o
+[ 66%] Building CXX object CMakeFiles/app.dir/math_utils.cpp.o
+[100%] Linking CXX executable app
+[100%] Built target app
+```
+
+- 只需要列出源文件，**头文件的依赖关系由 CMake 自动分析**，不用像 Makefile 那样手动写出来。
 - 所有生成的文件都放在 `build` 目录中，不会弄乱源代码目录。要从头构建，删掉 `build` 目录即可。
+- 只有修改了 `CMakeLists.txt` 时才需要重新配置（而且 `cmake --build` 会自动检测并重新配置），平时只需要执行第二步。
 - 用 `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug` 生成带调试信息的版本，`Release` 生成优化的版本。
 - CLion 直接打开含有 `CMakeLists.txt` 的目录就能识别项目；VS Code 安装 CMake Tools 扩展后也可以。
 
