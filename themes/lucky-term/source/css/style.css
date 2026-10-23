@@ -3,46 +3,218 @@
    ========================================================== */
 
 :root {
-  --bg: #f7f7f2;
-  --panel: #ffffff;
-  --panel-2: #f0f0ea;
-  --fg: #1d2127;
-  --fg-2: #3c434d;
-  --muted: #6e7681;
-  --border: #e2e2da;
-  --border-2: #cfcfc5;
-  --accent: #0b8a5a;        /* 提示符绿 */
-  --accent-soft: #e2f4ec;
-  --link: #1f63d6;          /* 路径蓝 */
-  --warn: #b25e09;
-  --danger: #c4372f;
-  --code-bg: #f3f3ec;
-  --mark: #fff1b8;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .04);
-
   --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace;
   --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
   --radius: 10px;
   --header-h: 56px;
 }
 
-[data-theme="dark"] {
-  --bg: #0d1015;
-  --panel: #13171e;
-  --panel-2: #1a1f28;
-  --fg: #d9dee5;
-  --fg-2: #b4bcc6;
-  --muted: #7d8692;
-  --border: #232a34;
-  --border-2: #303844;
-  --accent: #3fd68f;
-  --accent-soft: #11291f;
-  --link: #6cb0ff;
-  --warn: #f0b45a;
-  --danger: #ff6b61;
-  --code-bg: #0f131a;
-  --mark: #4a3d12;
+/* ==========================================================
+   配色方案：<html data-scheme="…">，由 head 里的脚本在首屏前设置。
+   每个方案给出同一组变量；--accent-soft / --mark 没写时由强调色推出来。
+   新增方案：在这里加一段，再到 _config.lucky-term.yml 的 schemes.list 里登记。
+   ========================================================== */
+:root, [data-scheme] {
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  --mark: color-mix(in srgb, var(--warn) 28%, var(--bg));
   --shadow: none;
+}
+
+/* Default Light —— 原来的浅色 */
+:root:not([data-scheme]), [data-scheme="default-light"] {
+  color-scheme: light;
+  --bg: #f7f7f2; --panel: #ffffff; --panel-2: #f0f0ea;
+  --fg: #1d2127; --fg-2: #3c434d; --muted: #6e7681;
+  --border: #e2e2da; --border-2: #cfcfc5;
+  --accent: #0b8a5a; --accent-soft: #e2f4ec; --link: #1f63d6;
+  --warn: #b25e09; --danger: #c4372f;
+  --code-bg: #f3f3ec; --mark: #fff1b8;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .04);
+  --hl-comment: #8a919a; --hl-keyword: #c2185b; --hl-type: #0b7f8a; --hl-string: #2e7d32;
+  --hl-number: #b25e09; --hl-func: #1f63d6; --hl-meta: #7b4fbf;
+}
+
+/* Default Dark —— 原来的深色 */
+[data-scheme="default-dark"] {
+  color-scheme: dark;
+  --bg: #0d1015; --panel: #13171e; --panel-2: #1a1f28;
+  --fg: #d9dee5; --fg-2: #b4bcc6; --muted: #7d8692;
+  --border: #232a34; --border-2: #303844;
+  --accent: #3fd68f; --accent-soft: #11291f; --link: #6cb0ff;
+  --warn: #f0b45a; --danger: #ff6b61;
+  --code-bg: #0f131a; --mark: #4a3d12;
+  --hl-comment: #6b7480; --hl-keyword: #ff7ab2; --hl-type: #5fd7e0; --hl-string: #8fdc7a;
+  --hl-number: #f0b45a; --hl-func: #6cb0ff; --hl-meta: #c39bff;
+}
+
+/* GitHub Light */
+[data-scheme="github-light"] {
+  color-scheme: light;
+  --bg: #f6f8fa; --panel: #ffffff; --panel-2: #eff2f5;
+  --fg: #1f2328; --fg-2: #424a53; --muted: #656d76;
+  --border: #d8dee4; --border-2: #d0d7de;
+  --accent: #1a7f37; --link: #0969da;
+  --warn: #953800; --danger: #d1242f;
+  --code-bg: #f6f8fa; --mark: #fff8c5;
+  --shadow: 0 1px 2px rgba(31, 35, 40, .06);
+  --hl-comment: #6e7781; --hl-keyword: #cf222e; --hl-type: #953800; --hl-string: #0a3069;
+  --hl-number: #0550ae; --hl-func: #8250df; --hl-meta: #116329;
+}
+
+/* Solarized Light */
+[data-scheme="solarized-light"] {
+  color-scheme: light;
+  --bg: #fdf6e3; --panel: #fefaee; --panel-2: #eee8d5;
+  --fg: #073642; --fg-2: #586e75; --muted: #6f8286;
+  --border: #e9e2cb; --border-2: #d9d2bc;
+  --accent: #859900; --link: #268bd2;
+  --warn: #cb4b16; --danger: #dc322f;
+  --code-bg: #f5efdc;
+  --hl-comment: #93a1a1; --hl-keyword: #859900; --hl-type: #b58900; --hl-string: #2aa198;
+  --hl-number: #d33682; --hl-func: #268bd2; --hl-meta: #cb4b16;
+}
+
+/* Catppuccin Latte */
+[data-scheme="catppuccin-latte"] {
+  color-scheme: light;
+  --bg: #eff1f5; --panel: #f8f9fb; --panel-2: #e6e9ef;
+  --fg: #4c4f69; --fg-2: #5c5f77; --muted: #7c7f93;
+  --border: #dce0e8; --border-2: #ccd0da;
+  --accent: #40a02b; --link: #1e66f5;
+  --warn: #fe640b; --danger: #d20f39;
+  --code-bg: #e6e9ef;
+  --hl-comment: #8c8fa1; --hl-keyword: #8839ef; --hl-type: #df8e1d; --hl-string: #40a02b;
+  --hl-number: #fe640b; --hl-func: #1e66f5; --hl-meta: #179299;
+}
+
+/* Gruvbox Light */
+[data-scheme="gruvbox-light"] {
+  color-scheme: light;
+  --bg: #fbf1c7; --panel: #f9f5d7; --panel-2: #f2e5bc;
+  --fg: #3c3836; --fg-2: #504945; --muted: #7c6f64;
+  --border: #ebdbb2; --border-2: #d5c4a1;
+  --accent: #79740e; --link: #076678;
+  --warn: #af3a03; --danger: #9d0006;
+  --code-bg: #f2e5bc;
+  --hl-comment: #928374; --hl-keyword: #9d0006; --hl-type: #b57614; --hl-string: #79740e;
+  --hl-number: #8f3f71; --hl-func: #076678; --hl-meta: #427b58;
+}
+
+/* One Dark */
+[data-scheme="one-dark"] {
+  color-scheme: dark;
+  --bg: #282c34; --panel: #2c313a; --panel-2: #323842;
+  --fg: #c8ccd4; --fg-2: #abb2bf; --muted: #7f848e;
+  --border: #3a3f4b; --border-2: #4b5263;
+  --accent: #98c379; --link: #61afef;
+  --warn: #e5c07b; --danger: #e06c75;
+  --code-bg: #21252b;
+  --hl-comment: #7f848e; --hl-keyword: #c678dd; --hl-type: #e5c07b; --hl-string: #98c379;
+  --hl-number: #d19a66; --hl-func: #61afef; --hl-meta: #56b6c2;
+}
+
+/* Dracula */
+[data-scheme="dracula"] {
+  color-scheme: dark;
+  --bg: #282a36; --panel: #2d2f3d; --panel-2: #343746;
+  --fg: #f8f8f2; --fg-2: #e2e2dc; --muted: #8a91b8;
+  --border: #3b3e51; --border-2: #4b4f66;
+  --accent: #50fa7b; --link: #bd93f9;
+  --warn: #ffb86c; --danger: #ff5555;
+  --code-bg: #21222c;
+  --hl-comment: #6272a4; --hl-keyword: #ff79c6; --hl-type: #8be9fd; --hl-string: #f1fa8c;
+  --hl-number: #bd93f9; --hl-func: #50fa7b; --hl-meta: #ffb86c;
+}
+
+/* Tokyo Night */
+[data-scheme="tokyo-night"] {
+  color-scheme: dark;
+  --bg: #1a1b26; --panel: #1f2335; --panel-2: #24283b;
+  --fg: #c0caf5; --fg-2: #a9b1d6; --muted: #737aa2;
+  --border: #292e42; --border-2: #3b4261;
+  --accent: #9ece6a; --link: #7aa2f7;
+  --warn: #e0af68; --danger: #f7768e;
+  --code-bg: #16161e;
+  --hl-comment: #6a73a0; --hl-keyword: #bb9af7; --hl-type: #2ac3de; --hl-string: #9ece6a;
+  --hl-number: #ff9e64; --hl-func: #7aa2f7; --hl-meta: #7dcfff;
+}
+
+/* Catppuccin Mocha */
+[data-scheme="catppuccin-mocha"] {
+  color-scheme: dark;
+  --bg: #1e1e2e; --panel: #252536; --panel-2: #313244;
+  --fg: #cdd6f4; --fg-2: #bac2de; --muted: #7f849c;
+  --border: #313244; --border-2: #45475a;
+  --accent: #a6e3a1; --link: #89b4fa;
+  --warn: #fab387; --danger: #f38ba8;
+  --code-bg: #181825;
+  --hl-comment: #7f849c; --hl-keyword: #cba6f7; --hl-type: #f9e2af; --hl-string: #a6e3a1;
+  --hl-number: #fab387; --hl-func: #89b4fa; --hl-meta: #94e2d5;
+}
+
+/* Nord */
+[data-scheme="nord"] {
+  color-scheme: dark;
+  --bg: #2e3440; --panel: #333a47; --panel-2: #3b4252;
+  --fg: #eceff4; --fg-2: #d8dee9; --muted: #8a93a6;
+  --border: #3b4252; --border-2: #4c566a;
+  --accent: #a3be8c; --link: #88c0d0;
+  --warn: #ebcb8b; --danger: #bf616a;
+  --code-bg: #2a2f3a;
+  --hl-comment: #616e88; --hl-keyword: #81a1c1; --hl-type: #8fbcbb; --hl-string: #a3be8c;
+  --hl-number: #b48ead; --hl-func: #88c0d0; --hl-meta: #d08770;
+}
+
+/* Gruvbox Dark */
+[data-scheme="gruvbox-dark"] {
+  color-scheme: dark;
+  --bg: #282828; --panel: #32302f; --panel-2: #3c3836;
+  --fg: #ebdbb2; --fg-2: #d5c4a1; --muted: #928374;
+  --border: #3c3836; --border-2: #504945;
+  --accent: #b8bb26; --link: #83a598;
+  --warn: #fe8019; --danger: #fb4934;
+  --code-bg: #1d2021;
+  --hl-comment: #928374; --hl-keyword: #fb4934; --hl-type: #fabd2f; --hl-string: #b8bb26;
+  --hl-number: #d3869b; --hl-func: #83a598; --hl-meta: #8ec07c;
+}
+
+/* Solarized Dark */
+[data-scheme="solarized-dark"] {
+  color-scheme: dark;
+  --bg: #002b36; --panel: #03303b; --panel-2: #073642;
+  --fg: #93a1a1; --fg-2: #839496; --muted: #6c8288;
+  --border: #0d3f4c; --border-2: #1a4f5c;
+  --accent: #859900; --link: #268bd2;
+  --warn: #cb4b16; --danger: #dc322f;
+  --code-bg: #00252f;
+  --hl-comment: #586e75; --hl-keyword: #859900; --hl-type: #b58900; --hl-string: #2aa198;
+  --hl-number: #d33682; --hl-func: #268bd2; --hl-meta: #cb4b16;
+}
+
+/* Monokai */
+[data-scheme="monokai"] {
+  color-scheme: dark;
+  --bg: #272822; --panel: #2d2e27; --panel-2: #3e3d32;
+  --fg: #f8f8f2; --fg-2: #cfcfc2; --muted: #908b75;
+  --border: #3b3a32; --border-2: #49483e;
+  --accent: #a6e22e; --link: #66d9ef;
+  --warn: #fd971f; --danger: #f92672;
+  --code-bg: #1e1f1c;
+  --hl-comment: #75715e; --hl-keyword: #f92672; --hl-type: #66d9ef; --hl-string: #e6db74;
+  --hl-number: #ae81ff; --hl-func: #a6e22e; --hl-meta: #fd971f;
+}
+
+/* Rosé Pine */
+[data-scheme="rose-pine"] {
+  color-scheme: dark;
+  --bg: #191724; --panel: #1f1d2e; --panel-2: #26233a;
+  --fg: #e0def4; --fg-2: #c5c2dc; --muted: #908caa;
+  --border: #26233a; --border-2: #403d52;
+  --accent: #9ccfd8; --link: #c4a7e7;
+  --warn: #f6c177; --danger: #eb6f92;
+  --code-bg: #16141f;
+  --hl-comment: #6e6a86; --hl-keyword: #569fba; --hl-type: #9ccfd8; --hl-string: #f6c177;
+  --hl-number: #eb6f92; --hl-func: #ebbcba; --hl-meta: #c4a7e7;
 }
 
 /* ---------- 基础 ---------- */
@@ -126,7 +298,47 @@ kbd {
 }
 .tool-btn:hover { border-color: var(--border-2); color: var(--fg); }
 .search-label { font: 13px/1 var(--mono); color: var(--muted); }
-[data-theme="dark"] .i-moon, [data-theme="light"] .i-sun { display: none; }
+
+/* 配色切换：色块用 var() 取色，挂上 data-scheme 就显示对应方案的颜色 */
+.scheme-picker { position: relative; }
+.scheme-label { font: 13px/1 var(--mono); display: inline-flex; gap: 6px; }
+.scheme-swatch {
+  display: inline-flex; gap: 2px; flex: none;
+  padding: 3px;
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  background: var(--bg);
+}
+.scheme-swatch i { width: 5px; height: 10px; border-radius: 1px; }
+.scheme-swatch i:nth-child(1) { background: var(--accent); }
+.scheme-swatch i:nth-child(2) { background: var(--link); }
+.scheme-swatch i:nth-child(3) { background: var(--warn); }
+.scheme-swatch i:nth-child(4) { background: var(--danger); }
+.scheme-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 70;
+  width: 260px;
+  background: var(--panel);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .25);
+  font: 13px/1 var(--mono);
+  overflow: hidden;
+}
+.scheme-menu[hidden] { display: none; }
+.scheme-menu-head, .scheme-menu-hint { padding: 10px 14px; background: var(--panel-2); }
+.scheme-menu-head { border-bottom: 1px solid var(--border); color: var(--fg-2); }
+.scheme-menu-hint { border-top: 1px solid var(--border); font-size: 12px; }
+.scheme-list { list-style: none; margin: 0; padding: 6px; max-height: min(60vh, 460px); overflow: auto; outline: none; }
+.scheme-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 8px; border-radius: 6px;
+  color: var(--fg-2); cursor: pointer;
+}
+.scheme-item.is-active { background: var(--panel-2); color: var(--fg); }
+.scheme-item[aria-selected="true"] .scheme-name::before { content: "> "; color: var(--accent); }
+.scheme-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scheme-mode { font-size: 11px; color: var(--muted); }
+.sr-scheme a { display: flex !important; align-items: center; gap: 10px; }
 
 .read-progress {
   position: fixed; top: 0; left: 0; z-index: 60;
@@ -389,21 +601,14 @@ kbd {
 .md figure.highlight code { all: unset; }
 
 /* 语法高亮配色 */
-.highlight .comment, .highlight .quote { color: #8a919a; font-style: italic; }
-.highlight .keyword, .highlight .selector-tag, .highlight .meta .keyword { color: #c2185b; }
-.highlight .type, .highlight .built_in, .highlight .class .title { color: #0b7f8a; }
-.highlight .string, .highlight .meta .string, .highlight .regexp { color: #2e7d32; }
-.highlight .number, .highlight .literal, .highlight .symbol { color: #b25e09; }
-.highlight .title, .highlight .title.function_, .highlight .function .title { color: #1f63d6; }
-.highlight .meta { color: #7b4fbf; }
+.highlight .comment, .highlight .quote { color: var(--hl-comment); font-style: italic; }
+.highlight .keyword, .highlight .selector-tag, .highlight .meta .keyword { color: var(--hl-keyword); }
+.highlight .type, .highlight .built_in, .highlight .class .title { color: var(--hl-type); }
+.highlight .string, .highlight .meta .string, .highlight .regexp { color: var(--hl-string); }
+.highlight .number, .highlight .literal, .highlight .symbol { color: var(--hl-number); }
+.highlight .title, .highlight .title.function_, .highlight .function .title { color: var(--hl-func); }
+.highlight .meta { color: var(--hl-meta); }
 .highlight .params, .highlight .variable, .highlight .attr { color: var(--fg-2); }
-[data-theme="dark"] .highlight .keyword, [data-theme="dark"] .highlight .selector-tag, [data-theme="dark"] .highlight .meta .keyword { color: #ff7ab2; }
-[data-theme="dark"] .highlight .type, [data-theme="dark"] .highlight .built_in, [data-theme="dark"] .highlight .class .title { color: #5fd7e0; }
-[data-theme="dark"] .highlight .string, [data-theme="dark"] .highlight .meta .string, [data-theme="dark"] .highlight .regexp { color: #8fdc7a; }
-[data-theme="dark"] .highlight .number, [data-theme="dark"] .highlight .literal, [data-theme="dark"] .highlight .symbol { color: #f0b45a; }
-[data-theme="dark"] .highlight .title, [data-theme="dark"] .highlight .title.function_, [data-theme="dark"] .highlight .function .title { color: #6cb0ff; }
-[data-theme="dark"] .highlight .meta { color: #c39bff; }
-[data-theme="dark"] .highlight .comment { color: #6b7480; }
 
 /* 文末 */
 .post-end { margin-top: 40px; display: flex; flex-direction: column; gap: 20px; }
@@ -484,13 +689,14 @@ kbd {
 }
 @media (max-width: 760px) {
   :root { --header-h: auto; }
-  .site-header { height: auto; position: static; }
+  .site-header { height: auto; position: relative; }
   .header-inner { flex-wrap: wrap; gap: 8px 12px; padding-top: 10px; padding-bottom: 8px; }
   .brand { flex: 1; }
   .p-path { max-width: 34vw; }
   .nav { order: 3; width: 100%; margin: 0 -10px; overflow-x: auto; scrollbar-width: none; }
   .nav::-webkit-scrollbar { display: none; }
-  .search-label, .search-btn kbd { display: none; }
+  .search-label, .search-btn kbd, .scheme-label { display: none; }
+  .scheme-menu { width: min(260px, calc(100vw - 32px)); }
   .wrap { padding: 0 16px; }
   .site-main { padding-top: 20px; }
   .term-body { padding: 16px; }

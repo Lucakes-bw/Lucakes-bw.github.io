@@ -17,6 +17,29 @@ hero:
   intro: 记录 C/C++、数据结构、计算机网络与 Linux 的学习笔记。按专栏顺序读，从语法一路走到网络编程。
   roadmap_title: 从零到 Linux 网络编程
 
+# 配色方案（颜色定义在 themes/lucky-term/source/css/style.css 里）
+# light / dark：访客没选过时，按系统深浅色用哪一个
+# list：菜单里出现的方案和顺序；mode 决定评论区等跟随深色还是浅色
+schemes:
+  light: default-light
+  dark: default-dark
+  list:
+    - { id: default-light, name: Default Light, mode: light }
+    - { id: github-light, name: GitHub Light, mode: light }
+    - { id: solarized-light, name: Solarized Light, mode: light }
+    - { id: catppuccin-latte, name: Catppuccin Latte, mode: light }
+    - { id: gruvbox-light, name: Gruvbox Light, mode: light }
+    - { id: default-dark, name: Default Dark, mode: dark }
+    - { id: one-dark, name: One Dark, mode: dark }
+    - { id: dracula, name: Dracula, mode: dark }
+    - { id: tokyo-night, name: Tokyo Night, mode: dark }
+    - { id: catppuccin-mocha, name: Catppuccin Mocha, mode: dark }
+    - { id: nord, name: Nord, mode: dark }
+    - { id: gruvbox-dark, name: Gruvbox Dark, mode: dark }
+    - { id: solarized-dark, name: Solarized Dark, mode: dark }
+    - { id: monokai, name: Monokai, mode: dark }
+    - { id: rose-pine, name: Rosé Pine, mode: dark }
+
 favicon: /img/logo.svg
 github: https://github.com/Lucakes-bw
 since: 2026
