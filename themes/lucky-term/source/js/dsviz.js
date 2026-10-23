@@ -48,6 +48,7 @@
   R.list = function (s) {
     var items = [], W = s.nodeW || 64, H = 36, GAP = s.gap || 96, X0 = s.x0 || 24, Y0 = s.top || 58, ROWH = 90;
     var pos = {}, hasOut = {};
+    var FY = (s.links || []).some(function (l) { return l.back; }) ? 11 : H / 2;   // 双向链表：next 画在上半部分
     (s.links || []).forEach(function (l) { if (!l.back && l.to != null) hasOut[l.from] = true; });
     (s.nodes || []).forEach(function (n) {
       var x = X0 + n.col * GAP, y = Y0 + (n.row || 0) * ROWH;
@@ -59,7 +60,7 @@
       if (!a || !b) return;
       var key = 'l' + l.from + (l.back ? 'b' : '');
       if (l.back) {                                   // 双向链表的 prev 指针：从左侧下方指回前驱
-        items.push({ key: key, type: 'arrow', x1: a.x + 4, y1: a.y + H - 8, x2: b.x + W - 2, y2: b.y + H - 8, hl: l.hl });
+        items.push({ key: key, type: 'arrow', x1: a.x + 4, y1: a.y + H - 7, x2: b.x + W - 2, y2: b.y + H - 7, hl: l.hl });
       } else if (a.y === b.y && b.x < a.x) {
         if (a.x - b.x <= GAP + 1) {                   // 反转后指向左边相邻的节点
           items.push({ key: key, type: 'arrow', x1: a.x + W - 9, y1: a.y + H, x2: b.x + (W - 18) / 2 + 6, y2: b.y + H + 2, curve: 26, hl: l.hl });
@@ -67,7 +68,7 @@
           items.push({ key: key, type: 'arrow', x1: a.x + W - 9, y1: a.y + 4, x2: b.x + W / 2, y2: b.y - 1, curve: -60, hl: l.hl });
         }
       } else if (a.y === b.y) {
-        items.push({ key: key, type: 'arrow', x1: a.x + W - 9, y1: a.y + H / 2, x2: b.x - 1, y2: b.y + H / 2, curve: l.curve || 0, hl: l.hl });
+        items.push({ key: key, type: 'arrow', x1: a.x + W - 9, y1: a.y + FY, x2: b.x - 1, y2: b.y + FY, curve: l.curve || 0, hl: l.hl });
       } else {
         items.push({ key: key, type: 'arrow', x1: a.x + W - 9, y1: b.y > a.y ? a.y + H : a.y,
           x2: b.x + W / 2 - 8, y2: b.y > a.y ? b.y - 1 : b.y + H + 1, hl: l.hl });
@@ -93,7 +94,7 @@
       if (at == null || at < 0 || at > cap) return null;
       return s.vertical ? { x: X0 + W, y: Y0 + (cap - 1 - at) * H + H / 2, side: true } : { x: X0 + at * W + W / 2, y: Y0 };
     }, s.ptrsBelow ? Y0 + H + 28 : null);
-    if (s.label) items.push({ key: 'label', type: 'text', x: X0, y: Y0 - 30, text: s.label, cls: 'muted', anchor: 'start' });
+    if (s.label) items.push({ key: 'label', type: 'text', x: X0, y: s.vertical ? Y0 - 10 : Y0 - 48, text: s.label, cls: 'muted', anchor: 'start' });
     return items;
   };
 

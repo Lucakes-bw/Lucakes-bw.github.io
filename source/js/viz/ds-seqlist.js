@@ -3,16 +3,14 @@
   'use strict';
 
   function view(m, x) {
-    var cells = [];
-    for (var i = 0; i < m.size; i++) cells.push({ v: m.data[i], hl: (x.hl || {})[i] });
-    if (x.ghost) cells.push({ v: x.ghost.v, hl: 'new' });   // 正在写入、尚未计入 size 的位置
+    var cells = [], n = x.len || m.size;          // 插入过程中多显示一个正在使用的位置
+    for (var i = 0; i < n; i++) cells.push({ v: m.data[i] == null ? '' : m.data[i], hl: (x.hl || {})[i] });
     return {
       kind: 'array', cells: cells, cap: m.cap, cellW: 50, top: 74, ptrs: x.ptrs || [],
       label: 'size = ' + m.size + '，capacity = ' + m.cap + '（虚线格子是已分配但未使用的空间）',
       vars: x.vars || { size: m.size, capacity: m.cap }
     };
   }
-  function hl(o) { return o; }
 
   DSViz.register('seq-ops', {
     title: '顺序表的插入和删除',
@@ -60,23 +58,23 @@
           rec.step(4, 'size == capacity，空间已满，调用 grow 扩容。');
           var all = {}; for (var k = 0; k < m.size; k++) all[k] = 'cmp';
           m.cap *= 2;
-          rec.step(4, 'grow：申请一块 2 倍大小的新空间（' + m.cap + ' 个），把原来的 ' + m.size + ' 个元素复制过去，再释放旧空间。这一步是 O(n) 的，但每次翻倍，所以很少发生。', { hl: all });
+          rec.step(4, 'grow：申请一块 2 倍大小的新空间（' + m.cap + ' 个），把原来的 ' + m.size + ' 个元素复制过去，再释放旧空间。这一步是 O(n) 的，但容量每次翻倍，所以很少发生。', { hl: all });
         }
+        var len = m.size + 1;
+        m.data[m.size] = null;
         for (var i = m.size; i > p.pos; --i) {
-          var h = {}; h[i - 1] = 'cmp';
-          rec.step(5, 'i = ' + i + ' > pos，把 data[' + (i - 1) + '] 后移到 data[' + i + ']。', { hl: h, ghost: i === m.size ? { v: '' } : null, ptrs: [{ name: 'i', at: i }], vars: { i: i, pos: p.pos } });
-          if (i === m.size) { m.data[i] = m.data[i - 1]; m.size++; m.hidden = true; }
-          else m.data[i] = m.data[i - 1];
-          var h2 = {}; h2[i] = 'cur'; h2[i - 1] = 'dim';
-          rec.step(6, 'data[' + i + '] = data[' + (i - 1) + ']。为了不覆盖还没有移动的元素，必须从后往前移。', { hl: h2, ptrs: [{ name: 'i', at: i }], vars: { i: i, pos: p.pos } });
+          var h = {}; h[i - 1] = 'cmp'; h[i] = 'new';
+          rec.step(5, 'i = ' + i + ' > pos，要把 data[' + (i - 1) + '] 后移到 data[' + i + ']。', { len: len, hl: h, ptrs: [{ name: 'i', at: i }], vars: { i: i, pos: p.pos } });
+          m.data[i] = m.data[i - 1];
+          var h2 = {}; h2[i] = 'cur';
+          rec.step(6, 'data[' + i + '] = data[' + (i - 1) + ']。必须从后往前移，否则会覆盖还没有移动的元素。', { len: len, hl: h2, ptrs: [{ name: 'i', at: i }], vars: { i: i, pos: p.pos } });
         }
-        if (!m.hidden) { m.data[m.size] = undefined; }
-        rec.step(5, 'i = pos，循环结束。位置 ' + p.pos + ' 已经空出来了。', { hl: hl((function () { var o = {}; o[p.pos] = 'new'; return o; })()), ptrs: [{ name: 'pos', at: p.pos }], vars: { i: p.pos, pos: p.pos } });
+        var o = {}; o[p.pos] = 'new';
+        rec.step(5, 'i = pos，循环结束。位置 ' + p.pos + ' 可以放新元素了（原来的值已经复制到了后一格）。', { len: len, hl: o, ptrs: [{ name: 'pos', at: p.pos }], vars: { i: p.pos, pos: p.pos } });
         m.data[p.pos] = p.value;
-        if (!m.hidden) m.size++;
-        m.hidden = false;
-        var o = {}; o[p.pos] = 'ok';
-        rec.step(8, '写入 ' + p.value + '，size 加 1。在位置 ' + p.pos + ' 插入，后面的 ' + (m.size - 1 - p.pos) + ' 个元素都移动了一次：插入的位置越靠前，移动的元素越多。', { hl: o });
+        m.size++;
+        var ok = {}; ok[p.pos] = 'ok';
+        rec.step(8, '写入 ' + p.value + '，size 加 1。后面的 ' + (m.size - 1 - p.pos) + ' 个元素各移动了一次：插入的位置越靠前，需要移动的元素越多。', { hl: ok });
       }
     }, {
       label: '删除',
