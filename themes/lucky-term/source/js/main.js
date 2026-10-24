@@ -1,9 +1,10 @@
-/* lucky-term 主题脚本：配色方案、搜索、阅读进度、代码复制、目录高亮、评论 */
+/* lucky-term 主题脚本：配色方案、阅读记录与统计、搜索、阅读进度、代码复制、目录高亮、评论 */
 (function () {
   'use strict';
 
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 隐私模式下忽略 */ } }
@@ -105,8 +106,12 @@
 
   /* ---------- 已读记录（保存在本机浏览器） ---------- */
   const READ_KEY = 'lt-read';
+  const READ_AT_KEY = 'lt-read-at';   // url → 标记已读的时间戳，用于阅读统计；更早的记录没有时间
   const readSet = new Set(store.get(READ_KEY, []));
-  const saveRead = () => store.set(READ_KEY, Array.from(readSet));
+  const readAt = store.get(READ_AT_KEY, {});
+  const saveRead = () => { store.set(READ_KEY, Array.from(readSet)); store.set(READ_AT_KEY, readAt); };
+  const markRead = url => { readSet.add(url); readAt[url] = Date.now(); saveRead(); };
+  const unmarkRead = url => { readSet.delete(url); delete readAt[url]; saveRead(); };
 
   function asciiBar(done, total, width) {
     const n = total ? Math.round(done / total * width) : 0;
@@ -115,9 +120,6 @@
 
   function renderReadState() {
     $$('[data-read-url]').forEach(el => el.classList.toggle('is-read', readSet.has(el.dataset.readUrl)));
-
-    const total = $('[data-read-total]');
-    if (total) total.textContent = readSet.size;
 
     const dataEl = $('#series-data');
     if (!dataEl) return;
@@ -133,6 +135,16 @@
         if (count) count.textContent = done;
         node.classList.toggle('is-done', s.posts.length > 0 && done === s.posts.length);
       });
+    });
+
+    // 侧栏 next：每个专栏下一篇没读的
+    series.forEach(s => {
+      const li = $(`[data-next="${s.key}"]`);
+      if (!li || !s.posts.length) return;
+      const next = s.posts.find(p => !readSet.has(p.url));
+      const a = $('a', li);
+      if (next) { a.href = next.url; a.textContent = next.title; }
+      else { a.removeAttribute('href'); a.textContent = '✓ 已全部读完'; a.classList.add('c-accent'); }
     });
 
     // 继续阅读：按路线顺序找到第一篇没读过的文章
@@ -162,8 +174,7 @@
   if (markBox) {
     $('[data-mark-btn]', markBox).addEventListener('click', () => {
       const url = markBox.dataset.markRead;
-      readSet.has(url) ? readSet.delete(url) : readSet.add(url);
-      saveRead();
+      readSet.has(url) ? unmarkRead(url) : markRead(url);
       updateMarkBox();
     });
     updateMarkBox();
@@ -181,8 +192,7 @@
       bar.style.width = (pct * 100).toFixed(1) + '%';
       if (pct >= 0.98 && !autoMarked && markBox && !readSet.has(markBox.dataset.markRead)) {
         autoMarked = true;
-        readSet.add(markBox.dataset.markRead);
-        saveRead();
+        markRead(markBox.dataset.markRead);
         updateMarkBox();
       }
     };
@@ -191,6 +201,140 @@
   }
 
   renderReadState();
+
+  /* ---------- 首页统计面板 ---------- */
+  // 每个标签页是一个 { label, compute(since) } ；以后加「练习」只要在 STAT_TABS 里多写一项
+  const statsEl = $('[data-stats]');
+  if (statsEl) {
+    const DAY = 864e5;
+    const pad = n => String(n).padStart(2, '0');
+    const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+    const startOfDay = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+    const fmtWords = n => (n >= 1e4 ? `${(n / 1e4).toFixed(1)} 万字` : `${n.toLocaleString('en-US')} 字`);
+    const fmtHour = h => {
+      const part = h < 6 ? '凌晨' : h < 12 ? '上午' : h === 12 ? '中午' : h < 18 ? '下午' : '晚上';
+      return `${part} ${h > 12 ? h - 12 : h} 点`;
+    };
+    const mode = arr => {
+      const cnt = new Map();
+      arr.forEach(x => cnt.set(x, (cnt.get(x) || 0) + 1));
+      let best = null, max = 0;
+      cnt.forEach((n, x) => { if (n > max) { max = n; best = x; } });
+      return best;
+    };
+    const longestRun = days => {
+      const ts = Array.from(new Set(days)).map(k => new Date(k + 'T00:00:00').getTime()).sort((a, b) => a - b);
+      let best = 0, run = 0;
+      ts.forEach((t, i) => { run = i && Math.round((t - ts[i - 1]) / DAY) === 1 ? run + 1 : 1; best = Math.max(best, run); });
+      return best;
+    };
+
+    let posts = [];
+    try { posts = JSON.parse($('#posts-data').textContent); } catch (e) { /* ignore */ }
+    const postByUrl = new Map(posts.map(p => [p.url, p]));
+    const totalWords = posts.reduce((n, p) => n + p.words, 0);
+
+    const STAT_TABS = {
+      reading: {
+        label: '我的阅读',
+        compute(since) {
+          const all = Array.from(readSet).map(url => ({ at: readAt[url], post: postByUrl.get(url) })).filter(e => e.post);
+          const list = since ? all.filter(e => e.at >= since) : all;
+          const timed = list.filter(e => e.at);
+          const words = list.reduce((n, e) => n + e.post.words, 0);
+          const days = timed.map(e => dayKey(e.at));
+          const run = longestRun(days);
+          const peak = mode(timed.map(e => new Date(e.at).getHours()));
+          const series = mode(list.map(e => e.post.series).filter(Boolean));
+          const heat = new Map();
+          all.forEach(e => { if (e.at) { const k = dayKey(e.at); heat.set(k, (heat.get(k) || 0) + 1); } });
+
+          let note;
+          if (!all.length) note = '还没有阅读记录。读到文章末尾或点「标记为已读」，就会记在这里。';
+          else if (!list.length) note = '这段时间没有读完的文章。';
+          else {
+            const min = Math.round(words / 300);
+            const time = min >= 60 ? `${Math.floor(min / 60)} 小时 ${min % 60} 分钟` : `${Math.max(1, min)} 分钟`;
+            note = `按每分钟 300 字估算，你在这里读了约 ${time}，占全部笔记的 ${(words / totalWords * 100).toFixed(1)}%。`;
+            const untimed = list.length - timed.length;
+            if (untimed) note += ` 有 ${untimed} 篇是之前的已读记录，没有阅读时间，不计入天数和热力图。`;
+          }
+          return {
+            tiles: [
+              ['已读文章', `${list.length} 篇`],
+              ['读过的字数', fmtWords(words)],
+              ['阅读天数', `${new Set(days).size} 天`],
+              ['最长连续', run ? `${run} 天` : '-'],
+              ['高峰时段', peak === null ? '-' : fmtHour(peak)],
+              ['最常读的专栏', series || '-']
+            ],
+            heat,
+            unit: '篇',
+            note
+          };
+        }
+      }
+    };
+
+    const tabsEl = $('[data-stats-tabs]');
+    const tilesEl = $('[data-stat-tiles]');
+    const heatEl = $('[data-heatmap]');
+    const noteEl = $('[data-stats-note]');
+    let tab = 'reading';
+    let range = 'all';
+
+    tabsEl.innerHTML = Object.keys(STAT_TABS).map(k =>
+      `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${STAT_TABS[k].label}</button>`).join('');
+
+    const level = n => (n <= 0 ? 0 : n === 1 ? 1 : n === 2 ? 2 : n <= 4 ? 3 : 4);
+
+    function renderStats() {
+      const today = startOfDay(Date.now());
+      const since = range === 'all' ? 0 : today - (Number(range) - 1) * DAY;
+      const r = STAT_TABS[tab].compute(since);
+
+      tilesEl.innerHTML = r.tiles.map(([k, v]) => `<div class="stat-tile"><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+      noteEl.textContent = r.note;
+
+      // 热力图：列是周（周一在上），最后一列是本周；列数按容器宽度来
+      const cell = 14, gap = 4;
+      const weeks = Math.max(8, Math.min(53, Math.floor((heatEl.clientWidth + gap) / (cell + gap))));
+      const dow = (new Date(today).getDay() + 6) % 7;            // 周一 = 0
+      const start = today - (dow + (weeks - 1) * 7) * DAY;
+      let html = '';
+      for (let i = 0; i < weeks * 7; i++) {
+        const t = start + i * DAY;
+        if (t > today) { html += '<i class="is-future"></i>'; continue; }
+        const k = dayKey(t);
+        const n = r.heat.get(k) || 0;
+        const out = since && t < since ? ' is-out' : '';
+        html += `<i class="l${level(n)}${out}" title="${k} · ${n ? `读了 ${n} ${r.unit}` : '没有阅读'}"></i>`;
+      }
+      heatEl.style.setProperty('--weeks', weeks);
+      heatEl.innerHTML = html;
+      heatEl.setAttribute('aria-label', `最近 ${weeks} 周的阅读热力图`);
+    }
+
+    tabsEl.addEventListener('click', e => {
+      const b = e.target.closest('[data-tab]');
+      if (!b) return;
+      tab = b.dataset.tab;
+      $$('[data-tab]', tabsEl).forEach(x => x.setAttribute('aria-selected', String(x === b)));
+      renderStats();
+    });
+    $('[data-stats-range]').addEventListener('click', e => {
+      const b = e.target.closest('[data-range]');
+      if (!b) return;
+      range = b.dataset.range;
+      $$('[data-range]', statsEl).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      renderStats();
+    });
+    let resizeTimer;
+    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderStats, 150); });
+
+    statsEl.hidden = false;
+    renderStats();
+  }
 
   /* ---------- 代码块：语言标签 + 复制按钮 ---------- */
   $$('.md figure.highlight').forEach(fig => {
@@ -269,7 +413,6 @@
     return index;
   }
 
-  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const hl = (s, kws) => kws.reduce((acc, k) => acc.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`), esc(s));
 
   // 搜索框里输入 `theme <名字>` 切换配色，选中项实时预览

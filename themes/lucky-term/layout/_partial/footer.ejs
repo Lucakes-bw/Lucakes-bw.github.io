@@ -3,9 +3,11 @@
     <div class="footer-line"><span class="c-accent">$</span> uptime</div>
     <div class="footer-line c-muted">
       © <%= theme.since %><%= new Date().getFullYear() > theme.since ? ' - ' + new Date().getFullYear() : '' %> <%= config.author %>
-      · <%= site.posts.length %> 篇文章
+      · <%= site.posts.length %> 篇文章 · <%= totalcount(site) %> 字
       <% if (theme.busuanzi) { %>
-      · 访问 <span id="busuanzi_value_site_pv">-</span> 次 · 访客 <span id="busuanzi_value_site_uv">-</span> 人
+      <%# 不蒜子加载成功后才会把 container 显示出来，失败时整段隐藏 %>
+      <span id="busuanzi_container_site_pv" style="display:none">· 访问 <span id="busuanzi_value_site_pv"></span> 次</span>
+      <span id="busuanzi_container_site_uv" style="display:none">· 访客 <span id="busuanzi_value_site_uv"></span> 人</span>
       <% } %>
     </div>
     <div class="footer-line c-muted">
