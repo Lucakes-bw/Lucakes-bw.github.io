@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="<%= config.language %>">
 <%- partial('_partial/head') %>
-<body>
+<body<% if (page.ide) { %> class="is-ide"<% } %>>
   <div class="read-progress" id="read-progress"></div>
   <%- partial('_partial/header') %>
   <main class="site-main">

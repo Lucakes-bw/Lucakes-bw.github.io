@@ -3,6 +3,7 @@
 # 顶部导航：cmd 是显示在前面的「命令」，name 是名称
 menu:
   - { cmd: cd, name: 专栏, path: /column/ }
+  - { cmd: vim, name: 刷题, path: /problems/ }
   - { cmd: ls, name: 归档, path: /archives/ }
   - { cmd: tag, name: 标签, path: /tags/ }
   - { cmd: cat, name: 公告, path: /essay/ }

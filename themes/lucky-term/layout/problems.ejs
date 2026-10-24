@@ -1,0 +1,49 @@
+<%
+  const list = page.problems;
+  const tags = [...new Set(list.flatMap(p => p.tags))];
+%>
+<link rel="stylesheet" href="<%- asset_url('/css/judge.css') %>">
+<div class="wrap page pb-index" data-pb-index>
+  <h1 class="page-title"><span class="c-accent">$</span> ls problems/ <span class="c-muted">| wc -l → <%= list.length %></span></h1>
+  <p class="c-muted">在浏览器里直接写代码、运行和提交，支持 C++ / Python / JavaScript，不需要登录。代码草稿和通过记录只保存在你的浏览器里。</p>
+
+  <div class="pb-summary" data-pb-summary>
+    <span class="rm-bar" data-bar>[<%= '-'.repeat(20) %>]</span>
+    <span>已通过 <b data-solved>0</b> / <%= list.length %></span>
+    <% ['easy', 'medium', 'hard'].forEach(function (d) { const n = list.filter(p => p.difficulty === d).length; if (!n) return; %>
+    <span class="diff diff-<%= d %>"><%= difficulty_name(d) %></span><span class="c-muted"><b data-solved-<%= d %>>0</b>/<%= n %></span>
+    <% }) %>
+  </div>
+
+  <div class="pb-filters">
+    <div class="seg" role="group" aria-label="难度" data-filter="diff">
+      <button type="button" data-v="" aria-pressed="true">全部</button>
+      <button type="button" data-v="easy" aria-pressed="false">简单</button>
+      <button type="button" data-v="medium" aria-pressed="false">中等</button>
+      <button type="button" data-v="hard" aria-pressed="false">困难</button>
+    </div>
+    <div class="seg" role="group" aria-label="状态" data-filter="state">
+      <button type="button" data-v="" aria-pressed="true">全部</button>
+      <button type="button" data-v="todo" aria-pressed="false">未通过</button>
+      <button type="button" data-v="ac" aria-pressed="false">已通过</button>
+    </div>
+    <label class="pb-search"><span class="c-accent">grep</span><input type="search" placeholder="题目 / 编号" data-filter-q aria-label="搜索题目"></label>
+  </div>
+  <div class="tag-cloud pb-tags-filter" data-filter="tag">
+    <% tags.forEach(function (t) { %><button type="button" data-v="<%= t %>" aria-pressed="false">#<%= t %></button><% }) %>
+  </div>
+
+  <ul class="ls-list pb-list">
+    <% list.forEach(function (p) { %>
+    <li class="ls-row pb-row" data-slug="<%= p.slug %>" data-diff="<%= p.difficulty %>" data-tags="<%= p.tags.join(',') %>" data-q="<%= (p.id + ' ' + p.title + ' ' + p.slug).toLowerCase() %>">
+      <span class="pb-state" title=""></span>
+      <span class="ls-no"><%= String(p.id).padStart(3, '0') %></span>
+      <a class="ls-title" href="<%- url_for('problems/' + p.slug + '/') %>"><%= p.title %></a>
+      <span class="pb-row-tags"><% p.tags.forEach(function (t) { %><span>#<%= t %></span><% }) %></span>
+      <span class="diff diff-<%= p.difficulty %>"><%= difficulty_name(p.difficulty) %></span>
+    </li>
+    <% }) %>
+  </ul>
+  <p class="c-muted empty" data-pb-empty hidden># 没有符合条件的题目</p>
+</div>
+<script src="<%- asset_url('/js/judge/list.js') %>"></script>
