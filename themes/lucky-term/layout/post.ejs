@@ -58,7 +58,7 @@
 </article>
 
 <% if (page.viz) { %>
-<script src="<%- url_for('/js/dsviz.js') %>"></script>
+<script src="<%- asset_url('/js/dsviz.js') %>"></script>
 <% [].concat(page.viz).forEach(function (v) { %><script src="<%- url_for('/js/viz/' + v + '.js') %>"></script>
 <% }) %>
 <% } %>
