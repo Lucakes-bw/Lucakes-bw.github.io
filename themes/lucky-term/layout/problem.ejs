@@ -1,0 +1,90 @@
+<%
+  const p = page.problem;
+  const fmt = v => JSON.stringify(v);
+  const showIn = ex => p.sig.params.map((prm, i) => prm[0] + ' = ' + fmt(ex.in[i])).join(', ');
+%>
+<link rel="stylesheet" href="<%- asset_url('/css/judge.css') %>">
+<div class="ide" data-ide>
+  <section class="ide-pane ide-desc" aria-label="题目描述">
+    <div class="ide-bar"><span class="c-accent">$</span> cat README.md</div>
+    <div class="ide-desc-body">
+      <div class="post-path"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('problems/') %>">problems</a>/<span class="c-fg"><%= p.slug %></span></div>
+      <h1 class="pb-title"><span class="post-no"><%= String(p.id).padStart(3, '0') %></span><%= p.title %></h1>
+      <div class="pb-meta">
+        <span class="diff diff-<%= p.difficulty %>"><%= difficulty_name(p.difficulty) %></span>
+        <% p.tags.forEach(function (t) { %><span class="c-muted">#<%= t %></span><% }) %>
+        <span class="pb-solved" data-solved hidden>✓ 已通过</span>
+        <% if (p.leetcode) { %><a class="pb-origin" href="<%= p.leetcode %>" target="_blank" rel="noopener">原题 ↗</a><% } %>
+      </div>
+
+      <div class="md pb-content"><%- p.content %></div>
+
+      <div class="md">
+        <% p.examples.forEach(function (ex, i) { %>
+        <h4 class="pb-ex-title">示例 <%= i + 1 %></h4>
+        <pre class="pb-example"><b>输入：</b><%= showIn(ex) %>
+<b>输出：</b><%= fmt(ex.out) %><% if (ex.explain) { %>
+<b>解释：</b><%- ex.explain %><% } %></pre>
+        <% }) %>
+      </div>
+
+      <% if (p.relatedPosts.length) { %>
+      <div class="pb-related">
+        <div class="side-title"># 相关文章</div>
+        <ul class="side-list">
+          <% p.relatedPosts.forEach(function (post) { %><li><a href="<%- url_for(post.path) %>"><%= post.title %></a></li><% }) %>
+        </ul>
+      </div>
+      <% } %>
+
+      <nav class="pb-nav">
+        <% if (page.prev) { %><a href="<%- url_for('problems/' + page.prev.slug + '/') %>">← <%= page.prev.id %>. <%= page.prev.title %></a><% } else { %><span></span><% } %>
+        <a href="<%- url_for('problems/') %>" class="c-muted">cd ..</a>
+        <% if (page.next) { %><a href="<%- url_for('problems/' + page.next.slug + '/') %>"><%= page.next.id %>. <%= page.next.title %> →</a><% } else { %><span></span><% } %>
+      </nav>
+    </div>
+  </section>
+
+  <div class="ide-gutter ide-gutter-x" data-gutter="x" role="separator" aria-orientation="vertical" title="拖动调整宽度"></div>
+
+  <section class="ide-right">
+    <div class="ide-pane ide-code">
+      <div class="ide-bar ide-toolbar">
+        <select class="ide-lang" data-lang aria-label="语言"></select>
+        <span class="ide-status c-muted" data-status></span>
+        <button type="button" class="ide-icon" data-reset title="恢复为初始模板">↺</button>
+        <button type="button" class="btn ide-run" data-run>运行</button>
+        <button type="button" class="btn btn-solid ide-submit" data-submit>提交</button>
+      </div>
+      <div class="ide-editor" data-editor>
+        <div class="ide-loading"><span class="c-accent">$</span> vim <span data-file>solution</span><br><span class="c-muted">正在加载编辑器…</span></div>
+      </div>
+    </div>
+
+    <div class="ide-gutter ide-gutter-y" data-gutter="y" role="separator" aria-orientation="horizontal" title="拖动调整高度"></div>
+
+    <div class="ide-pane ide-console">
+      <div class="ide-bar ide-tabs" role="tablist">
+        <button type="button" role="tab" data-tab="cases" aria-selected="true">测试用例</button>
+        <button type="button" role="tab" data-tab="result" aria-selected="false">运行结果</button>
+        <span class="ide-hint c-muted" data-hint></span>
+      </div>
+      <div class="ide-console-body" data-panel="cases"></div>
+      <div class="ide-console-body" data-panel="result" hidden>
+        <p class="c-muted ide-empty">先运行一下代码，结果会显示在这里。</p>
+      </div>
+    </div>
+  </section>
+</div>
+<script type="application/json" id="problem-data"><%- problem_json(p) %></script>
+<script>
+  window.LT_JUDGE = {
+    lang: <%- JSON.stringify(asset_url('/js/judge/lang.js')) %>,
+    cppWorker: <%- JSON.stringify(asset_url('/js/judge/cpp-worker.js')) %>,
+    wasiWorker: <%- JSON.stringify(asset_url('/js/judge/wasi-worker.js')) %>,
+    pyWorker: <%- JSON.stringify(asset_url('/js/judge/py-worker.js')) %>,
+    jsWorker: <%- JSON.stringify(asset_url('/js/judge/js-worker.js')) %>
+  };
+</script>
+<script src="<%- asset_url('/js/judge/lang.js') %>"></script>
+<script src="<%- asset_url('/js/judge/problem.js') %>"></script>
