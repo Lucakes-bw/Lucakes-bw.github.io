@@ -1,0 +1,7 @@
+LINE A线
+甲
+乙 2
+LINE B线
+丙
+丁 3
+END
