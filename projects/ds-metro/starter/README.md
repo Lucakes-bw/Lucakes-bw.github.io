@@ -19,6 +19,7 @@ tests/m1/         里程碑 1 的测试用例
 make                  # 编译出 build/metro
 make run              # 用示例数据运行，输入 help 查看命令
 tests/run.sh m1       # 运行里程碑 1 的测试
+tests/run.sh m1 hash  # 只运行一组测试，分组见 tests/m1/groups
 tests/run.sh -v m1    # 失败时显示完整的差异
 ```
 
