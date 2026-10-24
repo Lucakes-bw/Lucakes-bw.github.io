@@ -10,13 +10,13 @@
     </div>
     <h1 class="post-title"><% if (so) { %><span class="post-no"><%= so.item.no %></span><% } %><%= page.title %></h1>
     <div class="post-meta">
-      <span class="c-muted">-rw-r--r--</span>
       <span><%= config.author %></span>
       <span>发布 <time datetime="<%= date_xml(page.date) %>"><%= date(page.date, 'YYYY-MM-DD') %></time></span>
       <% if (page.updated && date(page.updated, 'YYYY-MM-DD') !== date(page.date, 'YYYY-MM-DD')) { %><span>更新 <%= date(page.updated, 'YYYY-MM-DD') %></span><% } %>
       <span><%= wordcount(page.content) %> 字</span>
       <span>约 <%= min2read(page.content) %> 分钟</span>
       <% if (theme.busuanzi) { %><span id="busuanzi_container_page_pv" style="display:none">阅读 <span id="busuanzi_value_page_pv"></span></span><% } %>
+      <button type="button" class="btn btn-ghost btn-sm focus-btn" data-focus-toggle aria-pressed="false" title="只显示正文（快捷键 F）">专注阅读</button>
     </div>
     <% if (page.tags && page.tags.length) { %>
     <div class="post-tags">
@@ -38,7 +38,7 @@
   <footer class="post-end">
     <div class="mark-read" data-mark-read="<%- url %>">
       <span class="c-accent">$</span> <span class="mark-text">touch .read</span>
-      <button type="button" class="btn" data-mark-btn>标记为已读</button>
+      <button type="button" class="btn btn-solid" data-mark-btn>标记为已读</button>
     </div>
 
     <% if (so) { %>

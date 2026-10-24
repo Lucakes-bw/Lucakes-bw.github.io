@@ -169,7 +169,31 @@
     const read = readSet.has(markBox.dataset.markRead);
     markBox.classList.toggle('is-read', read);
     $('.mark-text', markBox).textContent = read ? '已读完这一篇 ✓' : 'touch .read';
-    $('[data-mark-btn]', markBox).textContent = read ? '标记为未读' : '标记为已读';
+    const btn = $('[data-mark-btn]', markBox);
+    btn.textContent = read ? '标记为未读' : '标记为已读';
+    btn.classList.toggle('btn-solid', !read);   // 没读完时是主按钮，读完后退成中性按钮
+    btn.classList.toggle('btn-ghost', read);
+  }
+
+  /* ---------- 专注阅读：只留正文 ---------- */
+  const focusBtn = $('[data-focus-toggle]');
+  if (focusBtn) {
+    const setFocus = on => {
+      html.classList.toggle('is-focus', on);
+      focusBtn.setAttribute('aria-pressed', String(on));
+      focusBtn.textContent = on ? '退出专注' : '专注阅读';
+      try { localStorage.setItem('lt-focus', on ? '1' : ''); } catch (e) { /* ignore */ }
+    };
+    let on = false;
+    try { on = localStorage.getItem('lt-focus') === '1'; } catch (e) { /* ignore */ }
+    if (on) setFocus(true);
+    focusBtn.addEventListener('click', () => setFocus(!html.classList.contains('is-focus')));
+    document.addEventListener('keydown', e => {
+      const typing = /input|textarea|select/i.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
+      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'f' || e.key === 'F') setFocus(!html.classList.contains('is-focus'));
+      else if (e.key === 'Escape' && html.classList.contains('is-focus') && !$('#search-modal:not([hidden])')) setFocus(false);
+    });
   }
   if (markBox) {
     $('[data-mark-btn]', markBox).addEventListener('click', () => {
