@@ -159,7 +159,7 @@
   };
 
   // 自由布局：boxes [{id, x, y, w, h, text, sub, hl}]，arrows [{from, to, hl, label, curve}]，texts [{id, x, y, text, cls, anchor}]
-  // 箭头从 from 的右边中点指向 to 的左边中点
+  // 箭头从 from 的右边中点指向 to 的左边中点；to 在 from 左边时，从 from 的左边指向 to 的右边
   R.free = function (s) {
     var items = [], pos = {};
     (s.boxes || []).forEach(function (b) {
@@ -169,8 +169,9 @@
     (s.arrows || []).forEach(function (a) {
       var p = pos[a.from], q = pos[a.to];
       if (!p || !q) return;
-      items.push({ key: 'a' + a.from + '>' + a.to, type: 'arrow', x1: p.x + p.w, y1: p.y + (p.h || 36) / 2,
-        x2: q.x - 2, y2: q.y + (q.h || 36) / 2, hl: a.hl, label: a.label, curve: a.curve || 0 });
+      var back = q.x + q.w <= p.x;
+      items.push({ key: 'a' + a.from + '>' + a.to, type: 'arrow', x1: back ? p.x : p.x + p.w, y1: p.y + (p.h || 36) / 2,
+        x2: back ? q.x + q.w + 2 : q.x - 2, y2: q.y + (q.h || 36) / 2, hl: a.hl, label: a.label, curve: a.curve || 0 });
     });
     (s.texts || []).forEach(function (t, i) {
       items.push({ key: 't' + (t.id || i), type: 'text', x: t.x, y: t.y, text: t.text, cls: t.cls, anchor: t.anchor });
