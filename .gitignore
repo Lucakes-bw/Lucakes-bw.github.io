@@ -7,3 +7,4 @@ public/
 .deploy*/
 _multiconfig.ymldb *.json
 .claude/
+projects/**/build/
