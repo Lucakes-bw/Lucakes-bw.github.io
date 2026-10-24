@@ -3,6 +3,7 @@
   <h1 class="page-title"><span class="c-accent">$</span> cd columns/ &amp;&amp; ls</h1>
   <p class="c-muted">建议按编号顺序阅读。读过的文章会记录在本机浏览器里，进度条随之更新。</p>
   <%- partial('_partial/roadmap') %>
+  <script type="application/json" id="series-data"><%- series_json() %></script>
 
 <% } else if (page.type === 'series') {
   const s = series_all().find(x => x.key === page.series);
