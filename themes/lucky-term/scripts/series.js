@@ -69,6 +69,22 @@ hexo.extend.helper.register('series_json', function () {
   }))).replace(/</g, '\\u003c');
 });
 
+// 首页「我的阅读」统计用：每篇文章的标题、专栏和字数（与 hexo-wordcount 的算法一致）
+hexo.extend.helper.register('posts_json', function () {
+  const { stripHTML } = require('hexo-util');
+  const urlFor = hexo.extend.helper.get('url_for').bind(hexo);
+  const count = html => {
+    const text = stripHTML(html);
+    const cn = (text.match(/[一-龥]/g) || []).length;
+    const en = (text.replace(/[一-龥]/g, '').match(/[a-zA-Z0-9_Β-ωЀ-ӿ]+|[一-鿿㐀-䶿豈-﫿぀-ゟ가-힯Ѐ-ӿ]+|[äÄåÅöÖ]+|\w+/g) || []).length;
+    return cn + en;
+  };
+  return JSON.stringify(hexo.locals.get('posts').map(post => {
+    const root = post.categories.toArray().find(c => !c.parent);
+    return { url: urlFor(post.path), title: post.title, series: root ? root.name : '', words: count(post.content) };
+  })).replace(/</g, '\\u003c');
+});
+
 hexo.extend.tag.register('series', function (args) {
   const data = hexo.locals.get('data').series || {};
   const key = args[0];

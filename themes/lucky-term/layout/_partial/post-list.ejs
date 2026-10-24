@@ -1,10 +1,14 @@
 <ul class="ls-list">
-  <% posts.each(function (post) {
+  <% let prevDay = ''; posts.each(function (post) {
+    // 同一天的文章只在第一行写日期，和 ls 输出一样好扫读
+    const day = date(post.date, 'YYYY-MM-DD');
+    const sameDay = day === prevDay;
+    prevDay = day;
     const cats = post.categories.toArray();
     const root = cats.find(c => !c.parent);
   %>
   <li class="ls-row" data-read-url="<%- url_for(post.path) %>">
-    <span class="ls-date"><%= date(post.date, 'YYYY-MM-DD') %></span>
+    <span class="ls-date<%= sameDay ? ' is-same' : '' %>"<%- sameDay ? ' aria-hidden="true"' : '' %>><%= day %></span>
     <% if (root) { %><a class="ls-col" href="<%- url_for(root.path) %>"><%= root.name %></a><% } %>
     <a class="ls-title" href="<%- url_for(post.path) %>"><%= post.title %></a>
     <span class="ls-size"><%= wordcount(post.content) %> 字</span>
