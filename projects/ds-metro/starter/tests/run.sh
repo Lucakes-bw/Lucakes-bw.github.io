@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # 地铁换乘查询项目的测试脚本
 #
-# 用法：tests/run.sh [-v] <里程碑> [源代码目录]
+# 用法：tests/run.sh [-v] <里程碑> [分组] [源代码目录]
 #   tests/run.sh m1           测试 src/ 中的代码，运行里程碑 1 的测试
+#   tests/run.sh m1 hash      只运行里程碑 1 中 hash 这一组测试（分组见 tests/m1/groups）
 #   tests/run.sh m3           运行里程碑 1～3 的测试（后面的里程碑包含前面的，防止改坏已经做好的功能）
 #   tests/run.sh -v m1        失败时显示完整的差异，而不是只显示前 20 行
 #
@@ -17,11 +18,42 @@ if [ "${1:-}" = "-v" ]; then verbose=1; shift; fi
 target=${1:-}
 case "$target" in
     m[0-9]|m[0-9][0-9]) ;;
-    *) echo "用法：tests/run.sh [-v] <里程碑> [源代码目录]，例如 tests/run.sh m1"; exit 2 ;;
+    *) echo "用法：tests/run.sh [-v] <里程碑> [分组] [源代码目录]，例如 tests/run.sh m1"; exit 2 ;;
 esac
 last=${target#m}
 if [ ! -d "$ROOT/tests/$target" ]; then echo "没有里程碑 $last 的测试：tests/$target 不存在"; exit 2; fi
-src=${2:-$ROOT/src}
+shift
+
+# 分组：tests/mK/groups 中每行是「分组名 说明 匹配的测试...」，测试名可以用通配符
+groups="$ROOT/tests/$target/groups"
+group=""; groupDesc=""; groupPats=""
+groupNames() { [ -f "$groups" ] && grep -v '^#' "$groups" | awk 'NF { printf "%s ", $1 }'; }
+line=""
+if [ -n "${1:-}" ] && [ -f "$groups" ]; then
+    line=$(grep -v '^#' "$groups" | awk -v g="$1" '$1 == g' | head -n 1)
+fi
+if [ -n "${1:-}" ] && [ -z "$line" ] && [ ! -d "$1" ]; then
+    echo "里程碑 $last 没有叫 $1 的分组，可用的分组：$(groupNames)"
+    exit 2
+fi
+if [ -n "$line" ]; then                 # 第二个参数是分组名，否则是源代码目录
+    group=$1
+    groupDesc=$(echo "$line" | awk '{ print $2 }')
+    groupPats=$(echo "$line" | cut -d' ' -f3- | awk '{ $1 = $1; print }')
+    shift
+fi
+inGroup() {     # inGroup <测试名>：没有指定分组，或者测试名匹配分组中的某个模式
+    [ -z "$group" ] && return 0
+    local pat
+    set -f
+    for pat in $groupPats; do
+        case "$1" in $pat) set +f; return 0 ;; esac
+    done
+    set +f
+    return 1
+}
+
+src=${1:-$ROOT/src}
 if [ ! -d "$src" ]; then echo "源代码目录不存在：$src"; exit 2; fi
 src=$(cd "$src" && pwd)
 
@@ -85,14 +117,18 @@ report() {      # report <是否通过> <名字>
 
 compile "$BUILD/metro" "$src"/*.c
 
-for k in $(seq 1 "$last"); do
+first=1
+[ -n "$group" ] && first=$last          # 指定分组时只运行这个里程碑
+for k in $(seq "$first" "$last"); do
     dir="$ROOT/tests/m$k"
     [ -d "$dir" ] || continue
-    echo "${BOLD}== 里程碑 $k ==${RESET}"
+    if [ -n "$group" ]; then echo "${BOLD}== 里程碑 $k · $group（$groupDesc）==${RESET}"
+    else echo "${BOLD}== 里程碑 $k ==${RESET}"; fi
 
     # 单元测试：tests/mK/*_test.c，每行输出 [通过] 或 [失败]
     for t in "$dir"/*_test.c; do
         [ -e "$t" ] || continue
+        inGroup "$(basename "$t" .c)" || continue
         exe="$BUILD/$(basename "$t" .c)"
         compile "$exe" "$t" "${libsrc[@]}"
         runWithTimeout /dev/null "$BUILD/unit.out" "$BUILD/unit.err" "$exe"
@@ -120,6 +156,7 @@ for k in $(seq 1 "$last"); do
         [ -e "$input" ] || continue
         base=${input%.in}
         name=$(basename "$base")
+        inGroup "$name" || continue
         desc=$(head -n 1 "$input" | sed 's/^# *//')
         data=data/metro.txt; [ -f "$base.args" ] && data=$(cat "$base.args")
         want=0; [ -f "$base.code" ] && want=$(cat "$base.code")
@@ -154,7 +191,13 @@ for k in $(seq 1 "$last"); do
 done
 
 echo
-if [ $passed = $total ]; then
+if [ $total = 0 ]; then
+    echo "${YELLOW}没有运行任何测试${RESET}"
+    exit 2
+elif [ $passed = $total ] && [ -n "$group" ]; then
+    echo "${GREEN}${BOLD}$group 这一组全部通过：$passed/$total${RESET}"
+    exit 0
+elif [ $passed = $total ]; then
     echo "${GREEN}${BOLD}全部通过：$passed/$total，里程碑 $last 完成！${RESET}"
     exit 0
 else
