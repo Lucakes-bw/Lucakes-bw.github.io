@@ -19,7 +19,7 @@
 <div class="wrap gh">
   <%# ---------- 左侧：个人资料 ---------- %>
   <aside class="gh-side">
-    <img class="gh-avatar" src="<%- url_for(theme.favicon) %>" alt="" width="260" height="260">
+    <img class="gh-avatar" src="<%- avatar_src() %>" alt="<%= theme.prompt.user %> 的头像" width="260" height="260">
     <h1 class="gh-name"><span class="gh-fullname"><%= config.title %></span><span class="gh-login"><%= theme.prompt.user %></span></h1>
     <p class="gh-bio"><%= theme.hero.intro %></p>
     <% if (theme.github) { %><a class="btn btn-ghost gh-follow" href="<%- theme.github %>" target="_blank" rel="noopener">在 GitHub 上关注</a><% } %>
