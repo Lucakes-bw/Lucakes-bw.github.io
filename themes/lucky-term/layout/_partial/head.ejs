@@ -21,8 +21,8 @@
     window.LT = { root: <%- JSON.stringify(config.root) %>, search: <%- JSON.stringify(url_for((config.search && config.search.path) || 'search.xml')) %>, schemes: <%- JSON.stringify(schemes) %> };
     // 首屏前定好配色，避免闪一下默认色
     (function () {
-      var S = window.LT.schemes, id, mode = {};
-      S.list.forEach(function (s) { mode[s.id] = s.mode; });
+      var S = window.LT.schemes, id, mode = {}, ui = {};
+      S.list.forEach(function (s) { mode[s.id] = s.mode; ui[s.id] = s.ui; });
       try {
         id = localStorage.getItem('lt-scheme');
         // 旧版只存了 light / dark
@@ -33,6 +33,7 @@
       if (!mode[id]) id = S[matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'];
       document.documentElement.setAttribute('data-scheme', id);
       document.documentElement.setAttribute('data-theme', mode[id] || 'light');
+      if (ui[id]) document.documentElement.setAttribute('data-ui', ui[id]);
     })();
   </script>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">

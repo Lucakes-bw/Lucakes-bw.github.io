@@ -20,11 +20,14 @@ hero:
 
 # 配色方案（颜色定义在 themes/lucky-term/source/css/style.css 里）
 # light / dark：访客没选过时，按系统深浅色用哪一个
-# list：菜单里出现的方案和顺序；mode 决定评论区等跟随深色还是浅色
+# list：菜单里出现的方案和顺序；mode 决定评论区等跟随深色还是浅色；
+#       ui: ios 表示除了颜色，排版和组件也换成 iOS 风格
 schemes:
   light: default-light
   dark: default-dark
   list:
+    - { id: ios-light, name: iOS Light, mode: light, ui: ios }
+    - { id: ios-dark, name: iOS Dark, mode: dark, ui: ios }
     - { id: default-light, name: Default Light, mode: light }
     - { id: github-light, name: GitHub Light, mode: light }
     - { id: solarized-light, name: Solarized Light, mode: light }
