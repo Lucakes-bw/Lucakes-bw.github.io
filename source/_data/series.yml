@@ -54,6 +54,8 @@ linux:
 mysql:
   category: 数据库
   desc: 以 MySQL 为例，从 SQL 到索引、事务与锁，再到备份、复制和调优，每个结论都在真实的数据库中实测。
+  lang: SQL
+  color: "#e38c00"
   chapters:
     - SQL基础
     - 数据库设计
