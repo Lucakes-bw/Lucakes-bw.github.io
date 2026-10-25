@@ -6,7 +6,8 @@
 <article class="wrap post">
   <header class="post-head">
     <div class="post-path">
-      <a href="<%- url_for('/') %>">~</a>/<% if (so) { %><a href="<%- url_for(so.series.path) %>">columns/<%= so.series.key %></a>/<%= so.item.chapter %>/<% } else { %>posts/<% } %><span class="c-fg"><%= page.slug %>.md</span>
+      <span class="ui-term"><a href="<%- url_for('/') %>">~</a>/<% if (so) { %><a href="<%- url_for(so.series.path) %>">columns/<%= so.series.key %></a>/<%= so.item.chapter %>/<% } else { %>posts/<% } %><span class="c-fg"><%= page.slug %>.md</span></span>
+      <span class="ui-ios"><% if (so) { %><a href="<%- url_for(so.series.path) %>"><%= so.series.name %></a> › <%= so.item.chapter %><% } else { %><a href="<%- url_for('/archives/') %>">文章</a><% } %></span>
     </div>
     <h1 class="post-title"><% if (so) { %><span class="post-no"><%= so.item.no %></span><% } %><%= page.title %></h1>
     <div class="post-meta">
@@ -29,7 +30,7 @@
     <div class="post-content md" id="post-content"><%- page.content %></div>
     <% if (tocHtml) { %>
     <aside class="toc" id="toc">
-      <div class="toc-title"><span class="c-accent">$</span> grep '^#' <%= page.slug %>.md</div>
+      <div class="toc-title"><span class="ui-term"><span class="c-accent">$</span> grep '^#' <%= page.slug %>.md</span><span class="ui-ios">目录</span></div>
       <%- tocHtml %>
     </aside>
     <% } %>
@@ -37,7 +38,10 @@
 
   <footer class="post-end">
     <div class="mark-read" data-mark-read="<%- url %>">
-      <span class="c-accent">$</span> <span class="mark-text">touch .read</span>
+      <span class="mark-text">
+        <span class="when-unread"><span class="ui-term"><span class="c-accent">$</span> touch .read</span><span class="ui-ios">读完这一篇了吗？</span></span>
+        <span class="when-read"><span class="ui-term"><span class="c-accent">$</span> </span>已读完这一篇 ✓</span>
+      </span>
       <button type="button" class="btn btn-solid" data-mark-btn>标记为已读</button>
     </div>
 
@@ -46,7 +50,7 @@
       <% if (so.prev) { %>
       <a class="sn-prev" href="<%- url_for(so.prev.post.path) %>"><span class="c-muted">← 上一篇 <%= so.prev.no %></span><span><%= so.prev.post.title %></span></a>
       <% } else { %><span></span><% } %>
-      <a class="sn-up" href="<%- url_for(so.series.path) %>"><span class="c-muted">cd ..</span><span><%= so.series.name %> 目录</span></a>
+      <a class="sn-up" href="<%- url_for(so.series.path) %>"><span class="c-muted"><span class="ui-term">cd ..</span><span class="ui-ios">专栏</span></span><span><%= so.series.name %> 目录</span></a>
       <% if (so.next) { %>
       <a class="sn-next" href="<%- url_for(so.next.post.path) %>"><span class="c-muted">下一篇 <%= so.next.no %> →</span><span><%= so.next.post.title %></span></a>
       <% } else { %><span></span><% } %>

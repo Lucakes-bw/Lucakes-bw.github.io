@@ -22,6 +22,7 @@
     if (!s) return;
     html.setAttribute('data-scheme', id);
     html.setAttribute('data-theme', s.mode);
+    if (s.ui) html.setAttribute('data-ui', s.ui); else html.removeAttribute('data-ui');   // 界面风格，如 iOS
     $$('[data-scheme-toggle]').forEach(el => { el.title = `配色：${s.name}`; });
     $$('.scheme-item').forEach(li => li.setAttribute('aria-selected', String(li.dataset.schemeId === id)));
     const meta = $('meta[name="theme-color"]');
@@ -168,7 +169,6 @@
     if (!markBox) return;
     const read = readSet.has(markBox.dataset.markRead);
     markBox.classList.toggle('is-read', read);
-    $('.mark-text', markBox).textContent = read ? '已读完这一篇 ✓' : 'touch .read';
     const btn = $('[data-mark-btn]', markBox);
     btn.textContent = read ? '标记为未读' : '标记为已读';
     btn.classList.toggle('btn-solid', !read);   // 没读完时是主按钮，读完后退成中性按钮

@@ -217,6 +217,33 @@
   --hl-number: #eb6f92; --hl-func: #ebbcba; --hl-meta: #c4a7e7;
 }
 
+/* iOS Light / iOS Dark —— 苹果系统色；挂在 data-ui="ios" 上的排版规则在文件末尾 */
+[data-scheme="ios-light"] {
+  color-scheme: light;
+  --bg: #f2f2f7; --panel: #ffffff; --panel-2: #f2f2f7;
+  --fg: #1c1c1e; --fg-2: #3a3a3c; --muted: #8a8a8e;
+  --border: #e5e5ea; --border-2: #d1d1d6;
+  --accent: #007aff; --accent-soft: #eaf3ff; --link: #007aff;
+  --warn: #ff9500; --danger: #ff3b30;
+  --code-bg: #f5f5f7; --mark: #fff3c4;
+  --fill: rgba(120, 120, 128, .12);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 28px rgba(0, 0, 0, .05);
+  --hl-comment: #6c7986; --hl-keyword: #9b2393; --hl-type: #3900a0; --hl-string: #c41a16;
+  --hl-number: #1c00cf; --hl-func: #0f68a0; --hl-meta: #643820;
+}
+[data-scheme="ios-dark"] {
+  color-scheme: dark;
+  --bg: #000000; --panel: #1c1c1e; --panel-2: #2c2c2e;
+  --fg: #f5f5f7; --fg-2: #d1d1d6; --muted: #8e8e93;
+  --border: #38383a; --border-2: #48484a;
+  --accent: #0a84ff; --accent-soft: #0f2742; --link: #409cff;
+  --warn: #ff9f0a; --danger: #ff453a;
+  --code-bg: #242426; --mark: #4d3d0f;
+  --fill: rgba(120, 120, 128, .24);
+  --hl-comment: #7f8c98; --hl-keyword: #fc5fa3; --hl-type: #5dd8ff; --hl-string: #fc6a5d;
+  --hl-number: #d0bf69; --hl-func: #67b7a4; --hl-meta: #fd8f3f;
+}
+
 /* ---------- 基础 ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + 16px); }
@@ -244,6 +271,12 @@ kbd {
 }
 ::selection { background: var(--accent); color: var(--bg); }
 
+/* 同一处两套文案：终端风格显示 .ui-term，iOS 风格显示 .ui-ios */
+.ui-ios { display: none; }
+html[data-ui="ios"] .ui-ios { display: inline; }
+html[data-ui="ios"] .ui-term { display: none; }
+.mark-read .when-read, .mark-read.is-read .when-unread { display: none; }
+.mark-read.is-read .when-read { display: inline; }
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
 .site-main { min-height: calc(100vh - 220px); padding: 28px 0 56px; }
 .c-accent { color: var(--accent); }
@@ -949,3 +982,131 @@ html.is-focus .site-main { padding-top: 40px; }
 .dsviz .dv-ptr.is-warn path { stroke: var(--danger); }
 .dsviz .dv-box line.dv-nul { stroke: var(--muted); stroke-width: 1.5; }
 .dsviz .dv-column.is-ok text, .dsviz .dv-column.is-dim text { fill: var(--fg); }
+
+/* ==========================================================
+   iOS 风格（data-ui="ios"，由 iOS Light / iOS Dark 方案打开）
+   颜色只用一个系统蓝；层次靠留白、字重、圆角和分组卡片，不靠边框和彩色
+   ========================================================== */
+html[data-ui="ios"] { --radius: 16px; }
+html[data-ui="ios"] body { font-family: var(--sans); letter-spacing: .1px; }
+html[data-ui="ios"] ::selection { background: color-mix(in srgb, var(--accent) 25%, transparent); color: inherit; }
+
+/* 顶栏：半透明毛玻璃，不要终端提示符 */
+html[data-ui="ios"] .site-header { background: color-mix(in srgb, var(--bg) 72%, transparent); backdrop-filter: saturate(1.8) blur(20px); }
+html[data-ui="ios"] .brand { font: 700 17px/1 var(--sans); letter-spacing: -.2px; }
+html[data-ui="ios"] .p-user { color: var(--fg); }
+html[data-ui="ios"] .p-sep, html[data-ui="ios"] .p-path, html[data-ui="ios"] .p-dollar, html[data-ui="ios"] .cursor, html[data-ui="ios"] .nav-cmd { display: none; }
+html[data-ui="ios"] .nav-item { font: 15px/1 var(--sans); color: var(--fg-2); border-radius: 8px; }
+html[data-ui="ios"] .nav-item:hover { background: var(--fill); }
+html[data-ui="ios"] .nav-item.is-active { color: var(--accent); background: none; font-weight: 600; }
+html[data-ui="ios"] .tool-btn { border: 0; background: var(--fill); border-radius: 10px; }
+html[data-ui="ios"] .search-label { font-family: var(--sans); }
+html[data-ui="ios"] kbd { font-family: var(--sans); border: 0; background: var(--panel); }
+
+/* 按钮：胶囊形；主按钮实心蓝，其余是灰色填充 + 蓝字 / 黑字 */
+html[data-ui="ios"] .btn {
+  --btn-bg: var(--fill); --btn-fg: var(--accent); --btn-bd: transparent;
+  height: 34px; padding: 0 16px; border-radius: 999px; font: 600 14px/1 var(--sans);
+}
+html[data-ui="ios"] .btn:hover { --btn-bg: var(--fill); opacity: .82; }
+html[data-ui="ios"] .btn-solid, html[data-ui="ios"] .btn-solid:hover { --btn-bg: var(--accent); --btn-fg: #fff; }
+html[data-ui="ios"] .btn-ghost { --btn-fg: var(--fg); font-weight: 500; }
+html[data-ui="ios"] .btn-sm { height: 28px; padding: 0 12px; font-size: 13px; }
+
+/* 分段控件 */
+html[data-ui="ios"] .seg { background: var(--fill); padding: 2px; border-radius: 9px; gap: 0; }
+html[data-ui="ios"] .seg button { font: 500 13px/1 var(--sans); padding: 7px 14px; border-radius: 7px; color: var(--fg); }
+html[data-ui="ios"] .seg button[aria-selected="true"], html[data-ui="ios"] .seg button[aria-pressed="true"] {
+  background: var(--panel); box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 0 0 .5px rgba(0, 0, 0, .04); font-weight: 600;
+}
+html[data-ui="ios"][data-theme="dark"] .seg button[aria-selected="true"], html[data-ui="ios"][data-theme="dark"] .seg button[aria-pressed="true"] { background: #636366; }
+
+/* 首页和其他页面的卡片：去掉边框，换成大圆角白卡 */
+html[data-ui="ios"] .term, html[data-ui="ios"] .side-box, html[data-ui="ios"] .notice {
+  border: 0; border-radius: 18px; background: var(--panel); box-shadow: var(--shadow);
+}
+html[data-ui="ios"] .term-bar { background: none; border-bottom: 1px solid var(--border); font-family: var(--sans); }
+html[data-ui="ios"] .rm-link { border: 0; background: var(--panel-2); border-radius: 14px; }
+html[data-ui="ios"] .stat-tile { border-radius: 12px; }
+html[data-ui="ios"] .ls-col { border: 0; background: var(--fill); color: var(--fg-2); font-family: var(--sans); border-radius: 6px; }
+
+/* ---- 文章页 ---- */
+html[data-ui="ios"] .post-path { font: 13px/1.5 var(--sans); color: var(--muted); }
+html[data-ui="ios"] .post-path a { color: var(--muted); }
+html[data-ui="ios"] .post-title { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.8px; margin: 6px 0 12px; }
+/* 章节号做成标题上方的一行小字 */
+html[data-ui="ios"] .post-no {
+  display: block; width: fit-content;
+  font: 600 14px/1.4 var(--sans); letter-spacing: 0;
+  color: var(--accent); background: none; padding: 0; margin: 0 0 6px;
+}
+html[data-ui="ios"] .post-no::before { content: "第 "; }
+html[data-ui="ios"] .post-no::after { content: " 节"; }
+html[data-ui="ios"] .post-meta { font: 14px/1.6 var(--sans); }
+html[data-ui="ios"] .post-meta > span + span::before { color: var(--muted); margin: 0 8px; }
+html[data-ui="ios"] .post-tags { font: 13px/1 var(--sans); }
+html[data-ui="ios"] .post-tags a { background: var(--fill); color: var(--fg-2); padding: 6px 11px; }
+
+html[data-ui="ios"] .post-content { border: 0; border-radius: 22px; padding: 48px 60px 52px; }
+html[data-ui="ios"] .md { font-size: 17px; line-height: 1.85; letter-spacing: .15px; }
+html[data-ui="ios"] .md h2, html[data-ui="ios"] .md h3, html[data-ui="ios"] .md h4 { letter-spacing: -.3px; font-weight: 700; }
+html[data-ui="ios"] .md h2 { font-size: 1.55em; border-top: 0; padding-top: 0; margin-top: 2.1em; }
+html[data-ui="ios"] .md h2::before, html[data-ui="ios"] .md h3::before, html[data-ui="ios"] .md h4::before { content: none; }
+html[data-ui="ios"] .md li::marker { font-family: var(--sans); }
+html[data-ui="ios"] .md a { color: var(--accent); text-decoration: none; }
+html[data-ui="ios"] .md a:hover { text-decoration: underline; }
+html[data-ui="ios"] .md hr { border-top-color: var(--border); }
+html[data-ui="ios"] .md code { border: 0; background: var(--fill); border-radius: 6px; padding: .15em .45em; }
+/* 提示块：灰色圆角卡；开头的「本文目标」用浅蓝，标题字用蓝色 */
+html[data-ui="ios"] .md blockquote { border: 0; border-radius: 14px; background: var(--code-bg); padding: 16px 20px; font-size: .94em; }
+html[data-ui="ios"] .md > blockquote:first-child { background: var(--accent-soft); }
+html[data-ui="ios"] .md > blockquote:first-child p > strong:first-child { color: var(--accent); }
+html[data-ui="ios"] .md figure.highlight { border: 0; border-radius: 14px; }
+html[data-ui="ios"] .code-head { font: 600 11px/1 var(--sans); text-transform: uppercase; letter-spacing: .6px; padding-top: 12px; }
+html[data-ui="ios"] .code-copy { font: 500 12px/1 var(--sans); color: var(--accent); }
+html[data-ui="ios"] .code-copy:hover { background: var(--fill); border-color: transparent; }
+/* 表格：分组列表的样子 */
+html[data-ui="ios"] .md table { border: 0; border-radius: 14px; background: var(--code-bg); }
+html[data-ui="ios"] .md th { font: 600 12px/1.5 var(--sans); color: var(--muted); background: none; letter-spacing: .3px; }
+html[data-ui="ios"] .md th, html[data-ui="ios"] .md td { border-bottom-color: color-mix(in srgb, var(--border-2) 70%, transparent); }
+html[data-ui="ios"] .md tbody tr:hover { background: none; }
+/* 折叠答案：像设置里的一行，右边是会转的箭头 */
+html[data-ui="ios"] .md details { border: 0; border-radius: 14px; background: var(--code-bg); }
+html[data-ui="ios"] .md details > summary { font: 600 15px/1.4 var(--sans); color: var(--accent); padding: 14px 18px; border-radius: 14px; }
+html[data-ui="ios"] .md details > summary::before { content: none; }
+html[data-ui="ios"] .md details > summary::after {
+  content: ""; margin-left: auto; width: 8px; height: 8px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg); transition: transform .2s;
+}
+html[data-ui="ios"] .md details[open] > summary::after { transform: rotate(45deg); }
+html[data-ui="ios"] .md details > summary:hover { background: none; opacity: .8; }
+html[data-ui="ios"] .md details[open] > summary { border-bottom: 1px solid var(--border-2); border-radius: 14px 14px 0 0; }
+
+/* 目录：选中项是灰色圆角底，像侧边栏 */
+html[data-ui="ios"] .toc-title { font: 600 13px/1.5 var(--sans); color: var(--muted); padding-left: 10px; letter-spacing: .2px; }
+html[data-ui="ios"] .toc ol { border-left: 0; }
+html[data-ui="ios"] .toc a { border-left: 0; margin-left: 0; padding: 6px 10px; border-radius: 8px; font-size: 13.5px; }
+html[data-ui="ios"] .toc a.is-active { background: var(--fill); color: var(--fg); }
+
+/* 文末 */
+html[data-ui="ios"] .mark-read { border: 0; border-radius: 18px; background: var(--panel); box-shadow: var(--shadow); font: 600 15px/1.4 var(--sans); padding: 16px 18px 16px 22px; }
+html[data-ui="ios"] .mark-read.is-read { background: var(--panel); }
+html[data-ui="ios"] .mark-read.is-read .when-read { color: #34c759; }
+html[data-ui="ios"] .series-nav a { border: 0; border-radius: 18px; box-shadow: var(--shadow); font: 600 16px/1.4 var(--sans); padding: 16px 20px; }
+html[data-ui="ios"] .series-nav a:hover { transform: none; opacity: .85; }
+html[data-ui="ios"] .series-nav .c-muted { font: 400 13px/1.2 var(--sans); }
+html[data-ui="ios"] .sec-title, html[data-ui="ios"] .side-title { font-family: var(--sans); }
+html[data-ui="ios"] .site-footer { font-family: var(--sans); border-top: 0; }
+
+/* 菜单、搜索框 */
+html[data-ui="ios"] .scheme-menu, html[data-ui="ios"] .search-panel { border: 0; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, .22); }
+html[data-ui="ios"] .scheme-menu { font-family: var(--sans); }
+html[data-ui="ios"] .scheme-menu-head, html[data-ui="ios"] .scheme-menu-hint { background: none; }
+
+@media (max-width: 760px) {
+  /* 手机：正文是一整块白底，左右贴边 */
+  html[data-ui="ios"] .post-content { margin: 0 -16px; padding: 28px 18px 32px; border-radius: 0; background: var(--panel); }
+  html[data-ui="ios"] .post-title { font-size: 30px; }
+  html[data-ui="ios"] .md { font-size: 17px; }
+}
