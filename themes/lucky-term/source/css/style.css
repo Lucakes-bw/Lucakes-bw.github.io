@@ -450,11 +450,7 @@ html[data-ui="ios"] .ui-term { display: none; }
 .notice li { font-family: var(--sans); }
 .notice li .c-muted, .log li .c-muted { font-family: var(--mono); font-size: 13px; }
 
-/* ---------- 统计面板 ---------- */
-.stats { margin-top: 20px; }
-.stats[hidden] { display: none; }
-.stats-body { padding: 16px 20px 18px; }
-.stats-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+/* 分段控件（目前给 iOS 风格等复用） */
 .seg { display: inline-flex; gap: 4px; }
 .seg button {
   font: 13px/1 var(--mono);
@@ -466,29 +462,123 @@ html[data-ui="ios"] .ui-term { display: none; }
 }
 .seg button:hover { color: var(--fg); }
 .seg button[aria-selected="true"], .seg button[aria-pressed="true"] { background: var(--panel-2); color: var(--fg); }
-.stat-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 14px 0 0; }
-.stat-tile { padding: 10px 14px; border-radius: 8px; background: var(--panel-2); min-width: 0; }
-.stat-tile dt { font-size: 13px; color: var(--muted); }
-.stat-tile dd { margin: 2px 0 0; font: 700 17px/1.4 var(--mono); color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.heatmap {
-  display: grid; gap: 4px; margin-top: 16px;
-  grid-template-rows: repeat(7, auto);
-  grid-template-columns: repeat(var(--weeks, 26), minmax(0, 1fr));
-  grid-auto-flow: column;
+
+/* ---------- 首页（GitHub 主页风格） ----------
+   左边个人资料，右边 README、专栏卡片、学习热力图、学习动态、最近更新 */
+.gh { display: grid; grid-template-columns: 272px minmax(0, 1fr); gap: 36px; align-items: start; }
+.gh-avatar { display: block; width: 100%; max-width: 260px; height: auto; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--border); background: var(--panel); }
+.gh-name { margin: 16px 0 0; line-height: 1.25; }
+.gh-fullname { display: block; font: 700 24px/1.3 var(--sans); color: var(--fg); }
+.gh-login { display: block; font: 300 20px/1.4 var(--sans); color: var(--muted); }
+.gh-bio { margin: 12px 0 16px; font-size: 15px; line-height: 1.6; color: var(--fg); }
+.gh-follow { width: 100%; }
+.gh-counts { margin: 16px 0 0; font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.gh-counts strong { color: var(--fg); }
+.gh-info { list-style: none; margin: 12px 0 0; padding: 0; font-size: 14px; color: var(--fg-2); }
+.gh-info li { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.gh-info svg, .gh-counts svg { color: var(--muted); flex: none; }
+.gh-side-sec { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+.gh-side-title { margin: 0 0 12px; font: 600 16px/1.4 var(--sans); color: var(--fg); }
+.gh-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.gh-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 56px; height: 56px; border-radius: 50%;
+  font: 700 16px/1 var(--mono); color: #fff;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .35);
 }
-.heatmap i, .heat-legend i { display: block; aspect-ratio: 1; border-radius: 3px; background: var(--panel-2); }
-.heatmap .l1, .heat-legend .l1 { background: color-mix(in srgb, var(--accent) 30%, var(--panel-2)); }
-.heatmap .l2, .heat-legend .l2 { background: color-mix(in srgb, var(--accent) 55%, var(--panel-2)); }
-.heatmap .l3, .heat-legend .l3 { background: color-mix(in srgb, var(--accent) 80%, var(--panel-2)); }
-.heatmap .l4, .heat-legend .l4 { background: var(--accent); }
-.heatmap .is-out { opacity: .3; }
-.heatmap .is-future { visibility: hidden; }
-.stats-foot { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-top: 12px; }
-.stats-note { margin: 0; font-size: 14px; color: var(--muted); }
-.heat-legend { display: inline-flex; align-items: center; gap: 3px; flex: none; font: 12px/1 var(--mono); color: var(--muted); }
-.heat-legend i { width: 10px; }
-.heat-legend i:first-of-type { margin-left: 4px; }
-.heat-legend i:last-of-type { margin-right: 4px; }
+.gh-badge.b0 { background: linear-gradient(135deg, #f9a8d4, #a78bfa); }
+.gh-badge.b1 { background: linear-gradient(135deg, #67e8f9, #3b82f6); }
+.gh-badge.b2 { background: linear-gradient(135deg, #fcd34d, #f97316); }
+.gh-badge.b3 { background: linear-gradient(135deg, #86efac, #059669); }
+.gh-badge.b4 { background: linear-gradient(135deg, #a5b4fc, #4338ca); }
+.gh-badge.b5 { background: linear-gradient(135deg, #fda4af, #e11d48); }
+.gh-badge.is-locked { background: none; color: var(--muted); box-shadow: none; border: 2px dashed var(--border-2); opacity: .75; font-size: 14px; }
+.gh-badges-hint { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+.gh-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.gh-tags a { padding: 3px 10px; border-radius: 999px; font: 500 12px/1.6 var(--sans); background: color-mix(in srgb, var(--link) 12%, var(--bg)); color: var(--link); }
+.gh-tags a:hover { background: var(--link); color: var(--bg); text-decoration: none; }
+.gh-tags .gh-tags-more { background: none; color: var(--muted); }
+
+.gh-main { min-width: 0; }
+.gh-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; }
+.gh-muted { font-size: 12px; color: var(--muted); }
+.gh-date { font: 12px/1 var(--mono); color: var(--muted); white-space: nowrap; }
+.gh-readme { padding: 20px 24px; }
+.gh-readme-head { font: 13px/1 var(--mono); color: var(--fg-2); margin-bottom: 12px; }
+.gh-readme-list { margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.85; color: var(--fg); }
+.gh-readme-list li::marker { color: var(--muted); }
+.gh-resume { margin: 14px 0 0; padding-top: 14px; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted); }
+.gh-resume a { font-weight: 600; margin-left: 6px; }
+
+.gh-sec { margin-top: 28px; }
+.gh-sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.gh-sec-head h2, .gh-act-title { margin: 0; font: 400 16px/1.5 var(--sans); color: var(--fg); }
+.gh-sec-head a { font-size: 13px; }
+.gh-repos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.gh-repo { display: flex; flex-direction: column; padding: 16px; min-width: 0; }
+.gh-repo-head { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.gh-repo-name { font: 600 15px/1.3 var(--sans); color: var(--link); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gh-pill { margin-left: auto; flex: none; padding: 0 8px; border: 1px solid var(--border-2); border-radius: 999px; font: 500 12px/20px var(--sans); color: var(--muted); }
+.gh-repo-desc { flex: 1; margin: 8px 0 10px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.gh-repo-next { margin: 0 0 12px; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gh-repo-next a { color: var(--fg); margin-left: 4px; }
+.gh-repo-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 12px; color: var(--muted); }
+.gh-repo-foot > span { display: inline-flex; align-items: center; gap: 5px; }
+.gh-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; flex: none; border: 1px solid rgba(127, 127, 127, .2); }
+.gh-progress { margin-left: auto; font-family: var(--mono); }
+.gh-bar { display: inline-block; width: 56px; height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
+.gh-bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
+
+/* 学习热力图：格子大小和 GitHub 一样，窄屏横向滚动 */
+.gh-cal { padding: 14px 16px 10px; }
+.gh-cal-scroll { overflow-x: auto; scrollbar-width: thin; }
+.gh-cal-grid {
+  display: grid; gap: 3px; width: max-content;
+  grid-template-columns: 30px repeat(var(--weeks, 53), 10px);
+  grid-template-rows: 16px repeat(7, 10px);
+  font: 10px/10px var(--sans); color: var(--muted);
+}
+.gh-cal-grid i, .gh-legend i { display: block; width: 10px; height: 10px; border-radius: 2px; background: var(--panel-2); outline: 1px solid color-mix(in srgb, var(--fg) 5%, transparent); outline-offset: -1px; }
+.gh-cal-grid .l1, .gh-legend .l1 { background: color-mix(in srgb, var(--accent) 30%, var(--panel-2)); }
+.gh-cal-grid .l2, .gh-legend .l2 { background: color-mix(in srgb, var(--accent) 55%, var(--panel-2)); }
+.gh-cal-grid .l3, .gh-legend .l3 { background: color-mix(in srgb, var(--accent) 80%, var(--panel-2)); }
+.gh-cal-grid .l4, .gh-legend .l4 { background: var(--accent); }
+.gh-cal-grid .is-future { visibility: hidden; }
+.gh-cal-day { grid-column: 1; position: sticky; left: 0; z-index: 1; background: var(--panel); font-size: 11px; }
+.gh-cal-month { grid-row: 1; white-space: nowrap; line-height: 16px; }
+.gh-cal-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0 0 30px; }
+.gh-cal-foot > .gh-muted { cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; }
+.gh-legend { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--muted); }
+.gh-legend i:first-of-type { margin-left: 4px; }
+.gh-legend i:last-of-type { margin-right: 4px; }
+.gh-years { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.gh-years button {
+  display: block;
+  padding: 5px 12px;
+  border: 0; border-radius: 6px; background: none;
+  font: 13px/1.2 var(--sans); color: var(--muted); cursor: pointer;
+}
+.gh-years button:hover { background: var(--panel-2); color: var(--fg); }
+.gh-years button[aria-pressed="true"] { background: var(--link); color: var(--bg); font-weight: 600; }
+
+/* 学习动态：像 GitHub 的 Contribution activity，左边一条时间线 */
+.gh-act-title { margin-top: 24px; }
+.gh-activity { margin-top: 8px; }
+.gh-act-month h3 { display: flex; align-items: center; gap: 12px; margin: 16px 0 4px; font: 600 12px/1.5 var(--sans); color: var(--fg); }
+.gh-act-month h3::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.gh-act-item { position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 14px; padding: 12px 0 12px 4px; }
+.gh-act-item::before { content: ""; position: absolute; left: 19px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.gh-act-icon { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--panel-2); color: var(--muted); box-shadow: 0 0 0 3px var(--bg); }
+.gh-act-head { margin: 5px 0 10px; font-size: 16px; color: var(--fg); }
+.gh-act-rows, .gh-act-list { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.gh-act-rows li { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(80px, 38%); align-items: center; gap: 14px; padding: 4px 0; }
+.gh-act-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 0; }
+.gh-act-name { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.gh-act-n { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.gh-act-bar i { display: block; height: 8px; border-radius: 4px; background: var(--accent); }
+.gh-act-empty { padding: 28px 24px; border: 1px dashed var(--border-2); border-radius: 8px; text-align: center; font-size: 14px; line-height: 1.7; color: var(--muted); }
+.gh-act-more { width: 100%; margin-top: 12px; }
+.gh-more { margin: 12px 0 0; text-align: right; font-size: 14px; }
 
 /* ---------- 两栏布局 ---------- */
 .layout-2col { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; margin-top: 32px; }
@@ -854,6 +944,13 @@ html.is-focus .site-main { padding-top: 40px; }
   .roadmap { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rm-node:nth-child(2)::after { display: none; }
   .layout-2col, .post-body { grid-template-columns: minmax(0, 1fr); }
+  /* 首页：资料栏挪到上面，头像缩小放在名字左边 */
+  .gh { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .gh-side { display: grid; grid-template-columns: 88px minmax(0, 1fr); column-gap: 16px; align-items: center; }
+  .gh-avatar { width: 88px; grid-row: span 1; }
+  .gh-name { margin: 0; }
+  .gh-side > :not(.gh-avatar):not(.gh-name) { grid-column: 1 / -1; }
+  .gh-side-sec { display: none; }
   .toc { display: none; }
   .post-head, .post-end, .comments { max-width: none; }
   .post-content { padding: 32px 36px 36px; }
@@ -882,9 +979,9 @@ html.is-focus .site-main { padding-top: 40px; }
   .roadmap::-webkit-scrollbar { display: none; }
   .rm-node { flex: 0 0 78%; scroll-snap-align: start; scroll-margin-left: 16px; }
   .rm-node::after { display: none; }
-  .stats-body { padding: 14px 14px 16px; }
-  .stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .stats-foot { flex-direction: column; gap: 8px; }
+  .gh-repos { grid-template-columns: minmax(0, 1fr); }
+  .gh-fullname { font-size: 20px; }
+  .gh-login { font-size: 16px; }
   .ls-row { grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 8px 10px; padding: 12px 4px; }
   .ls-row .ls-title { grid-column: 1 / -1; grid-row: 1; }
   .ls-row .read-mark { grid-column: 4; }
@@ -1027,7 +1124,6 @@ html[data-ui="ios"] .term, html[data-ui="ios"] .side-box, html[data-ui="ios"] .n
 }
 html[data-ui="ios"] .term-bar { background: none; border-bottom: 1px solid var(--border); font-family: var(--sans); }
 html[data-ui="ios"] .rm-link { border: 0; background: var(--panel-2); border-radius: 14px; }
-html[data-ui="ios"] .stat-tile { border-radius: 12px; }
 html[data-ui="ios"] .ls-col { border: 0; background: var(--fill); color: var(--fg-2); font-family: var(--sans); border-radius: 6px; }
 
 /* ---- 文章页 ---- */
@@ -1110,3 +1206,12 @@ html[data-ui="ios"] .scheme-menu-head, html[data-ui="ios"] .scheme-menu-hint { b
   html[data-ui="ios"] .post-title { font-size: 30px; }
   html[data-ui="ios"] .md { font-size: 17px; }
 }
+
+/* iOS 风格下的首页卡片 */
+html[data-ui="ios"] .gh-card { border: 0; border-radius: 16px; box-shadow: var(--shadow); }
+html[data-ui="ios"] .gh-avatar { border: 0; box-shadow: var(--shadow); }
+html[data-ui="ios"] .gh-pill { border: 0; background: var(--fill); }
+html[data-ui="ios"] .gh-tags a { background: var(--fill); color: var(--fg-2); }
+html[data-ui="ios"] .gh-readme-head { font-family: var(--sans); }
+html[data-ui="ios"] .gh-years button[aria-pressed="true"] { background: var(--fill); color: var(--fg); }
+html[data-ui="ios"] .gh-act-empty { border: 0; background: var(--panel); border-radius: 16px; }

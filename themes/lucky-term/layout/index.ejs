@@ -3,37 +3,137 @@
   const allSeries = series_all();
   const TAG_LIMIT = 15;
   const tags = site.tags.sort('-length').limit(TAG_LIMIT);
+  const home = theme.home || {};
+  const projects = home.projects || [];
+  let problemCount = 0;
+  try { problemCount = JSON.parse(problems_json()).length; } catch (e) { /* 没有刷题模块 */ }
+  const icon = {
+    repo: '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 13V3.2C3 2.5 3.6 2 4.3 2H13v9.5H4.4C3.6 11.5 3 12.1 3 13zm0 0c0 .7.6 1.2 1.4 1.2H13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+    file: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 1.8h5.2L12.5 5v9.2H4z M9 1.8V5h3.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+    book: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 3.2c2-.8 4-.8 6 .6 2-1.4 4-1.4 6-.6v9.6c-2-.8-4-.8-6 .6-2-1.4-4-1.4-6-.6zM8 3.8v9.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+    link: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6.8 9.2a2.6 2.6 0 0 0 3.7 0l2.2-2.2a2.6 2.6 0 0 0-3.7-3.7l-.9.9M9.2 6.8a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    clock: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 4.8V8l2.2 1.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+  };
 %>
-<div class="wrap">
-  <% if (!page.prev) { %>
-  <section class="term hero">
-    <div class="term-bar"><span>bash — <%= theme.prompt.user %>@<%= theme.prompt.host %></span><span class="c-muted">~</span></div>
-    <div class="term-body">
-      <p class="cmd"><span class="c-accent">$</span> whoami</p>
-      <p class="out"><strong class="hero-name"><%= config.title %></strong></p>
-      <p class="out c-muted"><%= theme.hero.intro %></p>
-      <p class="cmd"><span class="c-accent">$</span> cat roadmap.txt <span class="c-muted"># <%= theme.hero.roadmap_title %></span></p>
-      <%- partial('_partial/roadmap') %>
+<% if (!page.prev) { %>
+<div class="wrap gh">
+  <%# ---------- 左侧：个人资料 ---------- %>
+  <aside class="gh-side">
+    <img class="gh-avatar" src="<%- avatar_src() %>" alt="<%= theme.prompt.user %> 的头像" width="260" height="260">
+    <h1 class="gh-name"><span class="gh-fullname"><%= config.title %></span><span class="gh-login"><%= theme.prompt.user %></span></h1>
+    <p class="gh-bio"><%= theme.hero.intro %></p>
+    <% if (theme.github) { %><a class="btn btn-ghost gh-follow" href="<%- theme.github %>" target="_blank" rel="noopener">在 GitHub 上关注</a><% } %>
+    <div class="gh-counts">
+      <%- icon.file %> <strong><%= site.posts.length %></strong> 篇文章 · <strong><%= totalcount(site) %></strong> 字
     </div>
-  </section>
-
-  <% if (essay.essay_list.length) { %>
-  <section class="notice">
-    <span class="c-accent">$</span> tail -n 3 notice.log
-    <ul>
-      <% essay.essay_list.slice(0, 3).forEach(function (n) { %>
-      <li><span class="c-muted">[<%= date(n.date, 'YYYY-MM-DD') %>]</span> <%= n.content %><% if (n.link) { %> <a href="<%- url_for(n.link) %>">→</a><% } %></li>
-      <% }) %>
+    <ul class="gh-info">
+      <li><%- icon.clock %> 从 <%= theme.since %> 年开始记录</li>
+      <% if (theme.github) { %><li><%- icon.link %> <a href="<%- theme.github %>" target="_blank" rel="noopener"><%= theme.github.replace(/^https?:\/\//, '') %></a></li><% } %>
     </ul>
-  </section>
-  <% } %>
 
-  <%- partial('_partial/stats') %>
-  <% } %>
+    <div class="gh-side-sec">
+      <h2 class="gh-side-title">成就</h2>
+      <div class="gh-badges" data-badges></div>
+      <p class="gh-badges-hint" data-badges-hint></p>
+    </div>
 
+    <div class="gh-side-sec">
+      <h2 class="gh-side-title">标签</h2>
+      <div class="gh-tags">
+        <% tags.each(function (t) { %><a href="<%- url_for(t.path) %>"><%= t.name %></a><% }) %>
+        <% if (site.tags.length > TAG_LIMIT) { %><a class="gh-tags-more" href="<%- url_for(config.tag_dir + '/') %>">全部 <%= site.tags.length %> 个</a><% } %>
+      </div>
+    </div>
+  </aside>
+
+  <%# ---------- 右侧 ---------- %>
+  <div class="gh-main">
+    <section class="gh-card gh-readme">
+      <div class="gh-readme-head"><%= theme.prompt.user %> / <strong>README</strong>.md</div>
+      <ul class="gh-readme-list">
+        <li>按专栏顺序读：从 C/C++ 语法，到数据结构，再到网络和 Linux 系统编程。</li>
+        <% essay.essay_list.slice(0, 3).forEach(function (n) { %>
+        <li><%= n.content %><% if (n.link) { %> <a href="<%- url_for(n.link) %>">→</a><% } %> <span class="gh-date"><%= date(n.date, 'MM-DD') %></span></li>
+        <% }) %>
+      </ul>
+      <p class="gh-resume" data-resume hidden>继续阅读 <a href="#"></a></p>
+    </section>
+
+    <section class="gh-sec">
+      <div class="gh-sec-head"><h2>专栏与栏目</h2><a href="<%- url_for('/column/') %>">全部专栏</a></div>
+      <div class="gh-repos">
+        <% allSeries.forEach(function (s) { const first = s.items[0]; %>
+        <article class="gh-card gh-repo" data-series="<%= s.key %>">
+          <div class="gh-repo-head">
+            <%- icon.repo %>
+            <a class="gh-repo-name" href="<%- url_for(s.path) %>"><%= s.name %></a>
+            <span class="gh-pill"><%= String(s.index).padStart(2, '0') %> · 专栏</span>
+          </div>
+          <p class="gh-repo-desc"><%= s.desc %></p>
+          <p class="gh-repo-next" data-next="<%= s.key %>">下一篇 <% if (first) { %><a href="<%- url_for(first.post.path) %>"><%= first.post.title %></a><% } else { %><span>敬请期待…</span><% } %></p>
+          <div class="gh-repo-foot">
+            <% if (s.lang) { %><span><i class="gh-dot" style="background:<%= s.color || 'var(--muted)' %>"></i><%= s.lang %></span><% } %>
+            <span><%- icon.file %> <%= s.items.length %> 篇</span>
+            <span><%- icon.book %> <%= s.chapters.length %> 章</span>
+            <span class="gh-progress" title="本机的阅读进度"><span class="gh-bar"><i data-bar-fill style="width:0"></i></span><span><span data-count>0</span>/<%= s.items.length %></span></span>
+          </div>
+        </article>
+        <% }) %>
+        <% projects.forEach(function (p) { const isPb = p.kind === 'problems'; %>
+        <article class="gh-card gh-repo" <% if (isPb) { %>data-problems="<%= problemCount %>"<% } %>>
+          <div class="gh-repo-head">
+            <%- icon.repo %>
+            <a class="gh-repo-name" href="<%- url_for(p.path) %>"><%= p.name %></a>
+            <span class="gh-pill"><%= p.pill || '栏目' %></span>
+          </div>
+          <p class="gh-repo-desc"><%= p.desc %></p>
+          <div class="gh-repo-foot">
+            <% if (p.lang) { %><span><i class="gh-dot" style="background:<%= p.color || 'var(--muted)' %>"></i><%= p.lang %></span><% } %>
+            <% if (isPb) { %>
+            <span><%- icon.file %> <%= problemCount %> 道题</span>
+            <span class="gh-progress" title="本机通过的题数"><span class="gh-bar"><i data-pb-fill style="width:0"></i></span><span><span data-pb-count>0</span>/<%= problemCount %></span></span>
+            <% } %>
+          </div>
+        </article>
+        <% }) %>
+      </div>
+    </section>
+
+    <section class="gh-sec" data-contrib>
+      <div class="gh-sec-head">
+        <h2 data-contrib-title>学习记录</h2>
+        <ul class="gh-years" data-years></ul>
+      </div>
+      <div class="gh-contrib">
+        <div class="gh-card gh-cal">
+          <div class="gh-cal-scroll" data-cal-scroll>
+            <div class="gh-cal-grid" data-cal></div>
+          </div>
+          <div class="gh-cal-foot">
+            <span class="gh-muted" title="读完一篇文章（滚到文末或点「标记为已读」）、在刷题里通过一道题，各记一次；数据只保存在你的浏览器里">怎么统计的？</span>
+            <span class="gh-legend">少<i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i>多</span>
+          </div>
+        </div>
+      </div>
+      <h2 class="gh-act-title">学习动态</h2>
+      <div class="gh-activity" data-activity></div>
+    </section>
+
+    <section class="gh-sec">
+      <div class="gh-sec-head"><h2>最近更新</h2><a href="<%- url_for(config.archive_dir + '/') %>">全部文章</a></div>
+      <%- partial('_partial/post-list', { posts: page.posts }) %>
+      <% if (page.next) { %><p class="gh-more"><a href="<%- url_for(page.next_link) %>">更多文章 →</a></p><% } %>
+    </section>
+  </div>
+</div>
+<script type="application/json" id="posts-data"><%- posts_json() %></script>
+<script type="application/json" id="problems-data"><%- problems_json() %></script>
+
+<% } else { %>
+<div class="wrap">
   <div class="layout-2col">
     <section class="main-col">
-      <h2 class="sec-title"><span class="c-accent">$</span> ls -lt posts/<% if (page.prev) { %> <span class="c-muted">--page <%= page.current %></span><% } %></h2>
+      <h2 class="sec-title"><span class="c-accent">$</span> ls -lt posts/ <span class="c-muted">--page <%= page.current %></span></h2>
       <%- partial('_partial/post-list', { posts: page.posts }) %>
       <%- partial('_partial/pagination') %>
     </section>
@@ -60,8 +160,8 @@
           <% if (site.tags.length > TAG_LIMIT) { %><a class="tag-more" href="<%- url_for(config.tag_dir + '/') %>">更多 <%= site.tags.length - TAG_LIMIT %> 个 →</a><% } %>
         </div>
       </div>
-
     </aside>
   </div>
 </div>
+<% } %>
 <script type="application/json" id="series-data"><%- series_json() %></script>
