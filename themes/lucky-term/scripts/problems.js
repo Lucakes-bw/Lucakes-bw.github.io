@@ -50,6 +50,13 @@ hexo.extend.processor.register('_problems/:slug.md', async function (file) {
 
 hexo.extend.helper.register('difficulty_name', d => DIFF[d] || d);
 
+// 首页学习动态用：题目的 slug、标题、地址
+hexo.extend.helper.register('problems_json', function () {
+  const urlFor = hexo.extend.helper.get('url_for').bind(hexo);
+  return JSON.stringify([...problems.values()].sort((a, b) => a.id - b.id)
+    .map(p => ({ slug: p.slug, id: p.id, title: p.title, url: urlFor(`problems/${p.slug}/`) }))).replace(/</g, '\\u003c');
+});
+
 hexo.extend.generator.register('problems', function (locals) {
   const list = [...problems.values()].sort((a, b) => a.id - b.id);
   list.forEach(p => {

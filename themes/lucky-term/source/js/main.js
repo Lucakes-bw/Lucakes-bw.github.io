@@ -135,6 +135,8 @@
         const count = $('[data-count]', node);
         if (count) count.textContent = done;
         node.classList.toggle('is-done', s.posts.length > 0 && done === s.posts.length);
+        const fill = $('[data-bar-fill]', node);
+        if (fill) fill.style.width = (s.posts.length ? done / s.posts.length * 100 : 0) + '%';
       });
     });
 
@@ -226,138 +228,205 @@
 
   renderReadState();
 
-  /* ---------- 首页统计面板 ---------- */
-  // 每个标签页是一个 { label, compute(since) } ；以后加「练习」只要在 STAT_TABS 里多写一项
-  const statsEl = $('[data-stats]');
-  if (statsEl) {
+  /* ---------- 首页：学习记录（热力图、学习动态、成就） ----------
+     一次「学习」= 读完一篇文章，或在刷题里通过一道题；数据都只在本机浏览器里 */
+  const calEl = $('[data-cal]');
+  if (calEl) {
     const DAY = 864e5;
     const pad = n => String(n).padStart(2, '0');
     const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
     const startOfDay = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
-    const fmtWords = n => (n >= 1e4 ? `${(n / 1e4).toFixed(1)} 万字` : `${n.toLocaleString('en-US')} 字`);
-    const fmtHour = h => {
-      const part = h < 6 ? '凌晨' : h < 12 ? '上午' : h === 12 ? '中午' : h < 18 ? '下午' : '晚上';
-      return `${part} ${h > 12 ? h - 12 : h} 点`;
-    };
-    const mode = arr => {
-      const cnt = new Map();
-      arr.forEach(x => cnt.set(x, (cnt.get(x) || 0) + 1));
-      let best = null, max = 0;
-      cnt.forEach((n, x) => { if (n > max) { max = n; best = x; } });
-      return best;
-    };
-    const longestRun = days => {
-      const ts = Array.from(new Set(days)).map(k => new Date(k + 'T00:00:00').getTime()).sort((a, b) => a - b);
-      let best = 0, run = 0;
-      ts.forEach((t, i) => { run = i && Math.round((t - ts[i - 1]) / DAY) === 1 ? run + 1 : 1; best = Math.max(best, run); });
-      return best;
-    };
+    const addDays = (t, n) => { const d = new Date(t); d.setDate(d.getDate() + n); return d.getTime(); };   // 跨夏令时也按日历日走
+    const fmtDay = t => { const d = new Date(t); return `${d.getMonth() + 1} 月 ${d.getDate()} 日`; };
+    const readJSON = id => { try { return JSON.parse($('#' + id).textContent); } catch (e) { return []; } };
 
-    let posts = [];
-    try { posts = JSON.parse($('#posts-data').textContent); } catch (e) { /* ignore */ }
+    const posts = readJSON('posts-data');
+    const problems = readJSON('problems-data');
+    const series = readJSON('series-data');
     const postByUrl = new Map(posts.map(p => [p.url, p]));
-    const totalWords = posts.reduce((n, p) => n + p.words, 0);
+    const pbBySlug = new Map(problems.map(p => [p.slug, p]));
+    const seriesByName = new Map(series.map(s => [s.name, s]));
+    const pbState = store.get('lt-pb-state', {});
 
-    const STAT_TABS = {
-      reading: {
-        label: '我的阅读',
-        compute(since) {
-          const all = Array.from(readSet).map(url => ({ at: readAt[url], post: postByUrl.get(url) })).filter(e => e.post);
-          const list = since ? all.filter(e => e.at >= since) : all;
-          const timed = list.filter(e => e.at);
-          const words = list.reduce((n, e) => n + e.post.words, 0);
-          const days = timed.map(e => dayKey(e.at));
-          const run = longestRun(days);
-          const peak = mode(timed.map(e => new Date(e.at).getHours()));
-          const series = mode(list.map(e => e.post.series).filter(Boolean));
-          const heat = new Map();
-          all.forEach(e => { if (e.at) { const k = dayKey(e.at); heat.set(k, (heat.get(k) || 0) + 1); } });
+    // 带时间的学习事件，新的在前
+    const events = [];
+    readSet.forEach(url => {
+      const post = postByUrl.get(url);
+      if (post && readAt[url]) events.push({ type: 'read', at: readAt[url], post });
+    });
+    Object.keys(pbState).forEach(slug => {
+      const st = pbState[slug], problem = pbBySlug.get(slug);
+      if (problem && st && st.status === 'ac' && st.at) events.push({ type: 'ac', at: st.at, problem });
+    });
+    events.sort((a, b) => b.at - a.at);
+    const perDay = new Map();
+    events.forEach(e => { const k = dayKey(e.at); perDay.set(k, (perDay.get(k) || 0) + 1); });
 
-          let note;
-          if (!all.length) note = '还没有阅读记录。读到文章末尾或点「标记为已读」，就会记在这里。';
-          else if (!list.length) note = '这段时间没有读完的文章。';
-          else {
-            const min = Math.round(words / 300);
-            const time = min >= 60 ? `${Math.floor(min / 60)} 小时 ${min % 60} 分钟` : `${Math.max(1, min)} 分钟`;
-            note = `按每分钟 300 字估算，你在这里读了约 ${time}，占全部笔记的 ${(words / totalWords * 100).toFixed(1)}%。`;
-            const untimed = list.length - timed.length;
-            if (untimed) note += ` 有 ${untimed} 篇是之前的已读记录，没有阅读时间，不计入天数和热力图。`;
-          }
-          return {
-            tiles: [
-              ['已读文章', `${list.length} 篇`],
-              ['读过的字数', fmtWords(words)],
-              ['阅读天数', `${new Set(days).size} 天`],
-              ['最长连续', run ? `${run} 天` : '-'],
-              ['高峰时段', peak === null ? '-' : fmtHour(peak)],
-              ['最常读的专栏', series || '-']
-            ],
-            heat,
-            unit: '篇',
-            note
-          };
-        }
-      }
-    };
+    // 刷题卡片上的进度
+    const solved = Object.keys(pbState).filter(k => pbState[k] && pbState[k].status === 'ac' && pbBySlug.has(k)).length;
+    $$('[data-problems]').forEach(card => {
+      const total = Number(card.dataset.problems) || 0;
+      const n = $('[data-pb-count]', card), fill = $('[data-pb-fill]', card);
+      if (n) n.textContent = solved;
+      if (fill) fill.style.width = (total ? solved / total * 100 : 0) + '%';
+    });
 
-    const tabsEl = $('[data-stats-tabs]');
-    const tilesEl = $('[data-stat-tiles]');
-    const heatEl = $('[data-heatmap]');
-    const noteEl = $('[data-stats-note]');
-    let tab = 'reading';
-    let range = 'all';
+    /* 热力图：和 GitHub 一样一列一周、周日在最上面 */
+    const level = n => (n <= 0 ? 0 : n === 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : 4);
+    const WEEKDAY = ['', '周一', '', '周三', '', '周五', ''];
+    const titleEl = $('[data-contrib-title]');
+    const scrollEl = $('[data-cal-scroll]');
+    const yearsEl = $('[data-years]');
+    const activityEl = $('[data-activity]');
+    let range = 'last';
 
-    tabsEl.innerHTML = Object.keys(STAT_TABS).map(k =>
-      `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${STAT_TABS[k].label}</button>`).join('');
-
-    const level = n => (n <= 0 ? 0 : n === 1 ? 1 : n === 2 ? 2 : n <= 4 ? 3 : 4);
-
-    function renderStats() {
+    function bounds(r) {
       const today = startOfDay(Date.now());
-      const since = range === 'all' ? 0 : today - (Number(range) - 1) * DAY;
-      const r = STAT_TABS[tab].compute(since);
-
-      tilesEl.innerHTML = r.tiles.map(([k, v]) => `<div class="stat-tile"><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
-      noteEl.textContent = r.note;
-
-      // 热力图：列是周（周一在上），最后一列是本周；列数按容器宽度来
-      const cell = 14, gap = 4;
-      const weeks = Math.max(8, Math.min(53, Math.floor((heatEl.clientWidth + gap) / (cell + gap))));
-      const dow = (new Date(today).getDay() + 6) % 7;            // 周一 = 0
-      const start = today - (dow + (weeks - 1) * 7) * DAY;
-      let html = '';
-      for (let i = 0; i < weeks * 7; i++) {
-        const t = start + i * DAY;
-        if (t > today) { html += '<i class="is-future"></i>'; continue; }
-        const k = dayKey(t);
-        const n = r.heat.get(k) || 0;
-        const out = since && t < since ? ' is-out' : '';
-        html += `<i class="l${level(n)}${out}" title="${k} · ${n ? `读了 ${n} ${r.unit}` : '没有阅读'}"></i>`;
-      }
-      heatEl.style.setProperty('--weeks', weeks);
-      heatEl.innerHTML = html;
-      heatEl.setAttribute('aria-label', `最近 ${weeks} 周的阅读热力图`);
+      if (r === 'last') return { from: addDays(today, -364), to: today, label: '过去一年' };
+      const y = Number(r);
+      return { from: new Date(y, 0, 1).getTime(), to: Math.min(new Date(y, 11, 31).getTime(), today), end: new Date(y, 11, 31).getTime(), label: `${y} 年` };
     }
 
-    tabsEl.addEventListener('click', e => {
-      const b = e.target.closest('[data-tab]');
-      if (!b) return;
-      tab = b.dataset.tab;
-      $$('[data-tab]', tabsEl).forEach(x => x.setAttribute('aria-selected', String(x === b)));
-      renderStats();
-    });
-    $('[data-stats-range]').addEventListener('click', e => {
-      const b = e.target.closest('[data-range]');
-      if (!b) return;
-      range = b.dataset.range;
-      $$('[data-range]', statsEl).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-      renderStats();
-    });
-    let resizeTimer;
-    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderStats, 150); });
+    function renderCalendar() {
+      const b = bounds(range);
+      const today = startOfDay(Date.now());
+      const first = addDays(b.from, -new Date(b.from).getDay());          // 往前退到周日
+      const last = b.end || b.to;
+      // 星期一列在窄屏横向滚动时固定在左边，每一行（含月份行）都要有一块遮住滚过来的格子
+      let html = '<span class="gh-cal-day" style="grid-row:1"></span>' + WEEKDAY.map((w, i) => `<span class="gh-cal-day" style="grid-row:${i + 2}">${w}</span>`).join('');
+      let col = 2, total = 0, lastMonth = -1;
+      for (let t = first; t <= last; t = addDays(t, 7), col++) {
+        // 月份标签：这一列在范围内的第一天换了月就标一次；第一列太靠月底就不标，免得和下一列挤在一起
+        const head = Math.max(t, b.from);
+        const hd = new Date(head);
+        if (hd.getMonth() !== lastMonth) {
+          if (col > 2 || hd.getDate() <= 14) html += `<span class="gh-cal-month" style="grid-column:${col} / span 4">${hd.getMonth() + 1} 月</span>`;
+          lastMonth = hd.getMonth();
+        }
+        for (let i = 0; i < 7; i++) {
+          const d = addDays(t, i);
+          if (d < b.from || d > last) continue;
+          if (d > today) { html += `<i class="is-future" style="grid-column:${col};grid-row:${i + 2}"></i>`; continue; }
+          const n = d >= b.from && d <= b.to ? perDay.get(dayKey(d)) || 0 : 0;
+          total += n;
+          html += `<i class="l${level(n)}" style="grid-column:${col};grid-row:${i + 2}" title="${n ? `${n} 次学习` : '没有学习记录'} · ${fmtDay(d)}"></i>`;
+        }
+      }
+      calEl.style.setProperty('--weeks', col - 2);
+      calEl.innerHTML = html;
+      titleEl.textContent = `${b.label}有 ${total} 次学习记录`;
+      if (range === 'last') scrollEl.scrollLeft = scrollEl.scrollWidth;
+    }
 
-    statsEl.hidden = false;
-    renderStats();
+    function renderYears() {
+      const years = new Set([new Date().getFullYear()]);
+      events.forEach(e => years.add(new Date(e.at).getFullYear()));
+      const items = ['last', ...Array.from(years).sort((a, b) => b - a)];
+      yearsEl.innerHTML = items.map(y => `<li><button type="button" data-year="${y}" aria-pressed="${y === range || String(y) === range}">${y === 'last' ? '最近一年' : y}</button></li>`).join('');
+    }
+
+    /* 学习动态：按月分组，每月里分「读完文章」「通过题目」「开始阅读的专栏」 */
+    const firstReadOf = new Map();                                       // 专栏名 → 第一次读完其中一篇的时间
+    events.slice().reverse().forEach(e => { if (e.type === 'read' && e.post.series && !firstReadOf.has(e.post.series)) firstReadOf.set(e.post.series, e.at); });
+    let monthsShown = 2;
+
+    function seriesLink(name) {
+      const s = seriesByName.get(name);
+      const dot = `<i class="gh-dot" style="background:${esc((s && s.color) || 'var(--muted)')}"></i>`;
+      return s ? `${dot}<a href="${esc(s.url)}">${esc(name)}</a>` : `${dot}<span>${esc(name || '其他文章')}</span>`;
+    }
+
+    function renderActivity() {
+      const b = bounds(range);
+      const list = events.filter(e => e.at >= b.from && e.at < addDays(b.end || b.to, 1));
+      if (!list.length) {
+        activityEl.innerHTML = `<div class="gh-act-empty">${events.length ? `${esc(b.label)}没有学习记录。` : '还没有学习记录。读完一篇文章（滚到文末或点「标记为已读」），或者在刷题里通过一道题，这里就会出现第一格。'}</div>`;
+        return;
+      }
+      const months = new Map();
+      list.forEach(e => {
+        const d = new Date(e.at), k = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月`;
+        if (!months.has(k)) months.set(k, []);
+        months.get(k).push(e);
+      });
+      const keys = Array.from(months.keys());
+      let html = '';
+      keys.slice(0, monthsShown).forEach(k => {
+        const evs = months.get(k);
+        const reads = evs.filter(e => e.type === 'read');
+        const acs = evs.filter(e => e.type === 'ac');
+        html += `<div class="gh-act-month"><h3><span>${k}</span></h3>`;
+        if (reads.length) {
+          const bySeries = new Map();
+          reads.forEach(e => bySeries.set(e.post.series, (bySeries.get(e.post.series) || 0) + 1));
+          const rows = Array.from(bySeries).sort((a, b) => b[1] - a[1]);
+          const max = rows[0][1];
+          html += `<div class="gh-act-item"><span class="gh-act-icon">${ICON_READ}</span><div class="gh-act-body">
+            <p class="gh-act-head">读完 ${reads.length} 篇文章，涉及 ${rows.length} 个专栏</p>
+            <ul class="gh-act-rows">${rows.map(([name, n]) => `<li><span class="gh-act-name">${seriesLink(name)}</span><span class="gh-act-n">${n} 篇</span><span class="gh-act-bar"><i style="width:${Math.max(4, n / max * 100)}%"></i></span></li>`).join('')}</ul>
+          </div></div>`;
+        }
+        if (acs.length) {
+          html += `<div class="gh-act-item"><span class="gh-act-icon">${ICON_AC}</span><div class="gh-act-body">
+            <p class="gh-act-head">在刷题里通过 ${acs.length} 道题</p>
+            <ul class="gh-act-list">${acs.slice(0, 6).map(e => `<li><a href="${esc(e.problem.url)}">${esc(e.problem.id ? e.problem.id + '. ' : '')}${esc(e.problem.title)}</a><span class="gh-date">${fmtDay(e.at)}</span></li>`).join('')}</ul>
+          </div></div>`;
+        }
+        const started = Array.from(firstReadOf).filter(([, at]) => evs.some(e => e.at === at));
+        if (started.length) {
+          html += `<div class="gh-act-item"><span class="gh-act-icon">${ICON_REPO}</span><div class="gh-act-body">
+            <p class="gh-act-head">开始阅读 ${started.length} 个专栏</p>
+            <ul class="gh-act-list">${started.map(([name, at]) => `<li><span class="gh-act-name">${seriesLink(name)}</span><span class="gh-date">${fmtDay(at)}</span></li>`).join('')}</ul>
+          </div></div>`;
+        }
+        html += '</div>';
+      });
+      if (keys.length > monthsShown) html += `<button type="button" class="btn btn-ghost gh-act-more" data-act-more>显示更多动态</button>`;
+      activityEl.innerHTML = html;
+    }
+
+    const ICON_READ = '<svg viewBox="0 0 16 16" width="16" height="16"><path d="M2 3.2c2-.8 4-.8 6 .6 2-1.4 4-1.4 6-.6v9.6c-2-.8-4-.8-6 .6-2-1.4-4-1.4-6-.6zM8 3.8v9.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+    const ICON_AC = '<svg viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5.3 8.2l1.8 1.8 3.6-3.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const ICON_REPO = '<svg viewBox="0 0 16 16" width="16" height="16"><path d="M3 13V3.2C3 2.5 3.6 2 4.3 2H13v9.5H4.4C3.6 11.5 3 12.1 3 13zm0 0c0 .7.6 1.2 1.4 1.2H13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+
+    /* 成就：都由本机记录算出来 */
+    function renderBadges() {
+      const days = Array.from(perDay.keys()).map(k => new Date(k + 'T00:00:00').getTime()).sort((a, b) => a - b);
+      let streak = 0, run = 0;
+      days.forEach((t, i) => { run = i && Math.round((t - days[i - 1]) / DAY) === 1 ? run + 1 : 1; streak = Math.max(streak, run); });
+      const seriesDone = series.filter(s => s.posts.length && s.posts.every(p => readSet.has(p.url))).length;
+      const night = events.some(e => e.type === 'read' && (new Date(e.at).getHours() >= 23 || new Date(e.at).getHours() < 5));
+      const BADGES = [
+        { text: '1', name: '初来乍到', desc: '读完第一篇文章', ok: readSet.size >= 1 },
+        { text: '10', name: '渐入佳境', desc: '读完 10 篇文章', ok: readSet.size >= 10 },
+        { text: '7d', name: '七日连学', desc: '连续 7 天都有学习记录', ok: streak >= 7 },
+        { text: '★', name: '专栏毕业', desc: '读完一个专栏的全部文章', ok: seriesDone >= 1 },
+        { text: '☾', name: '夜猫子', desc: '在 23 点到 5 点之间读完一篇文章', ok: night },
+        { text: 'AC', name: '首次通过', desc: '在刷题里通过第一道题', ok: solved >= 1 }
+      ];
+      const got = BADGES.filter(x => x.ok).length;
+      $('[data-badges]').innerHTML = BADGES.map((x, i) =>
+        `<span class="gh-badge b${i}${x.ok ? '' : ' is-locked'}" title="${esc(x.name)}：${esc(x.desc)}${x.ok ? '' : '（未解锁）'}">${esc(x.text)}</span>`).join('');
+      $('[data-badges-hint]').textContent = got ? `已解锁 ${got} / ${BADGES.length}` : '读完第一篇文章，解锁第一个成就';
+    }
+
+    function renderAll() { renderYears(); renderCalendar(); renderActivity(); }
+
+    yearsEl.addEventListener('click', e => {
+      const btn = e.target.closest('[data-year]');
+      if (!btn) return;
+      range = btn.dataset.year;
+      monthsShown = 2;
+      renderAll();
+    });
+    activityEl.addEventListener('click', e => {
+      if (!e.target.closest('[data-act-more]')) return;
+      monthsShown += 3;
+      renderActivity();
+    });
+
+    renderBadges();
+    renderAll();
   }
 
   /* ---------- 代码块：语言标签 + 复制按钮 ---------- */

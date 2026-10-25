@@ -44,6 +44,24 @@ schemes:
     - { id: monokai, name: Monokai, mode: dark }
     - { id: rose-pine, name: Rosé Pine, mode: dark }
 
+# 首页（GitHub 主页风格）
+# projects：专栏之外的栏目，和专栏卡片排在一起；以后加新栏目往这里加一项
+#   kind: problems 表示刷题，卡片上显示题目数和本机的通过数
+home:
+  # 头像，三种写法：
+  #   预设：terminal（终端）/ identicon（GitHub 式像素块）/ monogram（首字母）/
+  #         pixel-cat（像素猫）/ pixel-robot（像素机器人）/ code（</> 代码符号）
+  #   图片：/img/me.png（放在 source/img/ 下）或 https://... 的网址
+  #   github：直接用 GitHub 头像
+  avatar: terminal
+  projects:
+    - name: 刷题
+      path: /problems/
+      desc: 在浏览器里写代码、运行和判题，C++ / Python / JavaScript 都能用，附参考解答。
+      lang: C++ · Python · JS
+      color: "#3572A5"
+      kind: problems
+
 favicon: /img/logo.svg
 github: https://github.com/Lucakes-bw
 since: 2026

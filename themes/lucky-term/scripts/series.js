@@ -34,6 +34,8 @@ function buildSeries(hexo, key, conf) {
     key,
     name: conf.category,
     desc: conf.desc || '',
+    lang: conf.lang || '',
+    color: conf.color || '',
     path: `column/${key}/`,
     chapters,
     items: chapters.flatMap(c => c.posts.map(p => ({ ...p, chapter: c.name })))
@@ -65,6 +67,8 @@ hexo.extend.helper.register('series_json', function () {
   return JSON.stringify(allSeries(hexo).map(s => ({
     key: s.key,
     name: s.name,
+    url: urlFor(s.path),
+    color: s.color,
     posts: s.items.map(it => ({ title: it.post.title, url: urlFor(it.post.path) }))
   }))).replace(/</g, '\\u003c');
 });
