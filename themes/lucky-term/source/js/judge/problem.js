@@ -314,7 +314,8 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
   function cleanClang(text) {
     text = (text || '').replace(/\x1b\[[0-9;]*m/g, '').trim();
     if (/lt_judge\.cpp/.test(text) && !/solution\.cpp:\d+:\d+: error/.test(text)) {
-      text = `提示：判题程序调用 Solution::${sig.function} 时出错，请检查类名、函数名、参数和返回类型是否和模板一致。\n\n` + text;
+      const callee = sig.design ? `${sig.design.class} 的构造函数或方法` : `Solution::${sig.function}`;
+      text = `提示：判题程序调用 ${callee} 时出错，请检查类名、函数名、参数和返回类型是否和模板一致。\n\n` + text;
     }
     return text;
   }
