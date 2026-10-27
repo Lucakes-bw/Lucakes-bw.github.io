@@ -22,7 +22,6 @@
     if (!s) return;
     html.setAttribute('data-scheme', id);
     html.setAttribute('data-theme', s.mode);
-    if (s.ui) html.setAttribute('data-ui', s.ui); else html.removeAttribute('data-ui');   // 界面风格，如 iOS
     $$('[data-scheme-toggle]').forEach(el => { el.title = `配色：${s.name}`; });
     $$('.scheme-item').forEach(li => li.setAttribute('aria-selected', String(li.dataset.schemeId === id)));
     const meta = $('meta[name="theme-color"]');
@@ -50,6 +49,22 @@
     applyScheme(savedScheme);
   };
   if (darkMQ.addEventListener) darkMQ.addEventListener('change', followSystem);
+
+  /* 界面风格（终端 / iOS）和配色分开存：lt-ui */
+  function setUi(ui) {
+    if (ui === 'ios') html.setAttribute('data-ui', 'ios'); else html.removeAttribute('data-ui');
+    $$('[data-ui-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.uiV === ui)));
+    try { localStorage.setItem('lt-ui', ui); } catch (e) { /* ignore */ }
+    // 终端风格整页用等宽字体；iOS 风格只有代码要用
+    if (ui !== 'ios' || $('pre, code, .ide, .dsviz')) window.LT.loadMono();
+  }
+  const curUi = html.getAttribute('data-ui') === 'ios' ? 'ios' : 'term';
+  $$('[data-ui-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.uiV === curUi)));
+  $$('[data-ui-switch]').forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('[data-ui-v]');
+    if (b) setUi(b.dataset.uiV);
+  }));
+  if (curUi === 'ios' && $('pre, code, .ide, .dsviz')) window.LT.loadMono();
 
   const picker = $('[data-scheme-picker]');
   if (picker) {
@@ -317,7 +332,7 @@
       }
       calEl.style.setProperty('--weeks', col - 2);
       calEl.innerHTML = html;
-      titleEl.textContent = `${b.label}有 ${total} 次学习记录`;
+      titleEl.textContent = events.length ? `${b.label}有 ${total} 次学习记录` : '学习记录';
       if (range === 'last') scrollEl.scrollLeft = scrollEl.scrollWidth;
     }
 
@@ -411,6 +426,7 @@
       $('[data-badges]').innerHTML = BADGES.map((x, i) =>
         `<span class="gh-badge b${i}${x.ok ? '' : ' is-locked'}" title="${esc(x.name)}：${esc(x.desc)}${x.ok ? '' : '（未解锁）'}">${esc(x.text)}</span>`).join('');
       $('[data-badges-hint]').textContent = got ? `已解锁 ${got} / ${BADGES.length}` : '读完第一篇文章，解锁第一个成就';
+      $('[data-badges]').classList.toggle('is-empty', !got);         // 一个都没解锁时缩小显示
     }
 
     function renderAll() { renderYears(); renderCalendar(); renderActivity(); }
@@ -428,6 +444,8 @@
       renderActivity();
     });
 
+    // 新访客没有任何记录：热力图和年份收起来，只留一行提示，不占一大片空格子
+    calEl.closest('[data-contrib]').classList.toggle('is-empty', !events.length);
     renderBadges();
     renderAll();
   }

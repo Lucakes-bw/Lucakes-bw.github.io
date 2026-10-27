@@ -28,7 +28,16 @@
           </svg>
         </button>
         <div class="scheme-menu" data-scheme-menu hidden>
-          <div class="scheme-menu-head"><span class="ui-term"><span class="c-accent">$</span> theme --list</span><span class="ui-ios">配色</span></div>
+          <div class="scheme-menu-head"><span class="ui-term"><span class="c-accent">$</span> theme --list</span><span class="ui-ios">外观</span></div>
+          <%# 风格和配色互不影响：iOS 布局也可以配 Nord、Dracula 等任意颜色 %>
+          <div class="ui-switch">
+            <span class="ui-switch-label">风格</span>
+            <div class="seg" role="group" aria-label="界面风格" data-ui-switch>
+              <button type="button" data-ui-v="term" aria-pressed="false">终端</button>
+              <button type="button" data-ui-v="ios" aria-pressed="false">iOS</button>
+            </div>
+          </div>
+          <div class="ui-switch-label scheme-list-label">配色</div>
           <ul class="scheme-list" role="listbox" aria-label="配色方案" tabindex="-1">
             <% ((theme.schemes && theme.schemes.list) || []).forEach(function (s) { %>
             <li class="scheme-item" role="option" aria-selected="false" data-scheme-id="<%= s.id %>">
