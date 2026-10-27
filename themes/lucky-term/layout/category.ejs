@@ -1,6 +1,6 @@
 <div class="wrap page">
-  <div class="post-path"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('/categories/') %>">categories</a>/<span class="c-fg"><%= page.category %></span></div>
-  <h1 class="page-title"><span class="c-accent">$</span> ls <%= page.category %>/ <span class="c-muted">| wc -l → <%= page.posts.length %></span></h1>
+  <div class="post-path"><span class="ui-term"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('/categories/') %>">categories</a>/<span class="c-fg"><%= page.category %></span></span><span class="ui-ios"><a href="<%- url_for('/categories/') %>">分类</a></span></div>
+  <h1 class="page-title"><span class="ui-term"><span class="c-accent">$</span> ls <%= page.category %>/ <span class="c-muted">| wc -l → <%= page.posts.length %></span></span><span class="ui-ios"><%= page.category %> <span class="c-muted"><%= page.posts.length %> 篇</span></span></h1>
   <%- partial('_partial/post-list', { posts: page.posts }) %>
   <%- partial('_partial/pagination') %>
 </div>

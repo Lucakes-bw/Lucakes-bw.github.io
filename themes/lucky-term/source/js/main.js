@@ -131,7 +131,10 @@
       const done = s.posts.filter(p => readSet.has(p.url)).length;
       $$(`[data-series="${s.key}"]`).forEach(node => {
         const bar = $('[data-bar]', node);
-        if (bar) bar.textContent = asciiBar(done, s.posts.length, bar.textContent.length - 2);
+        if (bar) {
+          bar.textContent = asciiBar(done, s.posts.length, bar.textContent.length - 2);
+          bar.style.setProperty('--pct', s.posts.length ? done / s.posts.length : 0);   // iOS 风格用它画进度条
+        }
         const count = $('[data-count]', node);
         if (count) count.textContent = done;
         node.classList.toggle('is-done', s.posts.length > 0 && done === s.posts.length);
@@ -463,24 +466,63 @@
 
   /* ---------- 目录高亮 ---------- */
   const tocLinks = $$('#toc a');
-  if (tocLinks.length && 'IntersectionObserver' in window) {
+  const fabText = $('[data-toc-fab-text]');                    // 窄屏目录按钮上显示当前小节
+  if (tocLinks.length) {
     const map = new Map();
     tocLinks.forEach(a => {
       const id = decodeURIComponent(a.getAttribute('href').slice(1));
       const h = document.getElementById(id);
       if (h) map.set(h, a);
     });
-    const visible = new Set();
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(en => en.isIntersecting ? visible.add(en.target) : visible.delete(en.target));
-      const heads = Array.from(map.keys());
-      let current = heads.filter(h => visible.has(h))[0];
-      if (!current) current = heads.filter(h => h.getBoundingClientRect().top < 120).pop();
+    // 当前小节 = 最后一个已经滚过顶部附近的标题。直接按位置算，快速滑过一大段也不会漏掉
+    const heads = Array.from(map.keys());
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      let current = null;
+      for (const h of heads) { if (h.getBoundingClientRect().top < 120) current = h; else break; }
       tocLinks.forEach(a => a.classList.remove('is-active'));
       if (current) map.get(current).classList.add('is-active');
-    }, { rootMargin: '-80px 0px -60% 0px' });
-    map.forEach((_, h) => io.observe(h));
+      if (fabText) fabText.textContent = current ? map.get(current).textContent.trim() : '目录';
+    };
+    window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    update();
   }
+
+  /* ---------- 窄屏目录：右下角按钮弹出，按钮上显示当前小节 ---------- */
+  const fab = $('[data-toc-fab]');
+  const toc = $('#toc');
+  const tocBackdrop = $('[data-toc-backdrop]');
+  if (fab && toc) {
+    const setSheet = open => {
+      toc.classList.toggle('is-open', open);
+      tocBackdrop.hidden = !open;
+      fab.setAttribute('aria-expanded', String(open));
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) {
+        const cur = $('a.is-active', toc);
+        if (cur) cur.scrollIntoView({ block: 'center' });
+      }
+    };
+    fab.addEventListener('click', () => setSheet(!toc.classList.contains('is-open')));
+    tocBackdrop.addEventListener('click', () => setSheet(false));
+    toc.addEventListener('click', e => { if (e.target.closest('a')) setSheet(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && toc.classList.contains('is-open')) setSheet(false); });
+    matchMedia('(min-width: 1001px)').addEventListener('change', e => { if (e.matches) setSheet(false); });
+  }
+
+  /* ---------- 手机顶栏：往下读时收起，往上滑时出现 ---------- */
+  const narrow = matchMedia('(max-width: 760px)');
+  const headerEl = $('.site-header');
+  let lastY = window.scrollY;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    if (!narrow.matches || !headerEl) { html.classList.remove('is-header-hidden'); lastY = y; return; }
+    if (Math.abs(y - lastY) < 8) return;                         // 忽略手指的细小抖动
+    const menuOpen = !$('[data-scheme-menu]').hidden;
+    html.classList.toggle('is-header-hidden', y > lastY && y > headerEl.offsetHeight && !menuOpen);
+    lastY = y;
+  }, { passive: true });
 
   /* ---------- 搜索 ---------- */
   const modal = $('#search-modal');
@@ -491,18 +533,9 @@
 
   async function loadIndex() {
     if (index) return index;
-    const xml = await fetch(window.LT.search).then(r => r.text());
-    const doc = new DOMParser().parseFromString(xml, 'text/xml');
-    index = $$('entry', doc).map(e => {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = (e.querySelector('content') || {}).textContent || '';
-      tmp.querySelectorAll('.gutter').forEach(g => g.remove());   // 去掉代码行号
-      return {
-        title: (e.querySelector('title') || {}).textContent || '',
-        url: (e.querySelector('url') || {}).textContent || '',
-        text: tmp.textContent.replace(/\s+/g, ' ')
-      };
-    });
+    // search.json 由主题的 scripts/search.js 生成：已经是纯文本，不含代码块
+    const data = await fetch(window.LT.search).then(r => r.json());
+    index = data.map(p => ({ title: p.t, url: p.u, text: (p.g ? p.g + ' ' : '') + p.c }));
     return index;
   }
 

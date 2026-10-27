@@ -6,13 +6,13 @@
 <link rel="stylesheet" href="<%- asset_url('/css/judge.css') %>">
 <div class="ide" data-ide>
   <section class="ide-pane ide-desc" aria-label="题目描述">
-    <div class="ide-bar"><span class="c-accent">$</span> cat README.md</div>
+    <div class="ide-bar"><span class="ui-term"><span class="c-accent">$</span> cat README.md</span><span class="ui-ios">题目描述</span></div>
     <div class="ide-desc-body">
-      <div class="post-path"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('problems/') %>">problems</a>/<span class="c-fg"><%= p.slug %></span></div>
+      <div class="post-path"><span class="ui-term"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('problems/') %>">problems</a>/<span class="c-fg"><%= p.slug %></span></span><span class="ui-ios"><a href="<%- url_for('problems/') %>">刷题</a></span></div>
       <h1 class="pb-title"><span class="post-no"><%= String(p.id).padStart(3, '0') %></span><%= p.title %></h1>
       <div class="pb-meta">
         <span class="diff diff-<%= p.difficulty %>"><%= difficulty_name(p.difficulty) %></span>
-        <% p.tags.forEach(function (t) { %><span class="c-muted">#<%= t %></span><% }) %>
+        <% p.tags.forEach(function (t) { %><span class="c-muted"><span class="ui-term">#</span><%= t %></span><% }) %>
         <span class="pb-solved" data-solved hidden>✓ 已通过</span>
         <% if (p.leetcode) { %><a class="pb-origin" href="<%= p.leetcode %>" target="_blank" rel="noopener">原题 ↗</a><% } %>
       </div>
@@ -30,7 +30,7 @@
 
       <% if (p.relatedPosts.length) { %>
       <div class="pb-related">
-        <div class="side-title"># 相关文章</div>
+        <div class="side-title"><span class="ui-term"># </span><span class="ui-ios"></span>相关文章</div>
         <ul class="side-list">
           <% p.relatedPosts.forEach(function (post) { %><li><a href="<%- url_for(post.path) %>"><%= post.title %></a></li><% }) %>
         </ul>
@@ -39,7 +39,7 @@
 
       <nav class="pb-nav">
         <% if (page.prev) { %><a href="<%- url_for('problems/' + page.prev.slug + '/') %>">← <%= page.prev.id %>. <%= page.prev.title %></a><% } else { %><span></span><% } %>
-        <a href="<%- url_for('problems/') %>" class="c-muted">cd ..</a>
+        <a href="<%- url_for('problems/') %>" class="c-muted"><span class="ui-term">cd ..</span><span class="ui-ios">题库</span></a>
         <% if (page.next) { %><a href="<%- url_for('problems/' + page.next.slug + '/') %>"><%= page.next.id %>. <%= page.next.title %> →</a><% } else { %><span></span><% } %>
       </nav>
     </div>
@@ -87,4 +87,5 @@
   };
 </script>
 <script src="<%- asset_url('/js/judge/lang.js') %>"></script>
+<script src="<%- asset_url('/js/judge/cpp-complete.js') %>"></script>
 <script src="<%- asset_url('/js/judge/problem.js') %>"></script>

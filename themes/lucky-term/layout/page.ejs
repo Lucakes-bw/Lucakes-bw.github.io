@@ -1,6 +1,6 @@
 <div class="wrap page">
 <% if (page.type === 'columns') { %>
-  <h1 class="page-title"><span class="c-accent">$</span> cd columns/ &amp;&amp; ls</h1>
+  <h1 class="page-title"><span class="ui-term"><span class="c-accent">$</span> cd columns/ &amp;&amp; ls</span><span class="ui-ios">专栏</span></h1>
   <p class="c-muted">建议按编号顺序阅读。读过的文章会记录在本机浏览器里，进度条随之更新。</p>
   <%- partial('_partial/roadmap') %>
   <script type="application/json" id="series-data"><%- series_json() %></script>
@@ -10,7 +10,7 @@
 %>
   <% if (!s) { %><p>未找到专栏：<%= page.series %></p><% } else { %>
   <div class="series-head" data-series="<%= s.key %>">
-    <div class="post-path"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('/column/') %>">columns</a>/<span class="c-fg"><%= s.key %></span></div>
+    <div class="post-path"><span class="ui-term"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('/column/') %>">columns</a>/<span class="c-fg"><%= s.key %></span></span><span class="ui-ios"><a href="<%- url_for('/column/') %>">全部专栏</a></span></div>
     <h1 class="page-title"><span class="rm-no"><%= String(s.index).padStart(2, '0') %></span> <%= s.name %></h1>
     <p class="c-muted"><%= s.desc %></p>
     <div class="series-progress">
@@ -20,7 +20,7 @@
   </div>
   <% s.chapters.forEach(function (c) { %>
   <section class="chapter series-chapter">
-    <h2 class="chapter-title"><span class="c-accent">ch<%= c.no %></span> <%= c.name %> <span class="c-muted chapter-count"><%= c.posts.length %> 篇</span></h2>
+    <h2 class="chapter-title"><span class="c-accent"><span class="ui-term">ch<%= c.no %></span><span class="ui-ios">第 <%= c.no %> 章</span></span> <%= c.name %> <span class="c-muted chapter-count"><%= c.posts.length %> 篇</span></h2>
     <% if (c.posts.length) { %>
     <ul class="ls-list">
       <% c.posts.forEach(function (it) { %>
@@ -33,7 +33,7 @@
       <% }) %>
     </ul>
     <% } else { %>
-    <p class="c-muted empty"># TODO: 敬请期待…</p>
+    <p class="c-muted empty"><span class="ui-term"># TODO: </span><span class="ui-ios"></span>敬请期待…</p>
     <% } %>
   </section>
   <% }) %>
@@ -41,13 +41,13 @@
   <% } %>
 
 <% } else if (page.type === 'tags') { %>
-  <h1 class="page-title"><span class="c-accent">$</span> ls tags/ <span class="c-muted">| wc -l → <%= site.tags.length %></span></h1>
+  <h1 class="page-title"><span class="ui-term"><span class="c-accent">$</span> ls tags/ <span class="c-muted">| wc -l → <%= site.tags.length %></span></span><span class="ui-ios">标签 <span class="c-muted"><%= site.tags.length %> 个</span></span></h1>
   <div class="tag-cloud tag-cloud-lg">
-    <% site.tags.sort('-length').each(function (t) { %><a href="<%- url_for(t.path) %>">#<%= t.name %><sup><%= t.length %></sup></a><% }) %>
+    <% site.tags.sort('-length').each(function (t) { %><a href="<%- url_for(t.path) %>"><span class="ui-term">#</span><%= t.name %><sup><%= t.length %></sup></a><% }) %>
   </div>
 
 <% } else if (page.type === 'categories') { %>
-  <h1 class="page-title"><span class="c-accent">$</span> tree categories/</h1>
+  <h1 class="page-title"><span class="ui-term"><span class="c-accent">$</span> tree categories/</span><span class="ui-ios">分类</span></h1>
   <ul class="tree">
     <% site.categories.filter(c => !c.parent).sort('name').each(function (root) {
       const children = site.categories.filter(c => c.parent === root._id).toArray();
@@ -65,15 +65,20 @@
 <% } else if (page.type === 'essay') {
   const essay = (site.data.essay && site.data.essay[0]) || { essay_list: [] };
 %>
-  <h1 class="page-title"><span class="c-accent">$</span> cat notice.log</h1>
+  <h1 class="page-title"><span class="ui-term"><span class="c-accent">$</span> cat notice.log</span><span class="ui-ios">公告</span></h1>
   <ul class="log">
     <% essay.essay_list.forEach(function (n) { %>
-    <li><span class="c-muted">[<%= date(n.date, 'YYYY-MM-DD') %>]</span> <%= n.content %><% if (n.link) { %> <a href="<%- url_for(n.link) %>">→</a><% } %></li>
+    <li><span class="c-muted log-date"><span class="ui-term">[</span><%= date(n.date, 'YYYY-MM-DD') %><span class="ui-term">]</span></span> <%= n.content %><% if (n.link) { %> <a href="<%- url_for(n.link) %>">→</a><% } %></li>
     <% }) %>
   </ul>
 
 <% } else if (page.type === '404') { %>
-  <div class="term notfound">
+  <div class="nf-ios ui-ios">
+    <p class="nf-code">404</p>
+    <p class="nf-text">这个页面不存在，可能已经改名或者被删掉了。</p>
+    <p class="nf-actions"><a class="btn btn-solid" href="<%- url_for('/') %>">回到首页</a> <button type="button" class="btn" data-search-open>搜索文章</button></p>
+  </div>
+  <div class="term notfound ui-term">
     <div class="term-bar"><span>bash</span></div>
     <div class="term-body">
       <p class="cmd"><span class="c-accent">$</span> cd <span id="nf-path"></span></p>
