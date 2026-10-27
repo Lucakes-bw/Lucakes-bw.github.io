@@ -91,6 +91,12 @@ category_map:
   开发工具: dev-tools
   文件IO: file-io
   进程与线程: process-thread
+  客户端开发: client
+  Qt入门: qt-basics
+  界面开发: qt-ui
+  事件与多线程: qt-event-thread
+  网络与数据: qt-network-data
+  综合实战: qt-project
   未分类: uncategorized
 tag_map:
 
