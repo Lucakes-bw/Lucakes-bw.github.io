@@ -4,8 +4,12 @@
   else if (is_category()) title = page.category + ' | ' + config.title;
   else if (is_tag()) title = '#' + page.tag + ' | ' + config.title;
   else if (is_archive()) title = '归档 | ' + config.title;
-  const desc = page.description || config.description;
+  const isPost = is_post();
+  // 文章没写 description 时取正文开头（通常是「本文目标」），分享卡片和搜索引擎都用它
+  const desc = page.description || (isPost ? truncate(strip_html(page.content).replace(/\s+/g, ' ').trim(), { length: 120 }) : config.description);
   const schemes = theme.schemes || { light: 'default-light', dark: 'default-dark', list: [] };
+  const pageUrl = full_url_for(page.path.replace(/index\.html$/, ''));
+  const ogImage = theme.og_image ? full_url_for(theme.og_image) : '';
 %>
 <head>
   <meta charset="utf-8">
@@ -15,29 +19,57 @@
   <% if (config.keywords) { %><meta name="keywords" content="<%= config.keywords %>"><% } %>
   <meta name="author" content="<%= config.author %>">
   <link rel="icon" href="<%- url_for(theme.favicon) %>" type="image/svg+xml">
-  <link rel="canonical" href="<%- full_url_for(page.path.replace(/index\.html$/, '')) %>">
+  <link rel="canonical" href="<%- pageUrl %>">
+  <link rel="alternate" type="application/atom+xml" title="<%= config.title %>" href="<%- url_for('/atom.xml') %>">
+  <%# 分享卡片：微信、Telegram、Twitter、Slack 等读 og: / twitter: 标签 %>
+  <meta property="og:type" content="<%= isPost ? 'article' : 'website' %>">
+  <meta property="og:site_name" content="<%= config.title %>">
+  <meta property="og:title" content="<%= page.title || config.title %>">
+  <meta property="og:description" content="<%= desc %>">
+  <meta property="og:url" content="<%- pageUrl %>">
+  <meta property="og:locale" content="zh_CN">
+  <% if (ogImage) { %><meta property="og:image" content="<%- ogImage %>">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630"><% } %>
+  <% if (isPost) { %><meta property="article:published_time" content="<%= date_xml(page.date) %>"><% } %>
+  <meta name="twitter:card" content="<%= ogImage ? 'summary_large_image' : 'summary' %>">
   <meta name="theme-color" content="#0e1116">
   <script>
     window.LT = { root: <%- JSON.stringify(config.root) %>, search: <%- JSON.stringify(url_for('search.json')) %>, schemes: <%- JSON.stringify(schemes) %> };
     // 首屏前定好配色，避免闪一下默认色
     (function () {
-      var S = window.LT.schemes, id, mode = {}, ui = {};
-      S.list.forEach(function (s) { mode[s.id] = s.mode; ui[s.id] = s.ui; });
+      var S = window.LT.schemes, id, ui, mode = {};
+      S.list.forEach(function (s) { mode[s.id] = s.mode; });
       try {
         id = localStorage.getItem('lt-scheme');
+        ui = localStorage.getItem('lt-ui');
         // 旧版只存了 light / dark
         var old = localStorage.getItem('lt-theme');
         if (!id && (old === 'light' || old === 'dark')) { id = S[old]; localStorage.setItem('lt-scheme', id); }
         localStorage.removeItem('lt-theme');
+        // 旧版选 iOS 配色就等于 iOS 风格；风格单独存之后，替这些读者记成 iOS
+        if (!ui && /^ios-/.test(id)) { ui = 'ios'; localStorage.setItem('lt-ui', ui); }
       } catch (e) {}
       if (!mode[id]) id = S[matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'];
-      document.documentElement.setAttribute('data-scheme', id);
-      document.documentElement.setAttribute('data-theme', mode[id] || 'light');
-      if (ui[id]) document.documentElement.setAttribute('data-ui', ui[id]);
+      if (ui !== 'ios' && ui !== 'term') ui = S.ui === 'ios' ? 'ios' : 'term';
+      var root = document.documentElement;
+      root.setAttribute('data-scheme', id);
+      root.setAttribute('data-theme', mode[id] || 'light');
+      if (ui === 'ios') root.setAttribute('data-ui', 'ios');
+      // 等宽字体：终端风格整页都用；iOS 风格只有代码用，由 main.js 发现页面里有代码时再加载
+      window.LT.loadMono = function () {
+        if (window.LT.monoLoaded) return;
+        window.LT.monoLoaded = true;
+        ['400', '700'].forEach(function (w) {
+          var l = document.createElement('link');
+          l.rel = 'stylesheet';
+          l.href = 'https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.1.0/' + w + '.css';
+          document.head.appendChild(l);
+        });
+      };
+      if (ui !== 'ios') window.LT.loadMono();
     })();
   </script>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.1.0/400.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.1.0/700.css">
   <link rel="stylesheet" href="<%- asset_url('/css/style.css') %>">
 </head>

@@ -20,14 +20,15 @@ hero:
 
 # 配色方案（颜色定义在 themes/lucky-term/source/css/style.css 里）
 # light / dark：访客没选过时，按系统深浅色用哪一个
-# list：菜单里出现的方案和顺序；mode 决定评论区等跟随深色还是浅色；
-#       ui: ios 表示除了颜色，排版和组件也换成 iOS 风格
+# ui：默认界面风格，term（终端）或 ios；访客可以在配色菜单顶部自己切换，和配色互不影响
+# list：菜单里出现的方案和顺序；mode 决定评论区等跟随深色还是浅色
 schemes:
+  ui: term
   light: default-light
   dark: default-dark
   list:
-    - { id: ios-light, name: iOS Light, mode: light, ui: ios }
-    - { id: ios-dark, name: iOS Dark, mode: dark, ui: ios }
+    - { id: ios-light, name: iOS Light, mode: light }
+    - { id: ios-dark, name: iOS Dark, mode: dark }
     - { id: default-light, name: Default Light, mode: light }
     - { id: github-light, name: GitHub Light, mode: light }
     - { id: solarized-light, name: Solarized Light, mode: light }
@@ -63,6 +64,8 @@ home:
       kind: problems
 
 favicon: /img/logo.svg
+# 链接分享到微信、Telegram、Twitter 等时显示的配图（1200×630 的 PNG）
+og_image: /img/og.png
 github: https://github.com/Lucakes-bw
 since: 2026
 
