@@ -131,7 +131,10 @@
       const done = s.posts.filter(p => readSet.has(p.url)).length;
       $$(`[data-series="${s.key}"]`).forEach(node => {
         const bar = $('[data-bar]', node);
-        if (bar) bar.textContent = asciiBar(done, s.posts.length, bar.textContent.length - 2);
+        if (bar) {
+          bar.textContent = asciiBar(done, s.posts.length, bar.textContent.length - 2);
+          bar.style.setProperty('--pct', s.posts.length ? done / s.posts.length : 0);   // iOS 风格用它画进度条
+        }
         const count = $('[data-count]', node);
         if (count) count.textContent = done;
         node.classList.toggle('is-done', s.posts.length > 0 && done === s.posts.length);

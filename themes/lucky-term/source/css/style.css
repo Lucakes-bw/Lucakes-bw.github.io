@@ -1215,3 +1215,105 @@ html[data-ui="ios"] .gh-tags a { background: var(--fill); color: var(--fg-2); }
 html[data-ui="ios"] .gh-readme-head { font-family: var(--sans); }
 html[data-ui="ios"] .gh-years button[aria-pressed="true"] { background: var(--fill); color: var(--fg); }
 html[data-ui="ios"] .gh-act-empty { border: 0; background: var(--panel); border-radius: 16px; }
+
+/* ---- iOS 风格：其他页面（专栏、目录、归档、标签、分类、公告、刷题、404、搜索） ---- */
+/* 大标题，数量用浅色小字跟在后面 */
+html[data-ui="ios"] .page-title { font: 800 34px/1.25 var(--sans); letter-spacing: -.8px; margin: 8px 0 14px; }
+html[data-ui="ios"] .page-title .c-muted { font: 400 17px/1 var(--sans); letter-spacing: 0; margin-left: 6px; }
+html[data-ui="ios"] .page-title .rm-no {
+  display: block; width: fit-content; margin-bottom: 6px;
+  font: 600 14px/1.4 var(--sans); letter-spacing: 0; color: var(--accent);
+}
+html[data-ui="ios"] .page-title .rm-no::before { content: "专栏 "; }
+html[data-ui="ios"] .sec-title { font: 700 22px/1.3 var(--sans); letter-spacing: -.3px; }
+html[data-ui="ios"] .sec-title .c-muted { font-size: 15px; font-weight: 400; margin-left: 4px; }
+html[data-ui="ios"] .side-title { font: 600 13px/1.4 var(--sans); color: var(--muted); }
+html[data-ui="ios"] .series-progress, html[data-ui="ios"] .pb-summary { font: 14px/1.6 var(--sans); color: var(--muted); gap: 6px 14px; align-items: center; }
+
+/* 进度条：字符画换成真正的条，比例由脚本写进 --pct */
+html[data-ui="ios"] .rm-bar {
+  display: inline-block; vertical-align: middle;
+  width: 96px; height: 6px; border-radius: 3px;
+  font-size: 0; letter-spacing: 0; overflow: hidden;
+  background: linear-gradient(to right, var(--accent) calc(var(--pct, 0) * 100%), var(--fill) 0);
+}
+html[data-ui="ios"] .series-progress .rm-bar, html[data-ui="ios"] .pb-summary .rm-bar { width: 160px; }
+html[data-ui="ios"] .rm-progress { font-family: var(--sans); align-items: center; }
+
+/* 专栏页的路线卡片 */
+html[data-ui="ios"] .page .roadmap .rm-link { background: var(--panel); box-shadow: var(--shadow); border-radius: 18px; padding: 18px 20px; }
+html[data-ui="ios"] .rm-node::after { content: none; }
+html[data-ui="ios"] .rm-no { font-family: var(--sans); }
+html[data-ui="ios"] .rm-name { font: 700 18px/1.3 var(--sans); }
+html[data-ui="ios"] .rm-node.is-done .rm-link { background: var(--accent-soft); }
+html[data-ui="ios"] .resume { font-family: var(--sans); }
+
+/* 列表：iOS 的分组卡片，行之间是缩进的细线 */
+html[data-ui="ios"] .ls-list { border-top: 0; background: var(--panel); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+html[data-ui="ios"] .ls-row { padding: 13px 18px; border-bottom: 0; position: relative; }
+html[data-ui="ios"] .ls-row + .ls-row::before { content: ""; position: absolute; top: 0; left: 18px; right: 0; border-top: 1px solid var(--border); }
+html[data-ui="ios"] .ls-row:hover { background: var(--fill); }
+html[data-ui="ios"] .ls-date, html[data-ui="ios"] .ls-size, html[data-ui="ios"] .ls-no { font: 13px/1.4 var(--sans); }
+html[data-ui="ios"] .ls-no { color: var(--muted); font-variant-numeric: tabular-nums; }
+html[data-ui="ios"] .ls-title { font-weight: 500; }
+html[data-ui="ios"] .read-mark { color: #34c759; }
+html[data-ui="ios"] .chapter { margin-top: 30px; }
+html[data-ui="ios"] .chapter-title { font: 600 13px/1.5 var(--sans); color: var(--muted); margin: 0 0 8px 18px; letter-spacing: .2px; }
+html[data-ui="ios"] .chapter-title .c-accent { color: var(--muted); margin-right: 4px; }
+html[data-ui="ios"] .chapter-count { font-size: 13px; }
+html[data-ui="ios"] .empty { border-top: 0; font: 14px/1.5 var(--sans); background: var(--panel); border-radius: 16px; padding: 16px 18px; }
+html[data-ui="ios"] .pager { font-family: var(--sans); }
+html[data-ui="ios"] .gh-date { font-family: var(--sans); }
+html[data-ui="ios"] .gh-badge { font-family: var(--sans); }
+
+/* 标签：灰色胶囊 */
+html[data-ui="ios"] .tag-cloud a { font: 14px/1 var(--sans); background: var(--panel); border-radius: 999px; padding: 8px 14px; box-shadow: var(--shadow); color: var(--fg); }
+html[data-ui="ios"] .side-box .tag-cloud a { background: var(--fill); box-shadow: none; font-size: 13px; padding: 6px 11px; }
+html[data-ui="ios"] .tag-cloud a:hover { color: var(--accent); }
+html[data-ui="ios"] .tag-cloud sup { font-family: var(--sans); color: var(--muted); }
+html[data-ui="ios"] .tag-cloud .tag-more { background: none; box-shadow: none; color: var(--accent); }
+html[data-ui="ios"] .next-series { font-family: var(--sans); }
+html[data-ui="ios"] .next-list li + li { border-top: 1px solid var(--border); }
+
+/* 分类：每个一级分类一张卡片，子分类是胶囊 */
+html[data-ui="ios"] .tree { font-family: var(--sans); }
+html[data-ui="ios"] .tree > li { background: var(--panel); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 18px; font-weight: 600; }
+html[data-ui="ios"] .tree ul { display: flex; flex-wrap: wrap; gap: 6px; border-left: 0; margin: 10px 0 0; padding: 0; font-weight: 400; }
+html[data-ui="ios"] .tree ul li { padding: 4px 11px; border-radius: 999px; background: var(--fill); font-size: 13px; }
+html[data-ui="ios"] .tree ul li::before { content: none; }
+
+/* 公告 */
+html[data-ui="ios"] .log { background: var(--panel); border-radius: 16px; box-shadow: var(--shadow); padding: 4px 18px; }
+html[data-ui="ios"] .log li { border-bottom-color: var(--border); padding: 14px 0; }
+html[data-ui="ios"] .log li:last-child { border-bottom: 0; }
+html[data-ui="ios"] .log-date { display: block; font: 13px/1.6 var(--sans); }
+
+/* 404 */
+html[data-ui="ios"] .nf-ios { display: block; max-width: 520px; margin: 12vh auto; text-align: center; }
+html[data-ui="ios"] .nf-code { margin: 0; font: 800 96px/1 var(--sans); letter-spacing: -4px; color: var(--fg); }
+html[data-ui="ios"] .nf-text { margin: 16px 0 28px; font-size: 17px; color: var(--muted); }
+html[data-ui="ios"] .nf-actions { display: flex; justify-content: center; gap: 10px; }
+
+/* 搜索框、配色菜单 */
+html[data-ui="ios"] .search-input-row { font-family: var(--sans); }
+html[data-ui="ios"] .search-input-row input { font-family: var(--sans); }
+html[data-ui="ios"] .search-ico { display: block; color: var(--muted); flex: none; }
+html[data-ui="ios"] .search-hint, html[data-ui="ios"] .search-results .sr-empty { font-family: var(--sans); }
+html[data-ui="ios"] .scheme-menu-head { font: 600 13px/1 var(--sans); color: var(--muted); }
+
+/* 刷题列表 */
+html[data-ui="ios"] .pb-filters { border-top: 0; }
+html[data-ui="ios"] .pb-search { font-family: var(--sans); border: 0; background: var(--fill); border-radius: 10px; color: var(--muted); }
+html[data-ui="ios"] .pb-search input { font-family: var(--sans); }
+html[data-ui="ios"] .pb-search svg.ui-ios { display: block; }
+html[data-ui="ios"] .pb-tags-filter button { font: 13px/1 var(--sans); border-radius: 999px; padding: 7px 12px; background: var(--fill); }
+html[data-ui="ios"] .pb-tags-filter button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+html[data-ui="ios"] .pb-row-tags, html[data-ui="ios"] .pb-state { font-family: var(--sans); }
+html[data-ui="ios"] .diff { font-family: var(--sans); border-radius: 999px; padding-left: 9px; padding-right: 9px; }
+
+/* 做题页 */
+html[data-ui="ios"] .ide-bar, html[data-ui="ios"] .pb-meta, html[data-ui="ios"] .pb-nav, html[data-ui="ios"] .ide-empty, html[data-ui="ios"] .ide-loading { font-family: var(--sans); }
+html[data-ui="ios"] .pb-title { font-weight: 800; letter-spacing: -.4px; }
+/* 题号：「第 001 题」，不要沿用文章的「第 x 节」 */
+html[data-ui="ios"] .pb-title .post-no::before { content: "第 "; }
+html[data-ui="ios"] .pb-title .post-no::after { content: " 题"; }

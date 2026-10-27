@@ -28,7 +28,7 @@
           </svg>
         </button>
         <div class="scheme-menu" data-scheme-menu hidden>
-          <div class="scheme-menu-head"><span class="c-accent">$</span> theme --list</div>
+          <div class="scheme-menu-head"><span class="ui-term"><span class="c-accent">$</span> theme --list</span><span class="ui-ios">配色</span></div>
           <ul class="scheme-list" role="listbox" aria-label="配色方案" tabindex="-1">
             <% ((theme.schemes && theme.schemes.list) || []).forEach(function (s) { %>
             <li class="scheme-item" role="option" aria-selected="false" data-scheme-id="<%= s.id %>">
