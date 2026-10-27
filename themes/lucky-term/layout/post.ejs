@@ -33,6 +33,12 @@
       <div class="toc-title"><span class="ui-term"><span class="c-accent">$</span> grep '^#' <%= page.slug %>.md</span><span class="ui-ios">目录</span></div>
       <%- tocHtml %>
     </aside>
+    <%# 窄屏没有侧边目录：右下角按钮从底部弹出目录 %>
+    <button type="button" class="toc-fab" data-toc-fab aria-controls="toc" aria-expanded="false">
+      <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 4h1M6 4h7.5M2.5 8h1M6 8h7.5M2.5 12h1M6 12h7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span class="toc-fab-text" data-toc-fab-text>目录</span>
+    </button>
+    <div class="toc-backdrop" data-toc-backdrop hidden></div>
     <% } %>
   </div>
 

@@ -18,7 +18,7 @@
   <link rel="canonical" href="<%- full_url_for(page.path.replace(/index\.html$/, '')) %>">
   <meta name="theme-color" content="#0e1116">
   <script>
-    window.LT = { root: <%- JSON.stringify(config.root) %>, search: <%- JSON.stringify(url_for((config.search && config.search.path) || 'search.xml')) %>, schemes: <%- JSON.stringify(schemes) %> };
+    window.LT = { root: <%- JSON.stringify(config.root) %>, search: <%- JSON.stringify(url_for('search.json')) %>, schemes: <%- JSON.stringify(schemes) %> };
     // 首屏前定好配色，避免闪一下默认色
     (function () {
       var S = window.LT.schemes, id, mode = {}, ui = {};

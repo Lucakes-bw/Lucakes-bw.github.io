@@ -128,12 +128,7 @@ theme: lucky-term
 deploy:
   type: ''
 
-# 本地搜索（hexo-generator-search）
-search:
-  path: search.xml
-  field: post
-  content: true
-  format: html
+# 本地搜索：索引 /search.json 由主题的 scripts/search.js 生成，不需要插件
 
 # 归档 / 分类 / 标签页不分页
 archive_generator:
