@@ -28,6 +28,7 @@
   ['easy', 'medium', 'hard'].forEach(d => { const el = $(`[data-solved-${d}]`); if (el) el.textContent = solved[d]; });
   const width = 20, done = rows.length ? Math.round(solved.all / rows.length * width) : 0;
   $('[data-bar]').textContent = `[${'#'.repeat(done)}${'-'.repeat(width - done)}]`;
+  $('[data-bar]').style.setProperty('--pct', width ? done / width : 0);   // iOS 风格用它画进度条
 
   const filter = { diff: '', state: '', tag: '', q: '' };
   function apply() {

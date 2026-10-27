@@ -1,6 +1,6 @@
 <div class="wrap page">
-  <div class="post-path"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('/tags/') %>">tags</a>/<span class="c-fg"><%= page.tag %></span></div>
-  <h1 class="page-title"><span class="c-accent">$</span> grep -l '#<%= page.tag %>' posts/* <span class="c-muted">| wc -l → <%= page.posts.length %></span></h1>
+  <div class="post-path"><span class="ui-term"><a href="<%- url_for('/') %>">~</a>/<a href="<%- url_for('/tags/') %>">tags</a>/<span class="c-fg"><%= page.tag %></span></span><span class="ui-ios"><a href="<%- url_for('/tags/') %>">标签</a></span></div>
+  <h1 class="page-title"><span class="ui-term"><span class="c-accent">$</span> grep -l '#<%= page.tag %>' posts/* <span class="c-muted">| wc -l → <%= page.posts.length %></span></span><span class="ui-ios"><%= page.tag %> <span class="c-muted"><%= page.posts.length %> 篇</span></span></h1>
   <%- partial('_partial/post-list', { posts: page.posts }) %>
   <%- partial('_partial/pagination') %>
 </div>

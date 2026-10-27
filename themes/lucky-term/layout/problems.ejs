@@ -4,7 +4,7 @@
 %>
 <link rel="stylesheet" href="<%- asset_url('/css/judge.css') %>">
 <div class="wrap page pb-index" data-pb-index>
-  <h1 class="page-title"><span class="c-accent">$</span> ls problems/ <span class="c-muted">| wc -l → <%= list.length %></span></h1>
+  <h1 class="page-title"><span class="ui-term"><span class="c-accent">$</span> ls problems/ <span class="c-muted">| wc -l → <%= list.length %></span></span><span class="ui-ios">刷题 <span class="c-muted"><%= list.length %> 道</span></span></h1>
   <p class="c-muted">在浏览器里直接写代码、运行和提交，支持 C++ / Python / JavaScript，不需要登录。代码草稿和通过记录只保存在你的浏览器里。</p>
 
   <div class="pb-summary" data-pb-summary>
@@ -27,10 +27,10 @@
       <button type="button" data-v="todo" aria-pressed="false">未通过</button>
       <button type="button" data-v="ac" aria-pressed="false">已通过</button>
     </div>
-    <label class="pb-search"><span class="c-accent">grep</span><input type="search" placeholder="题目 / 编号" data-filter-q aria-label="搜索题目"></label>
+    <label class="pb-search"><span class="c-accent ui-term">grep</span><svg class="ui-ios" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="search" placeholder="题目 / 编号" data-filter-q aria-label="搜索题目"></label>
   </div>
   <div class="tag-cloud pb-tags-filter" data-filter="tag">
-    <% tags.forEach(function (t) { %><button type="button" data-v="<%= t %>" aria-pressed="false">#<%= t %></button><% }) %>
+    <% tags.forEach(function (t) { %><button type="button" data-v="<%= t %>" aria-pressed="false"><span class="ui-term">#</span><%= t %></button><% }) %>
   </div>
 
   <ul class="ls-list pb-list">
@@ -39,11 +39,11 @@
       <span class="pb-state" title=""></span>
       <span class="ls-no"><%= String(p.id).padStart(3, '0') %></span>
       <a class="ls-title" href="<%- url_for('problems/' + p.slug + '/') %>"><%= p.title %></a>
-      <span class="pb-row-tags"><% p.tags.forEach(function (t) { %><span>#<%= t %></span><% }) %></span>
+      <span class="pb-row-tags"><% p.tags.forEach(function (t) { %><span><span class="ui-term">#</span><%= t %></span><% }) %></span>
       <span class="diff diff-<%= p.difficulty %>"><%= difficulty_name(p.difficulty) %></span>
     </li>
     <% }) %>
   </ul>
-  <p class="c-muted empty" data-pb-empty hidden># 没有符合条件的题目</p>
+  <p class="c-muted empty" data-pb-empty hidden><span class="ui-term"># </span>没有符合条件的题目</p>
 </div>
 <script src="<%- asset_url('/js/judge/list.js') %>"></script>

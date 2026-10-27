@@ -133,7 +133,7 @@
 <div class="wrap">
   <div class="layout-2col">
     <section class="main-col">
-      <h2 class="sec-title"><span class="c-accent">$</span> ls -lt posts/ <span class="c-muted">--page <%= page.current %></span></h2>
+      <h2 class="sec-title"><span class="ui-term"><span class="c-accent">$</span> ls -lt posts/ <span class="c-muted">--page <%= page.current %></span></span><span class="ui-ios">全部文章 <span class="c-muted">第 <%= page.current %> 页</span></span></h2>
       <%- partial('_partial/post-list', { posts: page.posts }) %>
       <%- partial('_partial/pagination') %>
     </section>
@@ -141,7 +141,7 @@
     <aside class="side-col">
       <% if (allSeries.length) { %>
       <div class="side-box">
-        <h3 class="side-title">$ next <span class="c-muted"># 每个专栏下一篇没读的</span></h3>
+        <h3 class="side-title"><span class="ui-term">$ next <span class="c-muted"># 每个专栏下一篇没读的</span></span><span class="ui-ios">每个专栏的下一篇</span></h3>
         <ul class="next-list">
           <% allSeries.forEach(function (s) { const first = s.items[0]; %>
           <li data-next="<%= s.key %>">
@@ -154,9 +154,9 @@
       <% } %>
 
       <div class="side-box">
-        <h3 class="side-title"># tags</h3>
+        <h3 class="side-title"><span class="ui-term"># tags</span><span class="ui-ios">标签</span></h3>
         <div class="tag-cloud">
-          <% tags.each(function (t) { %><a href="<%- url_for(t.path) %>">#<%= t.name %><sup><%= t.length %></sup></a><% }) %>
+          <% tags.each(function (t) { %><a href="<%- url_for(t.path) %>"><span class="ui-term">#</span><%= t.name %><sup><%= t.length %></sup></a><% }) %>
           <% if (site.tags.length > TAG_LIMIT) { %><a class="tag-more" href="<%- url_for(config.tag_dir + '/') %>">更多 <%= site.tags.length - TAG_LIMIT %> 个 →</a><% } %>
         </div>
       </div>
