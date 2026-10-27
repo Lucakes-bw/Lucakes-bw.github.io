@@ -51,7 +51,7 @@
     <section class="gh-card gh-readme">
       <div class="gh-readme-head"><%= theme.prompt.user %> / <strong>README</strong>.md</div>
       <ul class="gh-readme-list">
-        <li>按专栏顺序读：从 C/C++ 语法，到数据结构，再到网络和 Linux 系统编程。</li>
+        <li>按专栏顺序读：从 C/C++ 语法，到数据结构，再到 Linux、网络编程和数据库。</li>
         <% essay.essay_list.slice(0, 3).forEach(function (n) { %>
         <li><%= n.content %><% if (n.link) { %> <a href="<%- url_for(n.link) %>">→</a><% } %> <span class="gh-date"><%= date(n.date, 'MM-DD') %></span></li>
         <% }) %>

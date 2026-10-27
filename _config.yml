@@ -4,9 +4,9 @@
 
 # Site
 title: lucky 的编程笔记
-subtitle: 'C/C++ · 数据结构 · 计算机网络 · Linux'
-description: '系统整理 C/C++、数据结构、计算机网络、Linux 基础的学习资料'
-keywords: C语言, C++, 数据结构, 计算机网络, Linux
+subtitle: 'C/C++ · 数据结构 · Linux · 计算机网络 · 数据库'
+description: '系统整理 C/C++、数据结构、Linux 基础、计算机网络、数据库的学习资料'
+keywords: C语言, C++, 数据结构, 计算机网络, Linux, 数据库, MySQL
 author: lucky
 language: zh-CN
 timezone: 'Asia/Shanghai'
