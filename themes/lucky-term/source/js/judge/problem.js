@@ -115,6 +115,13 @@
         'editorSuggestWidget.background': c['--panel'],
         'editorSuggestWidget.border': c['--border-2'],
         'editorSuggestWidget.selectedBackground': c['--panel-2'],
+        'editorSuggestWidget.selectedForeground': c['--fg'],
+        'editorSuggestWidget.selectedIconForeground': c['--fg'],
+        'editorSuggestWidget.foreground': c['--fg-2'],
+        'editorSuggestWidget.highlightForeground': c['--accent'],
+        'editorSuggestWidget.focusHighlightForeground': c['--accent'],
+        'list.activeSelectionForeground': c['--fg'],
+        'list.activeSelectionIconForeground': c['--fg'],
         'editorHoverWidget.background': c['--panel'],
         'editorHoverWidget.border': c['--border-2'],
         'editorError.foreground': c['--danger'],
@@ -144,6 +151,8 @@
 declare class ListNode { constructor(val?: number, next?: ListNode | null); val: number; next: ListNode | null; }
 declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null); val: number; left: TreeNode | null; right: TreeNode | null; }
 `, 'judge.d.ts');
+    window.LTCppComplete.register(monaco);
+    registerPython(monaco);
 
     Object.keys(J.LANGS).forEach(l => {
       const m = monaco.editor.createModel(codeOf(l), J.LANGS[l].monaco, monaco.Uri.parse(`file:///${J.LANGS[l].file}`));
@@ -317,8 +326,84 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
     pyW = new Worker(A.pyWorker);
     pyW.addEventListener('message', ({ data }) => {
       if (data.type === 'ready') { pyReady = true; setStatus('Python 3.12 就绪'); }
+      else if (data.type === 'jedi-ready') { jediReady = true; if (lang === 'python') setStatus('Python 3.12 就绪 · 补全已开启'); }
+      else if (data.type === 'completions' || data.type === 'signatures') {
+        const done = jediWaiting[data.id];
+        delete jediWaiting[data.id];
+        if (done) done(data.items);
+      }
     });
     return pyW;
+  }
+  function killPython() {
+    if (pyW) pyW.terminate();
+    pyW = null;
+    pyReady = jediReady = false;
+    Object.keys(jediWaiting).forEach(id => { jediWaiting[id]([]); delete jediWaiting[id]; });
+  }
+
+  // Python 补全和参数提示：交给 Worker 里的 Jedi。同一时间只发一个请求，
+  // 打字快的时候新请求顶掉还在排队的旧请求，免得 Worker 里积压一串过时的请求
+  let jediReady = false, jediSeq = 0, jediBusy = false, jediQueued = null;
+  const jediWaiting = {};
+  function askJedi(type, model, pos) {
+    if (!jediReady) {
+      // 还没加载好：先在后台加载，这次用编辑器自带的单词补全
+      if (!jediLoading) { jediLoading = true; pyWorker().postMessage({ type: 'jedi', prelude: J.PY_PRELUDE }); }
+      return Promise.resolve([]);
+    }
+    return new Promise(resolve => {
+      if (jediQueued) jediQueued.resolve([]);
+      jediQueued = { type, code: model.getValue(), line: pos.lineNumber, col: pos.column, resolve };
+      pumpJedi();
+    });
+  }
+  let jediLoading = false;
+  function pumpJedi() {
+    if (jediBusy || !jediQueued) return;
+    const q = jediQueued;
+    jediQueued = null;
+    jediBusy = true;
+    const id = ++jediSeq;
+    jediWaiting[id] = items => { jediBusy = false; q.resolve(items); pumpJedi(); };
+    pyWorker().postMessage({ type: q.type, id, prelude: J.PY_PRELUDE, code: q.code, line: q.line, col: q.col });
+  }
+
+  function registerPython(monaco) {
+    const K = monaco.languages.CompletionItemKind;
+    const KIND = { module: K.Module, class: K.Class, instance: K.Variable, function: K.Function, param: K.Variable,
+      keyword: K.Keyword, property: K.Property, statement: K.Variable, path: K.File };
+    monaco.languages.registerCompletionItemProvider('python', {
+      triggerCharacters: ['.'],
+      async provideCompletionItems(model, pos) {
+        const word = model.getWordUntilPosition(pos);
+        const items = await askJedi('complete', model, pos);
+        const range = { startLineNumber: pos.lineNumber, endLineNumber: pos.lineNumber, startColumn: word.startColumn, endColumn: word.endColumn };
+        // 没打下划线时不列出 _xxx / __xxx__
+        const hidden = name => name.startsWith('_') && !word.word.startsWith('_');
+        return {
+          suggestions: items.filter(([name]) => !hidden(name)).map(([name, type], i) => ({
+            label: name, kind: KIND[type] ?? K.Text, detail: type, insertText: name,
+            sortText: String(i).padStart(4, '0'), range
+          }))
+        };
+      }
+    });
+    monaco.languages.registerSignatureHelpProvider('python', {
+      signatureHelpTriggerCharacters: ['(', ','],
+      async provideSignatureHelp(model, pos) {
+        const sigs = await askJedi('signatures', model, pos);
+        if (!sigs.length) return null;
+        return {
+          value: {
+            signatures: sigs.map(s => ({ label: s.label, documentation: s.doc, parameters: s.params.map(p => ({ label: p })) })),
+            activeSignature: 0,
+            activeParameter: Math.max(0, sigs[0].index ?? 0)
+          },
+          dispose() {}
+        };
+      }
+    });
   }
   function runPython(code, cases, phase) {
     phase(pyReady ? '运行中…' : '加载 Python 运行环境（约 10MB，之后会缓存）…');
@@ -331,7 +416,7 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
         w.removeEventListener('error', onErr);
         resolve(Object.assign({ stdout }, r));
       };
-      const kill = () => { w.terminate(); pyW = null; pyReady = false; };
+      const kill = () => { killPython(); jediLoading = false; };
       const onMsg = ({ data }) => {
         if (data.type === 'start') { phase('运行中…'); timer = setTimeout(() => { kill(); finish({ timeout: true }); }, limit('python')); }
         else if (data.type === 'out') stdout += data.text;
@@ -355,7 +440,7 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
   // 开始写代码时就在后台准备编译器 / 解释器，点运行时少等一会儿
   function preload() {
     if (lang === 'cpp' && !cppW) { setStatus('准备 C++ 编译器…'); cppWorker().postMessage({ type: 'preload', pkg: CLANG_PKG }); }
-    if (lang === 'python' && !pyW) { setStatus('加载 Python…'); pyWorker().postMessage({ type: 'preload' }); }
+    if (lang === 'python' && !pyW) { setStatus('加载 Python…'); pyWorker().postMessage({ type: 'preload', prelude: J.PY_PRELUDE }); }
     if (lang === 'javascript') setStatus('');
   }
 

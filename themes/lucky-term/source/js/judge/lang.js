@@ -324,11 +324,9 @@ ${decl}
 
   /* ---------- Python：驱动是固定的，签名作为参数传进去 ---------- */
 
-  const PY_DRIVER = `
-import sys, json, time, traceback
-
-_LT_PRELUDE = '''
-from typing import *
+  // 用户代码之前执行的内容：常用模块和 ListNode / TreeNode。补全（Jedi）也把它拼在代码前面，
+  // 字段带类型注解，Jedi 才知道 head.next 还是 ListNode
+  const PY_PRELUDE = `from typing import *
 import collections, heapq, bisect, itertools, functools, math, string, re, random, operator
 from collections import *
 from heapq import *
@@ -338,14 +336,19 @@ from functools import *
 inf = float('inf')
 class ListNode:
     def __init__(self, val=0, next=None):
-        self.val = val
-        self.next = next
+        self.val: int = val
+        self.next: Optional['ListNode'] = next
 class TreeNode:
     def __init__(self, val=0, left=None, right=None):
-        self.val = val
-        self.left = left
-        self.right = right
-'''
+        self.val: int = val
+        self.left: Optional['TreeNode'] = left
+        self.right: Optional['TreeNode'] = right
+`;
+
+  const PY_DRIVER = `
+import sys, json, time, traceback
+
+_LT_PRELUDE = '''${PY_PRELUDE}'''
 
 def _lt_tb(e):
     frames = [f for f in traceback.extract_tb(e.__traceback__) if f.filename == 'solution.py']
@@ -617,5 +620,5 @@ def _lt_judge(code, sig_json, inp):
     return { status: first ? first.status : out.every(c => c.status === 'AC') ? 'AC' : 'DONE', cases: out };
   }
 
-  return { LANGS, parseType, signature, template, cppProgram, CLANG, CPP_FLAGS, cppFiles, PY_DRIVER, runJs, fmtLog, encodeInput, parseOutput, compare, evaluate };
+  return { LANGS, parseType, signature, template, cppProgram, CLANG, CPP_FLAGS, cppFiles, PY_PRELUDE, PY_DRIVER, runJs, fmtLog, encodeInput, parseOutput, compare, evaluate };
 });
