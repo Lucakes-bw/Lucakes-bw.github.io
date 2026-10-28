@@ -179,7 +179,7 @@ nb_frames=240
 |---|---|
 | `profile`、`level` | H.264 的**档次**和**级别**：档次决定能用哪些压缩工具（High 比 Baseline 多了 B 帧、CABAC 等），级别限制了分辨率和码率的上限。老设备或者硬件解码器可能不支持高档次 |
 | `pix_fmt` | 解码后的像素格式，`yuv420p` 就是第 1 篇的 I420 |
-| `color_range=tv` | 有限范围（16~235），第 1 篇讲过 |
+| `color_range=tv` | 有限范围（16～235），第 1 篇讲过 |
 | `color_space=bt709` | 用 BT.709 的公式转 RGB |
 | `r_frame_rate` | 帧率，用分数表示：24/1。有些视频是 24000/1001 ≈ 23.976，这是从 NTSC 电视继承下来的 |
 | `time_base` | **时间基**，下一节详细讲 |
@@ -279,7 +279,7 @@ ls -l bbb-10s.mp4 bbb.mkv bbb.flv bbb.ts
 -rw-r--r--  1 lucky  staff  3128696 Oct 28 12:00 bbb.ts
 ```
 
-每个命令只用了 0.02~0.03 秒。转封装不解码、不编码，只是把包从一种结构搬到另一种结构，所以和文件的读写速度差不多快，画质也没有任何损失。相比之下，上一篇用 x264 重新编码这段视频，最快的 preset 也要 0.1 秒，`medium` 要 0.65 秒，而且每编码一次画质都会再损失一点。**能转封装解决的问题，就不要重新编码。**
+每个命令只用了 0.02～0.03 秒。转封装不解码、不编码，只是把包从一种结构搬到另一种结构，所以和文件的读写速度差不多快，画质也没有任何损失。相比之下，上一篇用 x264 重新编码这段视频，最快的 preset 也要 0.1 秒，`medium` 要 0.65 秒，而且每编码一次画质都会再损失一点。**能转封装解决的问题，就不要重新编码。**
 
 MKV 比 MP4 还小 1.7 KB，FLV 大了 5.3 KB，TS 大了 134 KB（4.5%）。
 
@@ -432,8 +432,8 @@ bbb.aac        FF F1 4C 80 25 BF FC DC 00 4C 61 76  -> AAC 裸流（ADTS）
 sine440.wav    52 49 46 46 24 DC 05 00 57 41 56 45  -> WAV
 ```
 
-- MP4 的第 5~8 个字节是 `ftyp`（66 74 79 70）：MP4 由一个个「盒子」（box）组成，每个盒子先是 4 字节长度，再是 4 字节类型，第一个盒子是 `ftyp`；后面的 `isom` 就是 ffprobe 显示的 `major_brand`。
-- MKV 以 `1A 45 DF A3` 开头，这是 EBML 格式的标识；FLV 以 "FLV" 三个字符开头；WAV 以 "RIFF" 开头，第 9~12 字节是 "WAVE"（第 2 篇自己写过）。
+- MP4 的第 5～8 个字节是 `ftyp`（66 74 79 70）：MP4 由一个个「盒子」（box）组成，每个盒子先是 4 字节长度，再是 4 字节类型，第一个盒子是 `ftyp`；后面的 `isom` 就是 ffprobe 显示的 `major_brand`。
+- MKV 以 `1A 45 DF A3` 开头，这是 EBML 格式的标识；FLV 以 "FLV" 三个字符开头；WAV 以 "RIFF" 开头，第 9～12 字节是 "WAVE"（第 2 篇自己写过）。
 - TS 以 `0x47` 开头，但一个字节太容易碰巧出现了，所以还要检查第 188 字节、第 376 字节……是不是也是 `0x47`。`xxd -s 188 -l 4 bbb.ts` 看到的确实是 `47 40 00 10`。
 - `fake.avi` 的开头和 MP4 一模一样，被正确地识别为 MP4。
 - 裸流没有容器，开头就是码流本身：H.264 Annex B 裸流以起始码 `00 00 00 01` 开头；AAC 裸流以 ADTS 头的同步字 `FFF` 开头（前 12 位全是 1）。
@@ -459,3 +459,76 @@ FFmpeg 的格式探测本质上就是这样做的，只是更仔细：每种格�
 3. 用 `ffmpeg -i bbb-10s.mp4 -c copy -movflags +faststart` 和不加 `faststart` 各生成一个文件，用 `xxd -l 64` 查看开头，`moov` 在哪里？
 4. 给 `whatfmt.c` 加上 MP3（开头是 `ID3` 或 `FF FB`）和 PNG、JPEG 图片的识别。
 5. 用 `ffprobe -show_packets` 统计测试视频中音频包和视频包各有多少个，和时长、帧率、采样率对得上吗？
+
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 容器的元数据中 `encoder=Lavf63.1.102`，是 FFmpeg 的封装库 libavformat 写的这个 MP4；视频流的元数据中还有 `encoder: Lavc63.1.102 libx264`，说明视频是 libavcodec 调用 x264 编码的。所以第 0 节的那条 `ffmpeg` 命令在文件中留下了自己的「签名」。用别的软件导出的视频，这里会是 `HandBrake`、`Adobe Premiere` 之类。
+
+2. FLV 的时间基固定是 1/1000，时间戳以毫秒为单位：
+
+   ```
+   pts=83|pts_time=0.083000|dts=0
+   pts=208|pts_time=0.208000|dts=41
+   pts=125|pts_time=0.125000|dts=83
+   pts=166|pts_time=0.166000|dts=125
+   ```
+
+   和 MP4 对照，第一个包在 MP4 中是 PTS 0、DTS −1024，在 FLV 中却是 PTS 83、DTS 0：**FLV 的时间戳不能是负数**，FFmpeg 写 FLV 时把所有时间戳整体往后挪了 1024 / 12288 秒 = 83 毫秒。所以换算关系是：FLV 时间戳 = (MP4 时间戳 + 1024) × 1000 / 12288。例如 MP4 中 PTS 1536 的包：(1536 + 1024) × 1000 / 12288 = 208.3，取整为 208。
+
+   还能看出另一个问题：毫秒精度表示不了 1/24 秒（41.67 毫秒），DTS 只能是 0、41、83、125……间隔 41 和 42 交替。这就是为什么 MP4 要用 1/12288 这样精细的时间基。
+
+3. 不加 `faststart` 时文件开头的 64 字节：
+
+   ```
+   00000000: 0000 0020 6674 7970 6973 6f6d 0000 0200  ... ftypisom....
+   00000010: 6973 6f6d 6973 6f32 6176 6331 6d70 3431  isomiso2avc1mp41
+   00000020: 0000 0008 6672 6565 002d 92f9 6d64 6174  ....free.-..mdat
+   00000030: 0000 02ad 0605 ffff a9dc 45e9 bde6 d948  ..........E....H
+   ```
+
+   `ftyp`（32 字节）、`free`（8 字节）之后直接是 `mdat`（媒体数据），长度 0x002d92f9 = 2986745 字节。按「4 字节长度 + 4 字节类型」逐个跳过所有顶层盒子，两个文件的结构是：
+
+   ```
+   不加 faststart：ftyp 32 | free 8 | mdat 2986745 | moov 7926（在偏移 2986785，文件末尾）
+   加 faststart：  ftyp 32 | moov 7926 | free 8 | mdat 2986745
+   ```
+
+   两个文件一样大，只是 `moov` 的位置不同。7926 字节的 `moov` 中存着每一帧的位置和时间，不加 `faststart` 时，播放器要先读到文件末尾拿到它，才能开始播放。
+
+4. 在判断 ADTS 的那一行后面加上：
+
+   ```c
+   else if (n >= 3 && memcmp(b, "ID3", 3) == 0)             fmt = "MP3（带 ID3 标签）";
+   else if (n >= 2 && b[0] == 0xFF && (b[1] & 0xE6) == 0xE2) fmt = "MP3（Layer III）";
+   else if (n >= 8 && memcmp(b, "\x89PNG\r\n\x1A\n", 8) == 0) fmt = "PNG 图片";
+   else if (n >= 3 && memcmp(b, "\xFF\xD8\xFF", 3) == 0)   fmt = "JPEG 图片";
+   ```
+
+   MP3 帧头和 ADTS 一样以 11 个 1 开头，区别在后面的「层」字段：ADTS 是 00，MP3（Layer III）是 01，所以用掩码 `0xE6` 取出同步位和层，等于 `0xE2` 才是 MP3。很多 MP3 文件开头是 ID3 标签（歌名、歌手、封面），真正的音频帧在标签后面。用测试视频的音轨生成两个 MP3 测试：
+
+   ```bash
+   ffmpeg -i bbb-10s.mp4 -vn -c:a libmp3lame a.mp3
+   ffmpeg -i bbb-10s.mp4 -vn -c:a libmp3lame -id3v2_version 0 -write_xing 0 a_noid3.mp3
+   ./whatfmt a.mp3 a_noid3.mp3 frame-u.png frame-color.jpg bbb.aac
+   ```
+
+   ```
+   a.mp3          49 44 33 04 00 00 00 00 01 09 54 58  -> MP3（带 ID3 标签）
+   a_noid3.mp3    FF FB 94 44 00 00 02 0B 09 CF 9D 24  -> MP3（Layer III）
+   frame-u.png    89 50 4E 47 0D 0A 1A 0A 00 00 00 0D  -> PNG 图片
+   frame-color.jpg FF D8 FF FE 00 0F 4C 61 76 63 36 33  -> JPEG 图片
+   bbb.aac        FF F1 4C 80 25 BF FC DC 00 4C 61 76  -> AAC 裸流（ADTS）
+   ```
+
+5. 统计包数：
+
+   ```bash
+   ffprobe -v error -select_streams v -count_packets -show_entries stream=nb_read_packets -of csv=p=0 bbb-10s.mp4
+   ffprobe -v error -select_streams a -count_packets -show_entries stream=nb_read_packets -of csv=p=0 bbb-10s.mp4
+   ```
+
+   视频 240 个包：10 秒 × 24 帧/秒 = 240，一帧一个包。音频 470 个包：每个 AAC 包 1024 个采样，10 秒 × 48000 / 1024 = 468.75，向上取整 469，再加上开头那个标记为 discard 的预热包，正好 470。
+
+</details>
