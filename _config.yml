@@ -97,6 +97,13 @@ category_map:
   事件与多线程: qt-event-thread
   网络与数据: qt-network-data
   综合实战: qt-project
+  音视频开发: av
+  音视频基础: av-basics
+  码流与封装格式: bitstream-container
+  FFmpeg编程: ffmpeg
+  播放器: player
+  采集与流媒体: streaming
+  音视频实战: av-project
   未分类: uncategorized
 tag_map:
 
