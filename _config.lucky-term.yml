@@ -15,8 +15,8 @@ prompt:
 
 # 首页
 hero:
-  intro: 记录 C/C++、数据结构、Linux、计算机网络与数据库的学习笔记。按专栏顺序读，从语法一路走到网络编程和 MySQL。
-  roadmap_title: 从零到网络编程与数据库
+  intro: 记录 C/C++、数据结构、Linux、计算机网络、数据库与客户端开发的学习笔记。按专栏顺序读，从语法一路走到网络编程、MySQL，最后用 Qt 写出一个完整的聊天客户端。
+  roadmap_title: 从零到网络编程、数据库与客户端
 
 # 配色方案（颜色定义在 themes/lucky-term/source/css/style.css 里）
 # light / dark：访客没选过时，按系统深浅色用哪一个

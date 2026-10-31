@@ -1,13 +1,13 @@
 # lucky 的编程笔记
 
-基于 [Hexo](https://hexo.io) 的学习博客，使用自己编写的终端风格主题 **lucky-term**。专栏：C/C++、数据结构、计算机网络、Linux 基础。
+基于 [Hexo](https://hexo.io) 的学习博客，使用自己编写的终端风格主题 **lucky-term**。专栏：C/C++、数据结构、计算机网络、Linux 基础、数据库、客户端开发（Qt）。
 
 网址：https://lucakes-bw.github.io
 
 ## 主题特色
 
 - **终端风格**：命令行式导航（`cd 专栏`、`ls 归档`），文章列表像 `ls -l` 的输出，等宽字体
-- **学习路线**：首页按顺序展示四个专栏，每个专栏有章节编号目录
+- **学习路线**：首页按顺序展示各个专栏，每个专栏有章节编号目录
 - **阅读进度**：读到文末自动标记已读（也可以手动标记），首页和专栏页显示进度条，首页有「继续阅读」
 - **搜索**：按 `/` 或 `Ctrl/⌘ + K` 打开全文搜索，支持多关键词
 - **文章页**：代码块显示语言和复制按钮、目录随滚动高亮、顶部阅读进度条、专栏内上一篇 / 下一篇
@@ -45,7 +45,7 @@ npx hexo new post my-article-slug
 | `_config.lucky-term.yml` | 主题配置（导航、提示符、首页介绍、Giscus、统计） |
 | `source/_data/series.yml` | 专栏及章节顺序 |
 | `source/_data/essay.yml` | 首页公告和「公告」页 |
-| `source/column/` | 专栏总览页和四个专栏目录页 |
+| `source/column/` | 专栏总览页和各个专栏的目录页 |
 | `themes/lucky-term/layout/` | 页面模板（EJS） |
 | `themes/lucky-term/source/css/style.css` | 全部样式，颜色变量在文件开头 |
 | `themes/lucky-term/source/js/main.js` | 深浅色、搜索、阅读进度、代码复制、目录、评论 |

@@ -8,6 +8,9 @@
   limit: 30
   home_essay: true
   essay_list:
+    - content: 客户端开发专栏完结！5 章 20 篇，用 Qt 6 从信号槽、界面、多线程讲到网络和本地存储，最后做出一个能断线重连、消息不丢不重、可以打包发布的聊天客户端，附完整源码。
+      date: 2026/10/31
+      link: /column/client/
     - content: 数据库专栏完结！5 章 18 篇，从 SQL、表设计到索引、事务与锁，再到备份、复制和压测，每个结论都在 MySQL 8.4 中实测。
       date: 2026/10/27
       link: /column/mysql/
