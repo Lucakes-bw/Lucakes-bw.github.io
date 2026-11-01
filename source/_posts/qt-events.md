@@ -113,24 +113,22 @@ QObject::connect(&button, &QPushButton::pressed, [] { std::printf("6. pressed �
 
 画成图：
 
-```
-事件循环取出一个事件
-  │
-  ▼
-QApplication::notify(接收者, 事件)       ← 1. 所有事件的总入口
-  │
-  ├─► QApplication 上的事件过滤器        ← 2. 返回 true 就到此为止
-  ├─► 接收者上的事件过滤器               ← 3. 返回 true 就到此为止
-  │      （装了多个时，后装的先调用）
-  ▼
-接收者->event(事件)                     ← 4. 按事件类型分派
-  │
-  ▼
-mousePressEvent / keyPressEvent / paintEvent ……   ← 5. 具体的处理函数
-  │
-  ▼
-控件自己决定发出什么信号（pressed、clicked、textChanged ……）   ← 6.
-```
+<figure class="diagram">
+<svg viewBox="0 0 700 430" role="img" aria-label="一个事件依次经过六站：1 QApplication::notify；2 QApplication 上的事件过滤器；3 接收者上的事件过滤器，过滤器返回 true 时事件就被拦截，不再往下走；4 接收者的 event 按类型分派；5 mousePressEvent 等具体的处理函数；6 控件发出 pressed、clicked 等信号">
+  <defs><marker id="ev-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker><marker id="ev-x" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--danger)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="240" y="22" text-anchor="middle" style="fill:var(--muted)">事件循环取出一个事件</text>
+    <line x1="240" y1="28" x2="240" y2="47" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/>
+    <circle cx="40" cy="69" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="74" text-anchor="middle" style="fill:var(--fg)">1</text><rect x="70" y="50" width="340" height="38" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="240" y="74" text-anchor="middle" style="fill:var(--fg)">QApplication::notify(接收者, 事件)</text><text x="424" y="74" style="fill:var(--muted);font-size:12px">所有事件的总入口</text><line x1="240" y1="88" x2="240" y2="108" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="131" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="136" text-anchor="middle" style="fill:var(--fg)">2</text><rect x="70" y="112" width="340" height="38" rx="6" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="240" y="136" text-anchor="middle" style="fill:var(--fg)">QApplication 上的事件过滤器</text><text x="424" y="136" style="fill:var(--muted);font-size:12px">返回 true 就拦截</text><line x1="240" y1="150" x2="240" y2="170" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="193" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="198" text-anchor="middle" style="fill:var(--fg)">3</text><rect x="70" y="174" width="340" height="38" rx="6" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="240" y="198" text-anchor="middle" style="fill:var(--fg)">接收者上的事件过滤器</text><text x="424" y="198" style="fill:var(--muted);font-size:12px">后安装的先调用</text><line x1="240" y1="212" x2="240" y2="232" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="255" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="260" text-anchor="middle" style="fill:var(--fg)">4</text><rect x="70" y="236" width="340" height="38" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="240" y="260" text-anchor="middle" style="fill:var(--fg)">接收者->event(事件)</text><text x="424" y="260" style="fill:var(--muted);font-size:12px">按事件类型分派</text><line x1="240" y1="274" x2="240" y2="294" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="317" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="322" text-anchor="middle" style="fill:var(--fg)">5</text><rect x="70" y="298" width="340" height="38" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="240" y="322" text-anchor="middle" style="fill:var(--fg)">mousePressEvent / keyPressEvent …</text><text x="424" y="322" style="fill:var(--muted);font-size:12px">具体的处理函数</text><line x1="240" y1="336" x2="240" y2="356" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="379" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="384" text-anchor="middle" style="fill:var(--fg)">6</text><rect x="70" y="360" width="340" height="38" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="240" y="384" text-anchor="middle" style="fill:var(--fg)">发出信号：pressed、clicked …</text><text x="424" y="384" style="fill:var(--muted);font-size:12px">控件自己决定</text>
+    <rect x="590" y="118" width="100" height="90" rx="6" style="fill:none;stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 3"/>
+    <text x="640" y="156" text-anchor="middle" style="fill:var(--danger)">拦截</text>
+    <text x="640" y="178" text-anchor="middle" style="fill:var(--danger);font-size:12px">到此为止</text>
+    <path d="M566,131 L587,140" style="fill:none;stroke:var(--danger);stroke-width:1.5;stroke-dasharray:4 3" marker-end="url(#ev-x)"/>
+    <path d="M566,193 L587,186" style="fill:none;stroke:var(--danger);stroke-width:1.5;stroke-dasharray:4 3" marker-end="url(#ev-x)"/>
+    <text x="70" y="420" style="fill:var(--muted);font-size:12px">写控件的人处理 1～5 站的事件，用控件的人连接第 6 站的信号</text>
+  </g>
+</svg>
+</figure>
 
 拦截的那一次，事件到第 3 站就停了：按钮没有收到鼠标按下，也就不会发出 `pressed` 信号。对用户来说，这个按钮「点不动」了。
 
@@ -401,3 +399,107 @@ QTimer::singleShot(300, [] { longTask(2); });
 2. 给第二章 2.1 篇的登录对话框中的用户名输入框装一个事件过滤器：按 ↑ 键时填入上一次登录的用户名。
 3. 在第 2.1 节的实验中，把窗口也改成 `ignore()`，`press.isAccepted()` 的最终结果是什么？
 4. 用 `postEvent` 在一个循环中连续投递 10 万个自定义事件，测量投递用了多久、全部处理完又用了多久。事件队列占用了多少内存（可以用第二章 2.2 篇的 `rssMB()`）？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 参考代码：
+
+   ```cpp
+   class IdleWatcher : public QObject
+   {
+   public:
+       IdleWatcher(QStatusBar *bar) : m_bar(bar)
+       {
+           m_timer.setSingleShot(true);
+           m_timer.setInterval(5000);
+           connect(&m_timer, &QTimer::timeout, this, [this] { m_bar->showMessage("离开"); });
+           m_timer.start();
+       }
+
+   protected:
+       bool eventFilter(QObject *, QEvent *e) override
+       {
+           switch (e->type()) {                    // 只比较一个整数，不关心的事件立即放过
+           case QEvent::MouseMove:
+           case QEvent::MouseButtonPress:
+           case QEvent::KeyPress:
+           case QEvent::Wheel:
+               if (!m_timer.isActive())
+                   m_bar->clearMessage();          // 从「离开」回来
+               m_timer.start();                    // 重新计时
+               break;
+           default:
+               break;
+           }
+           return false;                           // 只是旁观，不拦截任何事件
+       }
+
+   private:
+       QStatusBar *m_bar;
+       QTimer m_timer;
+   };
+
+   app.installEventFilter(new IdleWatcher(window.statusBar()));
+   ```
+
+   装在 `QApplication` 上的过滤器会看到程序中**每一个**对象的**每一个**事件，包括所有的重画、定时器、布局请求，频率很高。所以过滤器中要做到：第一步只用 `e->type()` 判断，不关心的事件直接返回 `false`；不做类型转换、不打印、不分配内存；永远返回 `false`，不改变程序原有的行为。
+
+   注意：鼠标移动事件只有在按下按键或者控件打开了 `setMouseTracking(true)` 时才会产生，所以「只移动鼠标」不一定能把状态从「离开」改回来。真实的程序更常用系统提供的空闲时间（例如 macOS 的 `CGEventSourceSecondsSinceLastEventType`），它统计的是整个系统的输入，而不只是本程序的窗口。
+
+2. 参考代码：
+
+   ```cpp
+   class HistoryFilter : public QObject
+   {
+   public:
+       HistoryFilter(QLineEdit *edit, QString last) : QObject(edit), m_edit(edit), m_last(std::move(last)) {}
+
+   protected:
+       bool eventFilter(QObject *obj, QEvent *e) override
+       {
+           if (obj == m_edit && e->type() == QEvent::KeyPress
+               && static_cast<QKeyEvent *>(e)->key() == Qt::Key_Up) {
+               m_edit->setText(m_last);
+               m_edit->selectAll();                // 选中，方便直接改
+               return true;                        // ↑ 键已处理，不再交给输入框
+           }
+           return false;
+       }
+
+   private:
+       QLineEdit *m_edit;
+       QString m_last;
+   };
+
+   // LoginDialog 的构造函数中
+   m_user->installEventFilter(new HistoryFilter(m_user, QSettings().value("lastUser").toString()));
+   // 登录成功时
+   QSettings().setValue("lastUser", user());
+   ```
+
+   过滤器以输入框为父对象，输入框删除时它也被删除。处理了 ↑ 键之后返回 `true`：`QLineEdit` 本来会把 ↑ 键当作「光标移到行首」，返回 `true` 就不会再执行这个默认行为。上一次的用户名用 `QSettings` 保存在本地，第四章会讲本地存储。
+
+3. 最终 `isAccepted = 0`。实测：
+
+   ```
+     标签 label 收到，ignore()
+     面板 panel 收到，ignore()
+     窗口 window 收到，ignore()
+     最终 isAccepted = 0
+   ```
+
+   事件一直传到了顶层窗口，窗口也不要，顶层窗口没有父控件可以再传了，传播到此结束，事件最终是「未接受」的状态。这次点击就被丢掉了，不会有任何效果，也不会报错。`sendEvent` 返回后检查 `isAccepted()`，就能知道有没有控件处理了这个事件。
+
+4. 实测（Release 编译）：
+
+   ```
+   100000 个事件：投递 5.9 ms（每个 59 ns），处理 5.3 ms，投递后内存 +5.8 MB（每个 61 字节），处理完 +6.8 MB
+   1000000 个事件：投递 56.2 ms（每个 56 ns），处理 15.0 ms，投递后内存 +34.4 MB（每个 36 字节），处理完 +34.3 MB
+   ```
+
+   投递 10 万个事件不到 6 毫秒，每个约 60 纳秒，包括 `new` 一个事件对象和加锁放进队列。处理也很快，因为 `event()` 只是加 1。队列中每个事件占几十字节：事件对象本身（`QEvent` 是 24 字节），加上队列中记录「发给谁、什么优先级」的一项，再加上内存分配器的开销。
+
+   处理完之后内存没有下降，和上一篇的结论一样：内存已经释放，但分配器把它留在进程中备用。投递本身很便宜，真正的问题在于**处理得慢**：如果每个事件的处理要 10 微秒，10 万个事件就会让事件循环忙 1 秒，期间界面无法响应。下一篇第 4 节会遇到这个问题。
+
+</details>

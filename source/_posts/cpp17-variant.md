@@ -272,6 +272,15 @@ variant<char, int, double, std::string> : 32
 
 `std::string` 在 libc++ 中是 24 字节，加上索引并对齐到 8 字节，就是 32 字节。增加 `char`、`int`、`double` 这些更小的类型不会让 variant 变大。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 146" role="img" aria-label="variant 的内存布局：一块按最大类型分配的存储，加一个记录当前类型的索引。variant<int, double> 是 16 字节，variant<int, string> 是 24 字节的存储加索引，对齐到 32 字节">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="210" y="18" text-anchor="start" style="fill:var(--muted);font-size:11px">同一块存储，某一时刻只放其中一种类型</text><text x="198" y="50" text-anchor="end" style="fill:var(--fg);font-size:12px">variant&lt;int, double&gt;</text><rect x="210" y="28" width="112" height="34" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="266.0" y="50.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">int 或 double</text><rect x="322" y="28" width="14" height="34" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="329.0" y="50.0" text-anchor="middle" style="fill:var(--fg);font-size:11px"></text><rect x="336" y="28" width="98" height="34" rx="0" style="fill:none;stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:4 3"/><text x="385.0" y="50.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">填充</text><text x="442" y="50" text-anchor="start" style="fill:var(--muted);font-size:11px">16 字节</text><text x="198" y="96" text-anchor="end" style="fill:var(--fg);font-size:12px">variant&lt;int, string&gt;</text><rect x="210" y="74" width="288" height="34" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="354.0" y="96.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">int 或 std::string（按最大的 24 字节）</text><rect x="498" y="74" width="12" height="34" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="504.0" y="96.0" text-anchor="middle" style="fill:var(--fg);font-size:11px"></text><rect x="510" y="74" width="84" height="34" rx="0" style="fill:none;stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:4 3"/><text x="552.0" y="96.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">填充</text><text x="602" y="96" text-anchor="start" style="fill:var(--muted);font-size:11px">32 字节</text><text x="210" y="134" text-anchor="start" style="fill:var(--muted);font-size:11px">橙色的 1 字节是索引，记录当前存的是第几种类型（index()），std::get 时先检查它，类型不对就抛出异常</text>
+  </g>
+</svg>
+</figure>
+
 ## 6. 常见错误
 
 ### 6.1 用 get 而不检查类型

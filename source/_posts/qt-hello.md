@@ -409,3 +409,67 @@ QT_QPA_PLATFORM=offscreen ./build/hello
 2. 在 4.2 的程序中，运行时用鼠标点一下按钮（把 `singleShot` 的时间改长一些），找出点击产生了哪几个事件。
 3. 在 4.2 的程序中，让 `eventFilter` 遇到 `QEvent::Paint` 时返回 `true`，会看到什么？为什么？
 4. 用 `QT_QPA_PLATFORM=offscreen` 运行 4.2 的程序，事件序列和显示在屏幕上时有什么不同？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 没有调用 `resize()` 时，顶层窗口的初始大小就是控件的建议大小 `sizeHint()`，而按钮的建议大小由文字的宽度决定。在 macOS 上实测：
+
+   ```
+   short: size 97x32 hint 97x32
+   long : size 441x32 hint 441x32
+   ```
+
+   文字是「你好，Qt！」时窗口 97×32；换成一句 33 个字的长句子，窗口自动变成 441 宽，高度不变。改回短文字，窗口又变回 97 宽。下一篇会看到，布局也是按建议大小来分配空间的。
+
+2. 在 `singleShot` 之前把 500 改成 5000，运行后把鼠标移进按钮、点一下、再移出去，能看到这几组事件（时间省略）：
+
+   ```
+   Enter                    鼠标进入按钮
+   HoverEnter
+   HoverMove                鼠标在按钮上移动，可能有很多个
+   MouseButtonPress         按下
+   UpdateRequest / Paint    按钮画成「按下」的样子
+   MouseButtonRelease       松开，clicked 信号就是在这里发出的
+   UpdateRequest / Paint    恢复成普通的样子
+   HoverLeave
+   Leave                    鼠标离开按钮
+   ```
+
+   「点一下」至少是按下和松开两个事件，`QPushButton` 在 `MouseButtonRelease` 中判断松开的位置还在按钮内，才发出 `clicked`。在按钮上按下、拖到外面再松开，就不会触发 `clicked`。按下和松开之间各有一次重画，因为按钮的外观变了。
+
+3. 窗口出现了，但里面一片空白，看不到按钮的边框和文字。`eventFilter` 返回 `true` 表示「这个事件我处理完了，不要再交给 button」，于是 `QPushButton::paintEvent` 永远不会被调用。窗口能显示，是因为窗口本身是系统创建的（`show()` 中的 `PlatformSurface`），但窗口中的内容都是 Qt 在 `Paint` 事件中自己画的。这也说明了 Qt Widgets 的工作方式：控件不是系统的按钮，而是 Qt 自己画出来的。
+
+4. 实测的输出：
+
+   ```
+   ---- 调用 show()
+       0.0 ms  PlatformSurface
+       0.0 ms  WinIdChange
+       0.0 ms  WindowIconChange
+       0.0 ms  Polish
+       0.0 ms  Move
+       0.0 ms  Resize
+       0.0 ms  Show
+       0.1 ms  CursorChange
+       0.1 ms  ShowToParent
+   ---- show() 返回，进入 exec()
+       0.1 ms  PolishRequest
+       0.1 ms  UpdateLater
+       0.1 ms  UpdateRequest
+       0.1 ms  WindowActivate
+       0.1 ms  ActivationChange
+       0.1 ms  FocusIn
+       0.1 ms  Paint
+     ...
+   ```
+
+   不同之处：
+
+   - **快得多**：`show()` 在 0.1 毫秒内完成，屏幕上需要 18～34 毫秒。offscreen 插件不和窗口系统通信，申请窗口、等待系统回应的时间都省掉了。
+   - **窗口立即成为活动窗口**：`WindowActivate`、`FocusIn` 紧跟在第一次 `Paint` 前后，而屏幕上要等约 100 毫秒，由系统决定什么时候激活窗口。
+   - **少了几个和系统有关的事件**：没有 `PaletteChange`、第二个 `Move` 和 `InputMethodQuery`（输入法只存在于真实的窗口系统中）。
+
+   但「`show()` 返回时还没有 `Paint`，进入 `exec()` 后才画」这一点完全一样，因为这是 Qt 自己的逻辑，和平台插件无关。
+
+</details>

@@ -290,12 +290,33 @@ ERROR: AddressSanitizer: attempting double-free
 1. **修改 `b`，`a` 也变了**：`a.data_` 和 `b.data_` 指向同一块内存。
 2. **重复释放**：`a`、`b` 析构时都会 `delete[]` 这块内存。
 
-```
-浅拷贝：                     深拷贝：
- a.data_ ──┐                  a.data_ ──> "hello"
-           ├──> "hello"
- b.data_ ──┘                  b.data_ ──> "hello"（独立的一份）
-```
+<figure class="diagram">
+<svg viewBox="0 0 700 210" role="img" aria-label="浅拷贝：a.data_ 和 b.data_ 两个指针指向同一块 hello，修改一个另一个也变，析构时释放两次；深拷贝：b.data_ 指向自己的一份 hello">
+  <defs><marker id="cp-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker><marker id="cp-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--danger)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="24" style="fill:var(--danger)">浅拷贝（编译器生成的拷贝构造）</text>
+    <rect x="20" y="50" width="110" height="34" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="75" y="72" text-anchor="middle" style="fill:var(--fg)">a.data_</text>
+    <rect x="20" y="130" width="110" height="34" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="75" y="152" text-anchor="middle" style="fill:var(--fg)">b.data_</text>
+    <rect x="200" y="90" width="120" height="34" style="fill:var(--mark);stroke:var(--danger);stroke-width:1.5"/>
+    <text x="260" y="112" text-anchor="middle" style="fill:var(--fg)">"hello"</text>
+    <line x1="130" y1="67" x2="197" y2="100" style="stroke:var(--danger);stroke-width:1.5" marker-end="url(#cp-d)"/>
+    <line x1="130" y1="147" x2="197" y2="114" style="stroke:var(--danger);stroke-width:1.5" marker-end="url(#cp-d)"/>
+    <text x="260" y="148" text-anchor="middle" style="fill:var(--danger);font-size:12px">同一块堆内存</text>
+    <text x="20" y="196" style="fill:var(--muted);font-size:12px">改 b，a 也变；析构时 delete[] 两次</text>
+    <line x1="360" y1="20" x2="360" y2="196" style="stroke:var(--border);stroke-dasharray:4 4"/>
+    <text x="390" y="24" style="fill:var(--accent)">深拷贝（自己写的拷贝构造）</text>
+    <rect x="390" y="50" width="110" height="34" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="445" y="72" text-anchor="middle" style="fill:var(--fg)">a.data_</text>
+    <rect x="390" y="130" width="110" height="34" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="445" y="152" text-anchor="middle" style="fill:var(--fg)">b.data_</text>
+    <rect x="560" y="50" width="120" height="34" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/>
+    <text x="620" y="72" text-anchor="middle" style="fill:var(--fg)">"hello"</text>
+    <rect x="560" y="130" width="120" height="34" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/>
+    <text x="620" y="152" text-anchor="middle" style="fill:var(--fg)">"hello"</text>
+    <line x1="500" y1="67" x2="556" y2="67" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#cp-a)"/>
+    <line x1="500" y1="147" x2="556" y2="147" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#cp-a)"/>
+    <text x="390" y="196" style="fill:var(--muted);font-size:12px">各有一份，各自释放，互不影响</text>
+  </g>
+</svg>
+</figure>
 
 ### 4.2 自己实现深拷贝
 

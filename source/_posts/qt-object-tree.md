@@ -79,6 +79,15 @@ Node::root
 
 `dumpObjectTree()` 把整棵树打印出来（格式是「类名::对象名」），调试界面时可以用它查看控件的层次。
 
+<figure class="diagram">
+<svg viewBox="0 0 680 250" role="img" aria-label="对象树：root 有两个子对象 a 和 b，a 有子对象 a1、a2，b 有子对象 b1。delete root 时的析构顺序是 root、a、a1、a2、b、b1：先执行父对象自己的析构函数，再在 ~QObject 中依次删除子对象">
+  <g style="font-family:var(--mono);font-size:13px">
+    <line x1="330" y1="56" x2="200" y2="94" style="stroke:var(--fg-2);stroke-width:1.5"/><line x1="330" y1="56" x2="460" y2="94" style="stroke:var(--fg-2);stroke-width:1.5"/><line x1="200" y1="126" x2="140" y2="164" style="stroke:var(--fg-2);stroke-width:1.5"/><line x1="200" y1="126" x2="260" y2="164" style="stroke:var(--fg-2);stroke-width:1.5"/><line x1="460" y1="126" x2="460" y2="164" style="stroke:var(--fg-2);stroke-width:1.5"/><rect x="286" y="24" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="330" y="45" text-anchor="middle" style="fill:var(--fg)">root</text><circle cx="374" cy="24" r="10" style="fill:var(--warn)"/><text x="374" y="28" text-anchor="middle" style="fill:var(--bg);font-size:11px">1</text><rect x="156" y="94" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="200" y="115" text-anchor="middle" style="fill:var(--fg)">a</text><circle cx="244" cy="94" r="10" style="fill:var(--warn)"/><text x="244" y="98" text-anchor="middle" style="fill:var(--bg);font-size:11px">2</text><rect x="416" y="94" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="460" y="115" text-anchor="middle" style="fill:var(--fg)">b</text><circle cx="504" cy="94" r="10" style="fill:var(--warn)"/><text x="504" y="98" text-anchor="middle" style="fill:var(--bg);font-size:11px">5</text><rect x="96" y="164" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="140" y="185" text-anchor="middle" style="fill:var(--fg)">a1</text><circle cx="184" cy="164" r="10" style="fill:var(--warn)"/><text x="184" y="168" text-anchor="middle" style="fill:var(--bg);font-size:11px">3</text><rect x="216" y="164" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="260" y="185" text-anchor="middle" style="fill:var(--fg)">a2</text><circle cx="304" cy="164" r="10" style="fill:var(--warn)"/><text x="304" y="168" text-anchor="middle" style="fill:var(--bg);font-size:11px">4</text><rect x="416" y="164" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="460" y="185" text-anchor="middle" style="fill:var(--fg)">b1</text><circle cx="504" cy="164" r="10" style="fill:var(--warn)"/><text x="504" y="168" text-anchor="middle" style="fill:var(--bg);font-size:11px">6</text>
+    <text x="20" y="224" style="fill:var(--muted);font-size:12px">橙色数字：delete root 时析构的顺序。父对象的 ~Node 先执行，</text><text x="20" y="242" style="fill:var(--muted);font-size:12px">再在 ~QObject 中依次删除子对象；每个子对象同样先析构自己，再删自己的子对象</text>
+  </g>
+</svg>
+</figure>
+
 接着做三件事：直接删除一个子对象、把 `b` 从树中拿出来、删除根：
 
 ```cpp
@@ -465,3 +474,83 @@ if (guarded)
 2. 写一个对话框类，在构造函数中 `setAttribute(Qt::WA_DeleteOnClose)`，用 `new` 创建并 `show()`。用 `QPointer` 保存它，关闭对话框后检查 `QPointer` 是否为空。
 3. 给 1.1 节的 `Node` 加一个子对象成员 `Node child{"member", this};`（直接作为成员，而不是 `new` 出来），删除这个 `Node` 时会发生什么？用 ASan 验证你的判断。
 4. 用 `std::unique_ptr<QWidget>` 管理一个顶层窗口，再用 `new` 往里面加几个子控件，这样写有问题吗？如果把其中一个子控件也交给 `unique_ptr` 管理呢？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 没有事件循环时，**一个析构都不打印**：
+
+   ```
+   root->deleteLater()
+   main 结束
+   ```
+
+   `deleteLater()` 只是往事件队列中放了一个 `DeferredDelete` 事件，要等事件循环取出它才真正删除。没有事件循环，这个事件永远不会被处理，`QCoreApplication` 析构时也不会替你处理，整棵树就泄漏了。
+
+   加上 `QTimer::singleShot(0, &app, &QCoreApplication::quit)` 和 `app.exec()`：
+
+   ```
+   root->deleteLater()
+   进入 exec()
+     ~Node root
+     ~Node a
+     ~Node a1
+     ~Node b
+     ~Node b1
+   exec() 返回
+   main 结束
+   ```
+
+   进入事件循环后，整棵树在 `exec()` 返回之前被删除，顺序和 `delete root` 一样。`deleteLater` 适合「现在还不能删，等当前的处理结束再删」的场合，例如 4.2 节在槽中删除发出信号的对象。
+
+2. 参考代码：
+
+   ```cpp
+   class AboutDialog : public QDialog
+   {
+   public:
+       AboutDialog()
+       {
+           setAttribute(Qt::WA_DeleteOnClose);
+           auto *ok = new QPushButton("确定", this);
+           connect(ok, &QPushButton::clicked, this, &QDialog::accept);
+       }
+       ~AboutDialog() override { std::printf("~AboutDialog\n"); }
+   };
+
+   QPointer<AboutDialog> dialog = new AboutDialog;
+   dialog->show();
+   QTimer::singleShot(1000, [&] {
+       std::printf("dialog %s\n", dialog ? "还在" : "为空");
+   });
+   ```
+
+   在 1 秒内点「确定」关闭对话框，先打印 `~AboutDialog`，然后打印 `dialog 为空`。关闭时 Qt 对它调用了 `deleteLater()`，回到事件循环后对话框被删除，`QPointer` 随之变空。如果用普通指针保存，关闭后它就是悬空指针，再调用 `dialog->show()` 就是使用已释放的内存。
+
+3. 什么问题都没有。实测：
+
+   ```
+   delete holder
+     ~Node member
+     ~Node holder
+   ```
+
+   ASan 也没有报错。析构的顺序是：`Holder` 的析构函数体 → **成员 `child` 析构** → 基类 `Node`、`QObject` 析构。成员先于基类析构，`child` 析构时（在它自己的 `~QObject` 中）把自己从父对象的子对象列表中移除，等轮到父对象的 `~QObject` 删除子对象时，`child` 已经不在列表中了，不会被删第二次。这和第 2 节「栈上的对象先析构子对象」是同一个道理。
+
+   但如果成员的父对象**不是 `this`**，而是另一个比它先析构的对象，那个对象就会对一个不是 `new` 出来的成员调用 `delete`，程序崩溃。所以这种写法只在父对象是 `this` 时安全。
+
+4. 第一种写法没有问题：顶层窗口没有父对象，由 `unique_ptr` 负责删除；子控件由窗口负责删除，每个对象只有一个主人。
+
+   第二种写法有问题，而且问题取决于析构的顺序：
+
+   ```cpp
+   auto window = std::make_unique<QWidget>();
+   auto button = std::make_unique<QPushButton>("确定", window.get());
+   ```
+
+   - 如果 `button` 先析构（像上面这样，后声明的先析构），它把自己从窗口中移除，然后窗口析构，没有问题。
+   - 如果窗口先析构（例如调换声明顺序，或者 `window.reset()`），窗口删除了按钮，`button` 中的指针就悬空了，之后 `unique_ptr` 再 `delete` 一次，就是重复释放。
+
+   代码能不能正确运行，取决于几行声明的顺序，这正是「一个对象只能有一个主人」要避免的情况。子控件只交给对象树管理；如果确实需要保存它的指针，用普通指针或者 `QPointer`。
+
+</details>

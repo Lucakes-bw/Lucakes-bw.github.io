@@ -396,3 +396,72 @@ colorSchemeChanged → 深色
 2. 在登录对话框中，用户名不合格时调用 2.4 节的 `setStyleProperty` 把输入框标红，合格时恢复。把它连接到上一篇登录框的 `textChanged`。
 3. 把 2.1 节样式表中所有写死的颜色分成两类：哪些应该换成 `palette()`，哪些可以保留？改完后分别在浅色和深色模式下截图对比。
 4. 不用样式表，只用 `QPalette` 把「登录」按钮改成蓝底白字（提示：`QPalette::Button` 和 `QPalette::ButtonText`）。在 macOS 上效果如何？换成 Fusion 样式（`QApplication::setStyle("Fusion")`）再试试。
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 加上这几条规则：
+
+   ```css
+   QPushButton:pressed {
+       background: #d1d1d6;
+   }
+   QPushButton#primary:hover {
+       background: #0077ed;
+   }
+   QPushButton#primary:pressed {
+       background: #0062c4;
+   }
+   ```
+
+   为什么主按钮要单独写？如果只写 `QPushButton:pressed`，按下主按钮时有两条规则都设置了背景：`QPushButton#primary` 和 `QPushButton:pressed`。和 CSS 一样，ID 选择器比伪状态更具体，前者胜出，主按钮按下时还是 `#0a84ff`，没有任何变化。所以主按钮的每种状态都要写成 `QPushButton#primary:状态`，它同时有 ID 和伪状态，比两者都具体。
+
+2. 参考代码：
+
+   ```cpp
+   app.setStyleSheet(R"(
+       QLineEdit[error="true"] { border: 2px solid #ff3b30; background: #fff0f0; }
+   )");
+
+   QRegularExpression userRe("^[A-Za-z][A-Za-z0-9_]{2,15}$");
+   QObject::connect(user, &QLineEdit::textChanged, user, [user, userRe](const QString &text) {
+       bool bad = !text.isEmpty() && !userRe.match(text).hasMatch();
+       if (user->property("error").toBool() != bad)        // 状态没变就不重新抛光
+           setStyleProperty(user, "error", bad);
+   });
+   ```
+
+   两点：输入框为空时不标红，用户还没开始输入就看到一片红色很不友好；状态没变时不调用 `setStyleProperty`，因为每次 `unpolish` + `polish` 都要重新匹配样式表，用户每输入一个字就做一次是浪费。
+
+3. 判断的标准是：这个颜色是「背景、文字、边框」这类跟着明暗变化的颜色，还是「品牌、状态」这类有固定含义的颜色。
+
+   | 规则 | 颜色 | 处理 |
+   |---|---|---|
+   | `QLineEdit` 的边框 | `#c8c8cc` | 换成 `palette(mid)` |
+   | `QLineEdit` 的背景 | `white` | 换成 `palette(base)`，同时加上 `color: palette(text)` |
+   | `QPushButton` 的边框 | `#c8c8cc` | 换成 `palette(mid)` |
+   | `QPushButton` 的背景 | `#f2f2f7` | 换成 `palette(button)` |
+   | `QPushButton:hover` | `#e5e5ea` | 换成 `palette(midlight)` |
+   | `QLineEdit:focus` 的边框 | `#0a84ff` | 保留（强调色） |
+   | `#primary` 的蓝底白字 | `#0a84ff`、`white` | 保留（品牌色，白字在蓝底上两种模式下都清楚） |
+   | `#primary:disabled` | `#a0c8ff` | 保留，但在深色模式下偏亮，可以改成半透明的蓝 `rgba(10,132,255,0.4)` |
+   | `#hint` 的红字 | `#ff3b30` | 保留（错误色） |
+
+   最容易漏的是只改背景不改文字：背景用了 `palette(base)`，文字却没写，那么文字的颜色来自控件自己的调色板，大多数时候是对的；但只要有一处写死了背景、没写文字（或者反过来），就会出现第 3 节中白底白字的问题。所以背景和文字要成对地用 `palette()`。
+
+4. 参考代码：
+
+   ```cpp
+   QPalette p = login->palette();
+   p.setColor(QPalette::Button, QColor("#0a84ff"));
+   p.setColor(QPalette::ButtonText, Qt::white);
+   login->setPalette(p);
+   ```
+
+   在 macOS 默认的样式下（左）**完全没有效果**，按钮还是系统的灰白色；换成 Fusion 样式（右）后变成了蓝底白字：
+
+   <img src="/img/client/palette-btn-macos.png" alt="macOS 样式下，调色板改不了按钮的颜色，仍然是系统的灰白色" width="120"> <img src="/img/client/palette-btn-fusion.png" alt="Fusion 样式下，按钮变成了蓝底白字，带一点渐变" width="120">
+
+   截图读出按钮中间的像素，macOS 样式是 `#f0f0f0`，Fusion 是 `#73b8fc`（Fusion 在调色板的颜色上加了一层渐变）。原因是**调色板只是给样式的建议**：macOS 样式调用系统的 AppKit 绘制原生按钮，系统按钮的颜色由系统决定，不看 Qt 的调色板；Fusion 是 Qt 自己画的跨平台样式，完全按调色板绘制。样式表之所以总能生效，是因为设置了样式表的控件改用一个专门的样式（`QStyleSheetStyle`）绘制，绕开了原生样式。所以要在所有平台上得到一致的自定义外观，要么用样式表，要么整个程序用 Fusion。
+
+</details>

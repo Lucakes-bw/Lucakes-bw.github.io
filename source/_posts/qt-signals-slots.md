@@ -441,3 +441,69 @@ std::function           0.7 ns/次
 2. 给 `Counter` 加一个信号 `reachedLimit()`，数值超过 100 时发出，并把它连接到 `QCoreApplication::quit`。
 3. 在第 7 节的实验中，把槽换成一个 lambda（`connect(&c, &Counter::valueChanged, [&](int v) { sink.add(v); })`），开销有变化吗？
 4. 在第 6.2 节中，信号 `valueChanged` 的编号是 0，`setValue` 是 1。给 `Counter` 再加一个信号和一个槽，重新构建后看看 moc 的输出中编号是怎样排列的。
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 参考代码：
+
+   ```cpp
+   QWidget window;
+   auto *slider = new QSlider(Qt::Horizontal);
+   auto *spin = new QSpinBox;
+   slider->setRange(0, 100);
+   spin->setRange(0, 100);
+   auto *row = new QHBoxLayout(&window);
+   row->addWidget(slider);
+   row->addWidget(spin);
+
+   QObject::connect(slider, &QSlider::valueChanged, spin, &QSpinBox::setValue);
+   QObject::connect(spin, &QSpinBox::valueChanged, slider, &QSlider::setValue);
+   ```
+
+   不需要自己检查。`QSlider::setValue` 和 `QSpinBox::setValue` 都遵守「值没变就不发信号」的约定：拖动滑块到 30 → 发出 `valueChanged(30)` → 数字框 `setValue(30)` → 数字框的值变了，发出 `valueChanged(30)` → 滑块 `setValue(30)`，滑块已经是 30，不再发信号，循环到此结束。自己写的类也要遵守这个约定，别人才能这样放心地双向连接。
+
+2. 在 `signals:` 中加上 `void reachedLimit();`，修改 `setValue`：
+
+   ```cpp
+   void Counter::setValue(int value)
+   {
+       if (value == m_value)
+           return;
+       m_value = value;
+       emit valueChanged(value);
+       if (value > 100)
+           emit reachedLimit();
+   }
+   ```
+
+   连接：
+
+   ```cpp
+   QObject::connect(&counter, &Counter::reachedLimit, &app, &QCoreApplication::quit);
+   ```
+
+   注意：如果在 `app.exec()` 之前就调用了 `setValue(200)`，`quit()` 是在事件循环还没开始时调用的，不会起作用，之后的 `exec()` 会一直运行。要么在事件循环中改变数值，要么用 `Qt::QueuedConnection` 连接，让 `quit()` 等事件循环开始后再执行。
+
+3. 几乎没有变化。连接 1 个槽，各发 1000 万次信号，运行三次：
+
+   ```
+   成员函数槽 9.2 ns  lambda 8.0 ns  lambda+上下文 7.9 ns
+   成员函数槽 8.0 ns  lambda 8.0 ns  lambda+上下文 8.0 ns
+   成员函数槽 8.1 ns  lambda 8.0 ns  lambda+上下文 7.9 ns
+   ```
+
+   都是 8 纳秒左右（第一次的 9.2 是刚开始运行时的波动）。不管连接的是成员函数还是 lambda，Qt 都把它包装成一个「槽对象」保存在连接列表中，`activate` 的路径完全一样。开销主要在 `activate` 本身：查找连接、加锁、检查线程，而不在于最后调用的是哪种函数。
+
+4. 给 `Counter` 加上信号 `reachedLimit()` 和槽 `reset()`（`reset` 写在 `setValue` 之后），moc 生成的分派函数：
+
+   ```cpp
+   case 0: _t->valueChanged(...); break;
+   case 1: _t->reachedLimit(); break;
+   case 2: _t->setValue(...); break;
+   case 3: _t->reset(); break;
+   ```
+
+   **所有的信号排在前面，然后才是槽**，每一组内部按声明的顺序编号。头文件中 `public slots:` 写在 `signals:` 之前，也不影响这个顺序。原来 `setValue` 的编号从 1 变成了 2，所以编号只在一次编译之内有意义，不能保存下来以后再用。信号的编号从 0 开始连续排列，`activate` 就能用编号直接定位到这个信号的连接列表。
+
+</details>

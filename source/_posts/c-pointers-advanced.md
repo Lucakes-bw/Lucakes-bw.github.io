@@ -107,6 +107,29 @@ a = 0x16d566550, &a = 0x16d566550, a + 1 = 0x16d566554, &a + 1 = 0x16d566564
 
 注意 `a` 和 `&a` 的值相同，但类型不同：`a + 1` 前进 4 字节（一个 `int`），`&a + 1` 前进 20 字节（一整个数组）。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 220" role="img" aria-label="a 和 &amp;a 的值都是数组的起始地址 0x16d566550；a + 1 前进一个 int（4 字节）到 554；&amp;a + 1 前进一整个数组（20 字节）到 564，正好在数组之后">
+  <defs><marker id="ap-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="126" y="97" text-anchor="end" style="fill:var(--fg-2)">int a[5]</text>
+    <rect x="140" y="70" width="90" height="42" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="185" y="97" text-anchor="middle" style="fill:var(--fg);font-size:15px">1</text><text x="140" y="128" text-anchor="middle" style="fill:var(--muted);font-size:11px">…550</text><rect x="230" y="70" width="90" height="42" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="275" y="97" text-anchor="middle" style="fill:var(--fg);font-size:15px">2</text><text x="230" y="128" text-anchor="middle" style="fill:var(--muted);font-size:11px">…554</text><rect x="320" y="70" width="90" height="42" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="365" y="97" text-anchor="middle" style="fill:var(--fg);font-size:15px">3</text><text x="320" y="128" text-anchor="middle" style="fill:var(--muted);font-size:11px">…558</text><rect x="410" y="70" width="90" height="42" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="455" y="97" text-anchor="middle" style="fill:var(--fg);font-size:15px">4</text><text x="410" y="128" text-anchor="middle" style="fill:var(--muted);font-size:11px">…55c</text><rect x="500" y="70" width="90" height="42" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="545" y="97" text-anchor="middle" style="fill:var(--fg);font-size:15px">5</text><text x="500" y="128" text-anchor="middle" style="fill:var(--muted);font-size:11px">…560</text>
+    <text x="590" y="128" text-anchor="middle" style="fill:var(--muted);font-size:11px">…564</text>
+    <rect x="590" y="70" width="70" height="42" style="fill:none;stroke:var(--border-2);stroke-dasharray:4 3"/>
+    <g style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ap-arrow)">
+      <line x1="140" y1="30" x2="140" y2="66"/><line x1="230" y1="30" x2="230" y2="66"/>
+    </g>
+    <line x1="590" y1="30" x2="590" y2="66" style="stroke:var(--warn);stroke-width:1.5" marker-end="url(#ap-arrow)"/>
+    <text x="140" y="22" text-anchor="middle" style="fill:var(--link)">a、&amp;a</text>
+    <text x="230" y="22" text-anchor="middle" style="fill:var(--link)">a + 1</text>
+    <text x="590" y="22" text-anchor="middle" style="fill:var(--warn)">&amp;a + 1</text>
+    <path d="M140,140 v8 h90 v-8" style="fill:none;stroke:var(--link);stroke-width:1.5"/>
+    <text x="185" y="164" text-anchor="middle" style="fill:var(--link)">+4（一个 int）</text>
+    <path d="M140,176 v8 h450 v-8" style="fill:none;stroke:var(--warn);stroke-width:1.5"/>
+    <text x="365" y="204" text-anchor="middle" style="fill:var(--warn)">+20（一整个 int[5]）</text>
+  </g>
+</svg>
+</figure>
+
 **数组名转换为指针**的规则有三个例外：作为 `sizeof` 的操作数、作为 `&` 的操作数、以及用字符串字面量初始化字符数组时。这就是为什么 `sizeof(a)` 能得到整个数组的大小，而传到函数中就不行了。
 
 ## 3. 二级指针

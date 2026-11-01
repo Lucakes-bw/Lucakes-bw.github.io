@@ -322,3 +322,117 @@ db.setDatabaseName(dir + "/chat.db");
 2. 第 5 节的查询如果改成 `WHERE peer = ? AND body LIKE '%吃饭%'`（在会话中搜索），索引还有用吗？用 `EXPLAIN QUERY PLAN` 验证。SQLite 的 FTS5 全文索引能怎样改进它？
 3. 用两个线程同时写同一个数据库（各自的连接），一个线程在一个大事务中插入 10 万条，另一个线程逐条插入，观察会不会出现 `database is locked`。`PRAGMA busy_timeout` 有什么作用？
 4. 把 100 万条消息中的 `peer` 从字符串（`user42`）改成整数编号，再单独建一张会话表。数据库文件变小了多少？查询变快了吗？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 表结构加一列：
+
+   ```sql
+   CREATE TABLE message (
+       id INTEGER PRIMARY KEY,
+       client_id INTEGER NOT NULL UNIQUE,      -- 发送时的编号，确认消息中带回来
+       peer TEXT NOT NULL,
+       sender TEXT NOT NULL,
+       body TEXT NOT NULL,
+       sent_at INTEGER NOT NULL,
+       status INTEGER NOT NULL DEFAULT 0       -- 0 发送中，1 已发送，2 发送失败
+   );
+   CREATE INDEX idx_pending ON message (status) WHERE status = 0;   -- 只索引「发送中」的行
+   ```
+
+   发送和确认的流程：
+
+   ```cpp
+   // 发送：先写数据库，再发网络
+   q.prepare("INSERT INTO message (client_id, peer, sender, body, sent_at, status) VALUES (?, ?, ?, ?, ?, 0)");
+   // ……绑定参数，exec
+   conn->sendChat(msg);
+
+   // 收到 ack
+   q.prepare("UPDATE message SET status = 1 WHERE client_id = ?");
+
+   // 启动时 / 重连后：把还没确认的消息重新发送
+   q.exec("SELECT client_id, peer, body, sent_at FROM message WHERE status = 0 ORDER BY client_id");
+   while (q.next())
+       conn->sendChat(/* 用原来的 client_id 组装消息 */);
+   q.finish();
+   ```
+
+   关键是**先写数据库，再发送**：如果先发送、再写数据库，程序在两者之间崩溃，消息已经发出去了，本地却没有记录。先写数据库的话，最坏情况是消息发了两次，由服务器按编号去重（上一篇练习 2）。`client_id` 要在重启后继续递增，不能从 1 重新开始，可以取 `SELECT max(client_id) FROM message` 的结果再加 1。
+
+   「发送中」的消息在全部消息中只占极少数，所以用了一个**部分索引**（`WHERE status = 0`），索引只包含这几行，很小。
+
+2. 在 100 万条消息中实测（会话 `user42` 有 1 万条，其中七分之一包含「一起吃饭」）：
+
+   ```
+   最近 50 条:          0.02 ms, SEARCH message USING INDEX idx_peer_time (peer=?)
+   会话中搜索 LIMIT 50:   0.07 ms, 50 行, SEARCH message USING INDEX idx_peer_time (peer=?)
+   会话中搜索 count:      6.67 ms, SEARCH message USING INDEX idx_peer_time (peer=?)
+   全表搜索 count:       39.57 ms, SCAN message
+   ```
+
+   索引**仍然有用，但只用了一半**：`peer = ?` 用索引把范围缩小到这个会话的 1 万行，这部分已经按时间排好序；`LIKE '%吃饭%'` 以 `%` 开头，没法用索引，只能对这 1 万行逐行检查正文。
+
+   - 要找最近的 50 条匹配时，因为匹配的消息很多，倒着扫描不了多少行就凑够了，0.07 毫秒。
+   - 要把会话中所有匹配的都找出来（count），就要检查全部 1 万行，6.7 毫秒。
+   - 在所有会话中搜索，没有任何条件能用索引，扫描整张表 100 万行，40 毫秒。
+
+   搜索的词很少见时（例如「第 123442 条」，只有 1 条匹配），`LIMIT 50` 也要扫描完整个范围：会话中约 8 毫秒，全表约 75 毫秒。
+
+   SQLite 的 **FTS5** 全文索引为正文中的词建立倒排索引（「哪些行包含这个词」）。中文没有空格分词，可以用 `trigram` 分词器，把文字切成连续 3 个字的片段：
+
+   ```sql
+   CREATE VIRTUAL TABLE message_fts USING fts5(
+       body, content='message', content_rowid='id', tokenize='trigram');
+   INSERT INTO message_fts(rowid, body) SELECT id, body FROM message;
+   ```
+
+   ```sql
+   SELECT m.body FROM message m JOIN message_fts f ON f.rowid = m.id
+   WHERE message_fts MATCH '"第 123442 条"' AND m.peer = 'user42'
+   ORDER BY m.sent_at DESC LIMIT 50;
+   ```
+
+   建索引用了 850 毫秒，数据库文件从 80 MB 增加到 137 MB。搜索少见的词，全表只要 0.4 毫秒，比 `LIKE` 快约 200 倍。但它也有代价和限制：
+
+   - 索引要占不少空间（这里增加了约 70%），插入消息时也要同时更新它（可以用触发器自动完成）。
+   - `trigram` 要求搜索的词至少 3 个字符，搜「吃饭」两个字是查不到的，要退回到 `LIKE`。
+   - 搜索很常见的词（14 万条都包含「一起吃饭」）时，FTS5 要先找出全部 14 万行，再按会话过滤和排序，反而要 30 毫秒，比在会话中直接 `LIKE` 慢。
+
+   所以对聊天记录来说，在当前会话中搜索可以直接用 `LIKE`（数据量小）；在全部聊天记录中搜索时，才值得建 FTS5 索引。
+
+3. 一个线程在一个事务中插入 10 万条，另一个线程同时逐条插入 300 条，各自用自己的连接。先把 Qt 的等待时间设成 0（`db.setConnectOptions("QSQLITE_BUSY_TIMEOUT=0")`），再用 Qt 的默认设置：
+
+   ```
+   busy_timeout = 0：大事务 50 ms，错误 104；逐条插入成功 0、失败 300，单条最长等待 0 ms
+   Qt 默认（busy_timeout 5000 ms）：大事务 34 ms，错误 0；逐条插入成功 300、失败 0，单条最长等待 49 ms
+   ```
+
+   不等待时，出现了大量的 `database is locked`：SQLite 同一时刻只允许一个连接写入，另一个连接想写时，发现数据库被锁着，立即失败。大事务也有 104 条失败了，是在开始时被逐条插入的那个线程抢到了锁。
+
+   `PRAGMA busy_timeout`（Qt 中是连接选项 `QSQLITE_BUSY_TIMEOUT`）设置**遇到锁时最多等待多久**，在这段时间内 SQLite 会反复重试，锁释放了就继续执行。Qt 的 SQLite 驱动默认设置了 5000 毫秒，所以用默认设置时没有任何错误，逐条插入的线程最多等了 49 毫秒（大事务写完的时间）。
+
+   这说明：多个连接写同一个数据库时，等待的时间一定要比最长的写事务长；写事务应该尽量短，大批量的导入可以拆成每 1000 条一个事务，让别的连接有机会插进来。最根本的办法还是第 6 节说的：只让一个线程负责写入。
+
+4. 改成会话表加整数编号：
+
+   ```sql
+   CREATE TABLE conversation (id INTEGER PRIMARY KEY, peer TEXT NOT NULL UNIQUE);
+   CREATE TABLE message (id INTEGER PRIMARY KEY, conv_id INTEGER NOT NULL, sender TEXT NOT NULL,
+                         body TEXT NOT NULL, sent_at INTEGER NOT NULL);
+   CREATE INDEX idx_conv_time ON message (conv_id, sent_at);
+   ```
+
+   各插入 100 万条，建好索引，`VACUUM` 之后：
+
+   ```
+   peer 是字符串: 文件 80.2 MB，最近 50 条 0.018 ms（50 行）
+   peer 改成整数: 文件 70.6 MB，最近 50 条 0.019 ms（50 行）
+   ```
+
+   文件小了 9.6 MB（12%）：`user42` 这样的字符串要 6～7 个字节，0～99 的整数在 SQLite 中只占 1 个字节，而且表和索引中各存了一份。查询**没有变快**：有了索引，两种写法都只读几十行，时间都花在固定的开销上；整数版本还要先在会话表中按名字查一次编号。
+
+   规范化（数据库专栏《范式与反范式》）的好处主要不在速度，而在于：会话的名字、头像、置顶状态等信息只存一份，改名时只改一行；消息表变小了，同样的内存能缓存更多的消息。
+
+</details>

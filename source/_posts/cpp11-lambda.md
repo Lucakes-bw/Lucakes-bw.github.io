@@ -266,6 +266,40 @@ sizeof: 无捕获 1, 捕获 int 4, 捕获 int+double 16, 引用捕获两个 16
 fp(6, 7) = 42
 ```
 
+<figure class="diagram">
+<svg viewBox="0 0 700 230" role="img" aria-label="按值捕获的闭包对象 lam 中有一个成员 factor_，值是 3，是 factor 的副本，sizeof 为 4；按引用捕获的闭包 byRef 中保存的是 a 和 d 的地址，sizeof 为 16，通过指针读取外部变量的当前值">
+  <defs><marker id="lm-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker><marker id="lm-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="22" style="fill:var(--muted)">栈上的局部变量</text>
+    <rect x="20" y="40" width="130" height="34" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="85" y="62" text-anchor="middle" style="fill:var(--fg)">factor = 3</text>
+    <rect x="20" y="130" width="130" height="34" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="85" y="152" text-anchor="middle" style="fill:var(--fg)">a = 1</text>
+    <rect x="20" y="176" width="130" height="34" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="85" y="198" text-anchor="middle" style="fill:var(--fg)">d = 2.0</text>
+    <text x="300" y="22" style="fill:var(--muted)">闭包对象（编译器生成的匿名类）</text>
+    <rect x="300" y="32" width="250" height="56" rx="6" style="fill:none;stroke:var(--accent);stroke-width:1.5"/>
+    <text x="312" y="50" style="fill:var(--accent);font-size:12px">lam = [factor](int x) { … }</text>
+    <rect x="312" y="56" width="120" height="26" style="fill:var(--accent-soft);stroke:var(--accent)"/>
+    <text x="372" y="74" text-anchor="middle" style="fill:var(--fg)">factor_ = 3</text>
+    <text x="442" y="74" style="fill:var(--muted);font-size:11px">4 字节</text>
+    <line x1="150" y1="57" x2="308" y2="68" style="stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#lm-c)"/>
+    <text x="226" y="54" text-anchor="middle" style="fill:var(--accent);font-size:11px">创建时复制</text>
+    <rect x="300" y="122" width="250" height="96" rx="6" style="fill:none;stroke:var(--link);stroke-width:1.5"/>
+    <text x="312" y="140" style="fill:var(--link);font-size:12px">byRef = [&amp;a, &amp;d]() { … }</text>
+    <rect x="312" y="148" width="120" height="26" style="fill:var(--panel-2);stroke:var(--link)"/>
+    <text x="372" y="166" text-anchor="middle" style="fill:var(--fg)">&amp;a（指针）</text>
+    <rect x="312" y="182" width="120" height="26" style="fill:var(--panel-2);stroke:var(--link)"/>
+    <text x="372" y="200" text-anchor="middle" style="fill:var(--fg)">&amp;d（指针）</text>
+    <text x="442" y="182" style="fill:var(--muted);font-size:11px">16 字节</text>
+    <line x1="312" y1="161" x2="154" y2="148" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#lm-a)"/>
+    <line x1="312" y1="195" x2="154" y2="193" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#lm-a)"/>
+    <text x="570" y="66" style="fill:var(--muted);font-size:12px">外部再改 factor，</text>
+    <text x="570" y="82" style="fill:var(--muted);font-size:12px">它也不变</text>
+    <text x="570" y="160" style="fill:var(--muted);font-size:12px">每次调用都读</text>
+    <text x="570" y="176" style="fill:var(--muted);font-size:12px">a、d 的当前值；</text>
+    <text x="570" y="192" style="fill:var(--danger);font-size:12px">a、d 销毁后悬空</text>
+  </g>
+</svg>
+</figure>
+
 从闭包类的角度，前面的规则都能解释通：
 
 - **按值捕获** = 构造时把变量**复制**成成员，所以创建后外部变量再变化也不影响它。

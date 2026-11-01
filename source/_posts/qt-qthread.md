@@ -130,17 +130,40 @@ QTimer::singleShot(200, [&] {
 
 所以在接收结果的槽中，**可以放心地修改界面**，它就在界面线程中执行。这就是 Qt 多线程最常用的模式：
 
-```
-界面线程                                工作线程
-────────                                ────────
-用户点击「开始」
-  invokeMethod(worker, doWork) ──事件──► doWork() 开始
-（立即返回，继续处理界面事件）              │  耗时的计算
-                                         │  emit progress(50)
-  进度条更新到 50% ◄────────────事件──────┘
-                                         │  ……
-  显示结果 ◄────────────────────事件────── emit finished(结果)
-```
+<figure class="diagram">
+<svg viewBox="0 0 700 360" role="img" aria-label="时序图：界面线程调用 invokeMethod 后立即返回，继续处理界面事件；doWork 在工作线程中执行；工作线程 emit progress 和 finished 时，调用被打包成事件放进界面线程的队列，由界面线程执行更新进度条和显示结果">
+  <defs><marker id="th-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker><marker id="th-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="90" y="10" width="160" height="32" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/>
+    <text x="170" y="31" text-anchor="middle" style="fill:var(--fg)">界面线程</text>
+    <rect x="450" y="10" width="160" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--link);stroke-width:1.5"/>
+    <text x="530" y="31" text-anchor="middle" style="fill:var(--fg)">工作线程</text>
+    <line x1="170" y1="42" x2="170" y2="350" style="stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+    <line x1="530" y1="42" x2="530" y2="350" style="stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+    <rect x="523" y="92" width="14" height="210" style="fill:var(--link);opacity:.35"/>
+    <text x="546" y="104" style="fill:var(--fg)">doWork() 开始</text>
+    <text x="546" y="140" style="fill:var(--muted);font-size:12px">耗时的计算</text>
+    <text x="158" y="74" text-anchor="end" style="fill:var(--fg)">用户点击「开始」</text>
+    <line x1="170" y1="88" x2="520" y2="96" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#th-a)"/>
+    <text x="350" y="84" text-anchor="middle" style="fill:var(--link);font-size:12px">invokeMethod：放进对方的事件队列</text>
+    <text x="158" y="112" text-anchor="end" style="fill:var(--muted);font-size:12px">立即返回</text>
+    <g style="fill:var(--accent)">
+      <circle cx="170" cy="130" r="3"/><circle cx="170" cy="150" r="3"/><circle cx="170" cy="170" r="3"/>
+      <circle cx="170" cy="230" r="3"/><circle cx="170" cy="250" r="3"/><circle cx="170" cy="270" r="3"/>
+    </g>
+    <text x="158" y="154" text-anchor="end" style="fill:var(--muted);font-size:12px">照常处理重画、点击</text>
+    <line x1="520" y1="190" x2="174" y2="200" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#th-b)"/>
+    <text x="546" y="194" style="fill:var(--fg)">emit progress(50)</text>
+    <text x="350" y="186" text-anchor="middle" style="fill:var(--accent);font-size:12px">事件</text>
+    <text x="158" y="206" text-anchor="end" style="fill:var(--fg)">进度条更新到 50%</text>
+    <line x1="520" y1="300" x2="174" y2="310" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#th-b)"/>
+    <text x="546" y="304" style="fill:var(--fg)">emit finished(结果)</text>
+    <text x="350" y="296" text-anchor="middle" style="fill:var(--accent);font-size:12px">事件</text>
+    <text x="158" y="316" text-anchor="end" style="fill:var(--fg)">显示结果</text>
+    <text x="10" y="352" style="fill:var(--muted);font-size:11px">时间 ↓</text>
+  </g>
+</svg>
+</figure>
 
 ### 2.3 几个细节
 
@@ -349,3 +372,78 @@ thread.wait();                  // 3. 等待线程结束
 2. 在 `doWork` 还在执行时，再调用两次 `invokeMethod(worker, &Worker::doWork, ...)`，打印三个任务开始和结束的时间。它们是并行执行的吗？
 3. 把第 3 节的 `MyThread` 改成在构造函数中调用 `moveToThread(this)`，`onPing` 会在哪个线程中执行？为什么很多人不推荐这样做？
 4. 把第 2 节程序中的 `thread.wait()` 去掉，只保留 `quit()`，程序还能正常退出吗？多运行几次看看。
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 修改 `doWork`，每一小步之前检查中断请求：
+
+   ```cpp
+   void Worker::doWork(int n)
+   {
+       long long sum = 0;
+       for (int i = 1; i <= 10; ++i) {
+           if (QThread::currentThread()->isInterruptionRequested()) {
+               emit canceled();                 // 告诉界面：任务被取消了
+               return;
+           }
+           std::this_thread::sleep_for(std::chrono::milliseconds(100));
+           sum += i * n;
+           emit progress(i * 10);
+       }
+       emit finished(sum);
+   }
+
+   // 界面线程
+   QTimer::singleShot(500, [&] { thread.requestInterruption(); });
+   QObject::connect(worker, &Worker::canceled, &app, [&] {
+       thread.quit();
+       thread.wait();
+       app.quit();
+   });
+   ```
+
+   如果只是在检查到中断时 `return`，`finished` 就**不会**发出，而第 2 节中让线程退出、让程序退出的代码都写在 `finished` 的槽中，程序就会一直挂着不退出。
+
+   应该发出吗？不应该发出 `finished(sum)`：这时的 `sum` 只算了一半，界面会把它当作正确的结果显示出来。但是也不能什么都不发：界面需要知道「任务结束了」，才能恢复「开始」按钮、隐藏进度条、在需要时退出线程。所以应该发出一个**单独的信号** `canceled()`，或者让 `finished` 带一个表示是否完成的参数。原则是：任务的每一种结局（成功、失败、取消）都要通知调用者，而且要让调用者能区分它们。
+
+2. 在 200 毫秒时连续调用三次 `invokeMethod`，实测：
+
+   ```
+     203 ms  doWork(1) 开始
+    1234 ms  doWork(1) 结束
+    1237 ms  doWork(2) 开始
+    2271 ms  doWork(2) 结束
+    2271 ms  doWork(3) 开始
+    3309 ms  doWork(3) 结束
+   ```
+
+   不是并行执行的，三个任务依次执行，一共用了 3 秒多。一个 worker 属于一个线程，这个线程同一时间只能执行一个槽：第一个 `doWork` 执行时，后两个调用作为事件排在工作线程的队列中，`doWork` 返回后事件循环才取出下一个。想要并行，要么创建多个 worker、多个线程，要么用下一篇的线程池。
+
+3. 构造函数中 `moveToThread(this)` 之后，`MyThread` 对象属于它自己管理的那个新线程，所以 `onPing` 会在**新线程**中执行（前提是 `run()` 中调用了 `exec()`，新线程有事件循环）。
+
+   不推荐的原因：
+
+   - **对象的归属和使用者错位**：`start()`、`quit()`、`wait()` 都是在界面线程中调用的，`started`、`finished` 信号也和创建者有关，可对象却属于另一个线程。线程结束后，这个对象属于一个已经没有事件循环的线程，再给它发队列信号、调用 `deleteLater()` 都不会被处理。
+   - **混淆了两个概念**：`QThread` 对象是「管理线程的句柄」，而不是「线程本身」。把句柄移进它管理的线程里，就像把遥控器锁在电视机里。
+   - **成员的访问更乱了**：`run()` 和 `onPing` 都在新线程，但 `start()`、`isRunning()` 等函数仍然在界面线程中调用，同一个对象的成员被两个线程访问，读代码的人很难判断哪些需要加锁。
+
+   需要「槽在新线程中执行」时，用第 2 节的写法：单独写一个 worker，把它移到线程中，`QThread` 对象本身留在创建它的线程。
+
+4. 去掉 `thread.wait()`，运行 20 次，退出码：
+
+   ```
+   134 134 0 134 134 134 134 134 134 134 134 134 134 134 134 134 134 134 134 134
+   ```
+
+   20 次中有 19 次 abort，错误信息是：
+
+   ```
+   QThread: Destroyed while thread '' is still running
+   ```
+
+   `quit()` 只是向工作线程投递一个「退出」请求，立即返回；接着 `app.quit()` 让 `app.exec()` 返回，`main` 结束，栈上的 `thread` 析构。这时工作线程很可能还没来得及处理「退出」请求，线程还在运行，就是 5.1 节的情况。偶尔有一次工作线程恰好先退出了，程序就正常结束了。
+
+   这类错误最危险的地方就在于「多运行几次」才会发现：只运行一次，可能恰好成功。`quit()` 之后一定要 `wait()`。
+
+</details>

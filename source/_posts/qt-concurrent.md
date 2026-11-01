@@ -298,3 +298,95 @@ for (int i = 0; i < 24; ++i)
 2. 用 `QtConcurrent::filtered` 在第二章 2.2 篇的 100 万个联系人中，并行地找出所有包含「7」的名字。和代理模型的过滤（220 毫秒）相比快了多少？
 3. 用 `QPromise` 版本的 `QtConcurrent::run` 写一个可以取消、能报告进度的长任务（提示：任务函数的第一个参数是 `QPromise<T> &`）。
 4. 在第 4 节的实验中，把阻塞任务的数量改成 11 个和 12 个，快速任务分别在什么时候开始执行？为什么？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 在 `thumbnail` 中，每算出一个输出像素，额外做 1000 次浮点运算（乘法、加法和 `sin`）。每种配置运行 3 次取最快：
+
+   ```
+   单线程   48 张:   8033.5 ms
+    1 个线程 48 张:   8036.0 ms，加速 1.0 倍
+    2 个线程 48 张:   4133.5 ms，加速 1.9 倍
+    4 个线程 48 张:   2169.7 ms，加速 3.7 倍
+    8 个线程 48 张:   1215.8 ms，加速 6.6 倍
+   12 个线程 48 张:    950.5 ms，加速 8.5 倍
+   ```
+
+   | 线程数 | 原来（内存密集） | 计算密集 |
+   |---|---|---|
+   | 2 | 1.9 倍 | 1.9 倍 |
+   | 4 | 2.8 倍 | 3.7 倍 |
+   | 8 | 3.5 倍 | 6.6 倍 |
+   | 12 | 3.7 倍 | 8.5 倍 |
+
+   计算多了以后，读内存只占很小的一部分时间，内存带宽不再是瓶颈，加速比随线程数一直上升。12 个线程没有达到 12 倍，是因为 3.2 节说的三档核心：6 个能效核比性能核慢得多，它们加起来大约相当于 3 个性能核。
+
+2. 参考代码：
+
+   ```cpp
+   QStringList names;                       // 100 万个「联系人 i」
+   QStringList hits = QtConcurrent::blockingFiltered(names, [](const QString &n) {
+       return n.contains(u'7');
+   });
+   ```
+
+   实测：
+
+   ```
+   单线程过滤 5.1 ms，blockingFiltered 7.3 ms，找到 468559 个，结果相同 1
+   ```
+
+   和代理模型的 220 毫秒相比，**单线程的循环就快了 40 多倍**，并行反而比单线程还慢一点。
+
+   - 快的原因：直接在 `QStringList` 中查找，每个名字只是一次 `contains`；代理模型每一行都要调用一次 `data()`，现场生成字符串、包装成 `QVariant`、再转回字符串比较，开销主要在这些地方，而不在比较本身。
+   - 并行没有用的原因：每个元素的工作只要几纳秒，比分配任务、合并结果的开销还小，结果又有 47 万个，合并时要复制大量的字符串（虽然是隐式共享，也要逐个增加引用计数）。
+
+   这正是 3.2 节「任务太小」的情况。先去掉不必要的开销，往往比加线程有效得多。
+
+3. 参考代码：
+
+   ```cpp
+   QFutureWatcher<long long> watcher;
+   QObject::connect(&watcher, &QFutureWatcher<long long>::progressValueChanged, [](int v) {
+       progressBar->setValue(v);
+   });
+   QObject::connect(&watcher, &QFutureWatcher<long long>::finished, [&] {
+       if (watcher.isCanceled())
+           std::printf("已取消\n");
+       else
+           std::printf("结果 %lld\n", watcher.result());
+   });
+
+   watcher.setFuture(QtConcurrent::run([](QPromise<long long> &promise, int n) {
+       promise.setProgressRange(0, 100);
+       long long sum = 0;
+       for (int i = 1; i <= 100; ++i) {
+           promise.suspendIfRequested();         // 支持暂停：watcher.suspend()
+           if (promise.isCanceled())
+               return;                           // 支持取消：watcher.cancel()
+           QThread::msleep(20);                  // 一小段工作
+           sum += i * n;
+           promise.setProgressValue(i);
+       }
+       promise.addResult(sum);
+   }, 7));
+   ```
+
+   任务函数的第一个参数是 `QPromise<T> &`，`run` 的其余参数（这里的 7）依次传给后面的参数。和 2.2 节普通的 `run` 相比，任务自己可以报告进度（`setProgressValue`）、检查是否被取消（`isCanceled`）、响应暂停（`suspendIfRequested`），结果用 `addResult` 交出去。1.1 秒时取消，实测 `finished` 中 `isCanceled = 1`，没有结果。
+
+   注意取消时不要 `addResult`，否则 `finished` 中调用 `watcher.result()` 会以为有结果；取消后调用 `result()` 是错误的，所以 `finished` 中要先检查 `isCanceled()`。
+
+4. 实测：
+
+   ```
+   11 个阻塞任务（线程池 12 个线程）: 快速任务在第 0 ms 开始执行
+   12 个阻塞任务（线程池 12 个线程）: 快速任务在第 1001 ms 开始执行
+   ```
+
+   - 11 个阻塞任务占了 11 个线程，还剩 1 个空闲，快速任务提交后立即被它执行。
+   - 12 个阻塞任务正好占满全部 12 个线程，快速任务只能排队，等第一个阻塞任务在 1 秒后结束、让出线程才能执行。
+
+   第 4 节的 24 个任务等了 2 秒，是因为有两轮阻塞任务排在它前面。规律是：快速任务的等待时间 = 排在它前面的阻塞任务需要几「轮」才能执行完。差一个线程，结果就是 0 秒和 1 秒的区别，所以在全局线程池中执行阻塞任务的程序，往往在测试时一切正常，到了用户那里任务一多就突然变慢。
+
+</details>

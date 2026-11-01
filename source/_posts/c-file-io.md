@@ -167,6 +167,15 @@ ls -l important.txt
 
 程序被终止（退出码 137），`important.txt` 的大小是 **0 字节**：写入的数据还在缓冲区中，随着进程一起消失了。在 `fprintf` 之后加上一行 **`fflush(f);`**，同样被强制终止，文件的大小就是 16 字节了，数据被保存了下来。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 186" role="img" aria-label="文件缓冲：fprintf 先把数据放进进程内存中的 FILE 缓冲区，fflush 或 fclose 时才交给内核，再由内核写到磁盘。进程被 SIGKILL 杀死时，缓冲区中的数据随进程一起消失">
+  <defs><marker id="fb-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="60" width="130" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="85.0" y="85.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">fprintf(f, …)</text><rect x="200" y="30" width="230" height="110" rx="8" style="fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 4"/><text x="212" y="50" text-anchor="start" style="fill:var(--accent);font-size:12px">进程的内存</text><rect x="225" y="62" width="180" height="40" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="315.0" y="80.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">FILE 的缓冲区</text><text x="315.0" y="96.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">"重要的数据\n"</text><line x1="150" y1="80" x2="221" y2="80" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#fb-a)"/><rect x="490" y="30" width="180" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="580.0" y="55.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">内核（页缓存）</text><rect x="490" y="100" width="180" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="580.0" y="125.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">磁盘上的文件</text><line x1="405" y1="80" x2="486" y2="54" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#fb-a)"/><text x="446" y="54" text-anchor="middle" style="fill:var(--fg-2);font-size:12px">fflush</text><text x="446" y="104" text-anchor="middle" style="fill:var(--fg-2);font-size:12px">fclose</text><line x1="580" y1="70" x2="580" y2="96" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#fb-a)"/><text x="225" y="126" text-anchor="start" style="fill:var(--danger);font-size:11px">SIGKILL：进程连同缓冲区一起消失</text><text x="20" y="172" text-anchor="start" style="fill:var(--muted);font-size:11px">缓冲区攒够了、fflush、fclose 或程序正常结束时，数据才通过 write 交给内核；交给内核后，即使进程被杀，数据也不会丢</text>
+  </g>
+</svg>
+</figure>
+
 - **`fclose`** 会先把缓冲区中的数据写入文件，再关闭文件。程序正常结束（从 `main` 返回或调用 `exit`）时，所有打开的文件也会被自动刷新和关闭。
 - **`fflush(f)`** 立即把缓冲区中的数据写入文件。写日志时，如果希望程序崩溃前的日志不丢失，每写一条就 `fflush` 一次。
 - 这和《开发环境与编程工具》中「程序崩溃时，重定向到文件的输出丢失」是同一个原因，也是 C++ 中 `std::endl` 比 `'\n'` 慢的原因（《字符串与 IO 流》）。

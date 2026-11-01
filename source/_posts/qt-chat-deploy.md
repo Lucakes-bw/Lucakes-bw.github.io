@@ -318,3 +318,106 @@ Windows 上，3.3 节的翻译问题同样存在，`main.cpp` 中的 `appDir + "
 2. 把 `Info.plist` 中的版本号改成从 Git 的标签生成（`git describe --tags`），每次打包自动更新。
 3. 在 `deploy-macos.sh` 中再删掉用不到的 `imageformats` 插件（QtChat 不显示任何图片），包小了多少？删之前怎样确认它们确实用不到？
 4. 在 Windows 上用 `windeployqt` 打包 QtChat，统计包的大小和 DLL 的数量，和 macOS 上的结果比较。
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 生成 `.icns`：
+
+   ```bash
+   mkdir QtChat.iconset
+   for s in 16 32 128 256 512; do
+       sips -z $s $s icon-1024.png --out QtChat.iconset/icon_${s}x${s}.png
+       sips -z $((s*2)) $((s*2)) icon-1024.png --out QtChat.iconset/icon_${s}x${s}@2x.png
+   done
+   iconutil -c icns QtChat.iconset          # 生成 QtChat.icns
+   ```
+
+   `CMakeLists.txt`：
+
+   ```cmake
+   set(MACOSX_BUNDLE_ICON_FILE QtChat.icns)                 # 写进 Info.plist 的 CFBundleIconFile
+   set(app_icon ${CMAKE_CURRENT_SOURCE_DIR}/QtChat.icns)
+   set_source_files_properties(${app_icon} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+   qt_add_executable(QtChat MACOSX_BUNDLE main.cpp ... ${app_icon})
+   ```
+
+   `MACOSX_PACKAGE_LOCATION "Resources"` 让构建时把文件复制到 `QtChat.app/Contents/Resources/` 中，Finder 和程序坞从那里读取图标。`iconset` 中要有 `@2x` 的版本，Retina 屏上的图标才清晰。改了图标后 Finder 可能还显示旧的，是系统的图标缓存，换一个目录或重新登录就好了。
+
+2. 在 `CMakeLists.txt` 中执行 `git describe`：
+
+   ```cmake
+   execute_process(
+       COMMAND git describe --tags --always --dirty
+       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+       OUTPUT_VARIABLE GIT_VERSION
+       OUTPUT_STRIP_TRAILING_WHITESPACE
+       ERROR_QUIET)
+   if(NOT GIT_VERSION)
+       set(GIT_VERSION "0.0.0")
+   endif()
+   # v1.2.0-3-gabc1234 → 1.2.0（Info.plist 中的版本号只能是数字和点）
+   string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" SHORT_VERSION "${GIT_VERSION}")
+
+   set_target_properties(QtChat PROPERTIES
+       MACOSX_BUNDLE_SHORT_VERSION_STRING "${SHORT_VERSION}"
+       MACOSX_BUNDLE_BUNDLE_VERSION "${GIT_VERSION}")
+   target_compile_definitions(QtChat PRIVATE APP_VERSION="${GIT_VERSION}")   # 「关于」对话框中显示
+   ```
+
+   要注意：`execute_process` 只在 **CMake 配置时**执行，之后再打标签、再提交，只运行 `cmake --build` 是不会更新的。打包脚本中应该每次都重新配置（`cmake -B build ...`），或者用 `add_custom_command` 在每次构建时生成一个头文件。`--dirty` 会在有未提交的修改时加上 `-dirty` 后缀，避免把没提交的代码当成正式版本发出去。
+
+3. 用到的 Qt 图片格式插件和它们拉进来的库：
+
+   ```
+   libjpeg.8.dylib      <- libtiff.6.dylib libqjpeg.dylib
+   liblzma.5.dylib      <- libtiff.6.dylib
+   libsharpyuv.0.dylib  <- libwebp.7.dylib libwebpdemux.2.dylib libwebpmux.3.dylib libqwebp.dylib
+   libtiff.6.dylib      <- libqtiff.dylib
+   libwebp.7.dylib      <- libtiff.6.dylib libwebpdemux.2.dylib libwebpmux.3.dylib libqwebp.dylib
+   libwebpdemux.2.dylib <- libqwebp.dylib
+   libwebpmux.3.dylib   <- libqwebp.dylib
+   libzstd.1.dylib      <- QtCore QtNetwork libtiff.6.dylib
+   ```
+
+   （用 `otool -L` 查每个库被谁引用。）除了 `PlugIns/imageformats` 目录，还可以删掉只被这些插件引用的 7 个库；`libzstd` 也被 `QtCore` 和 `QtNetwork` 用到，要保留。删除后重新签名、打包：
+
+   | | 删除前 | 删除后 |
+   |---|---|---|
+   | `QtChat.app` | 71.9 MB | 69.6 MB |
+   | `QtChat.dmg` | 31.7 MB | 30.4 MB |
+
+   只小了约 2.3 MB（3%），大头仍然是 Qt 的框架和 ICU 的数据。
+
+   删之前怎样确认用不到：
+
+   - **读代码**：QtChat 没有 `QImage`、`QPixmap` 加载文件，没有图标资源，PNG 的支持是 `QtGui` 内置的，不需要插件。
+   - **运行时检查**：用 `DYLD_PRINT_LIBRARIES=1` 运行程序，把登录、聊天、切换会话都操作一遍，看加载了哪些库。实测输出中只有系统的 `ImageIO.framework/.../libJPEG.dylib` 和 `libTIFF.dylib`（这是 macOS 自己的框架加载的），没有加载包中的任何一个 `imageformats` 插件。
+   - **删掉之后再测一遍**：删除后的包照常运行，没有警告。
+
+   以后如果加了头像（JPEG）之类的功能，要记得把对应的插件加回来，否则图片会静悄悄地加载失败。所以这类删减要写在打包脚本中并加上注释，而不是手工删。
+
+4. 本文的实验环境中没有 Windows，没有实测，这里给出做法和预期。在 Windows 上：
+
+   ```bat
+   cmake -B build -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH=C:\Qt\6.x\msvc2022_64
+   cmake --build build --config Release
+   windeployqt --release --no-translations build\Release\QtChat.exe
+   ```
+
+   `windeployqt` 把 `Qt6Core.dll`、`Qt6Gui.dll`、`Qt6Widgets.dll`、`Qt6Network.dll`、`Qt6Sql.dll`，`platforms\qwindows.dll`、`styles\`、`sqldrivers\qsqlite.dll`、`imageformats\`、`tls\` 等插件复制到 exe 旁边，还会带上 MSVC 运行库的安装程序（或 DLL）。统计：
+
+   ```bat
+   dir /s build\Release | find "个文件"
+   dir /s /b build\Release\*.dll | find /c ".dll"
+   ```
+
+   和 macOS 比较时，可以预期：
+
+   - Windows 上没有 `.app` 的目录结构，所有 DLL 和插件目录平铺在 exe 旁边。
+   - 官方安装器中的 Qt 用自己编译的 ICU 或者系统的 ICU（Windows 10 起系统自带），不像 Homebrew 版那样带上 30 多 MB 的 ICU 数据，所以包通常**更小**。
+   - 也不会出现 Homebrew 依赖的 glib、dbus 等库：它们是 Homebrew 编译 Qt 时打开的功能带进来的，官方的 Windows 版没有。
+
+   不同的 Qt 来源（官方安装器、vcpkg、MSYS2）带的依赖差别很大，具体的数字要以实际测量为准。
+
+</details>

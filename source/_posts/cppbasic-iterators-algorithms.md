@@ -12,6 +12,7 @@ tags:
 order: 13
 description: 迭代器把容器和算法连接起来，让一个 sort 可以排序任何容器。本文介绍迭代器的用法和分类，用 AddressSanitizer 复现迭代器失效，讲清楚边遍历边删除的正确写法和 erase-remove 惯用法，并介绍 sort、find_if、count_if、accumulate、transform、lower_bound 等常用算法。
 disableNunjucks: true
+viz: [cpp-basics]
 ---
 
 > **本文目标**：会用迭代器遍历和修改容器；理解迭代器的分类，知道为什么 `std::sort` 不能用于 `list`；能识别和避免迭代器失效；掌握边遍历边删除的正确写法和 erase-remove 惯用法；熟练使用常用的 STL 算法。
@@ -360,6 +361,10 @@ sort + unique:  1 2 3（size = 3）
 ```
 
 `remove_if` 之后，`size` 仍然是 7。它做的事情是：**把要保留的元素依次移到前面**，然后返回「新的结尾」`newEnd`。`newEnd` 后面的元素是剩下的旧值，内容没有意义。
+
+一步一步看它是怎样「搬」的：
+
+<div class="dsviz" data-viz="remove-if"></div>
 
 为什么不直接删除？因为**算法只能通过迭代器访问元素，它无法改变容器的大小**，真正删除元素必须调用容器自己的 `erase`。所以要两步合在一起：
 

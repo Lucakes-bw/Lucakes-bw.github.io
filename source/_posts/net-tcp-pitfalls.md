@@ -159,6 +159,23 @@ TCP_NODELAY：平均 1.34 毫秒，最短 1.21，最长 1.44
 
 **发送方在等确认，接收方在等数据**，直到接收方的延迟确认计时器到期，才打破僵局，每个请求因此多出了约 40 毫秒。第一个请求很快，是因为连接刚建立时，Linux 的接收方处于「快速确认」模式，还没有开始延迟确认。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 390" role="img" aria-label="Nagle 与延迟确认互相等待：c 发出 10 字节的请求头后，因为它还没被确认，Nagle 算法扣住了 100 字节的正文；s 收到不完整的请求，没有数据要回，推迟确认；41.7 毫秒后延迟确认计时器到期，s 发出 ACK，c 才发出正文，s 马上回复 ok">
+  <defs><marker id="sq-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker><marker id="sq-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker><marker id="sq-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="138" y="8" width="124" height="30" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="200" y="28" text-anchor="middle" style="fill:var(--fg)">客户端 c</text><rect x="458" y="8" width="124" height="30" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="520" y="28" text-anchor="middle" style="fill:var(--fg)">服务器 s</text><line x1="200" y1="38" x2="200" y2="380" style="stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:5 4"/><line x1="520" y1="38" x2="520" y2="380" style="stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+    <rect x="194" y="72" width="12" height="172" style="fill:var(--warn);opacity:.35"/>
+    <rect x="514" y="84" width="12" height="138" style="fill:var(--warn);opacity:.35"/>
+    <text x="184" y="140" text-anchor="end" style="fill:var(--warn);font-size:12px">Nagle：请求头还没</text>
+    <text x="184" y="156" text-anchor="end" style="fill:var(--warn);font-size:12px">被确认，正文先扣着</text>
+    <text x="536" y="140" style="fill:var(--warn);font-size:12px">延迟确认：请求不完整，</text>
+    <text x="536" y="156" style="fill:var(--warn);font-size:12px">没有数据可捎带，等一等</text>
+    <text x="360.0" y="150" text-anchor="middle" style="fill:var(--warn)">互相等待 41.7 毫秒</text>
+    <line x1="200" y1="60" x2="516" y2="82" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#sq-l)"/><text x="360.0" y="66" text-anchor="middle" style="fill:var(--link);font-size:12px">请求头 10 字节</text><text x="188" y="64" text-anchor="end" style="fill:var(--muted);font-size:11px">0 ms</text><line x1="520" y1="222" x2="204" y2="244" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#sq-g)"/><text x="360.0" y="228" text-anchor="middle" style="fill:var(--fg-2);font-size:12px">ACK（延迟确认计时器到期）</text><text x="188" y="248" text-anchor="end" style="fill:var(--muted);font-size:11px">41.7 ms</text><line x1="200" y1="268" x2="516" y2="290" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#sq-l)"/><text x="360.0" y="274" text-anchor="middle" style="fill:var(--link);font-size:12px">正文 100 字节</text><text x="188" y="272" text-anchor="end" style="fill:var(--muted);font-size:11px">43.1 ms</text><line x1="520" y1="304" x2="204" y2="326" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#sq-g)"/><text x="360.0" y="310" text-anchor="middle" style="fill:var(--fg-2);font-size:12px">ACK</text><line x1="520" y1="340" x2="204" y2="362" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#sq-a)"/><text x="360.0" y="346" text-anchor="middle" style="fill:var(--accent);font-size:12px">回复 ok</text><text x="188" y="366" text-anchor="end" style="fill:var(--muted);font-size:11px">43.3 ms</text>
+  </g>
+</svg>
+</figure>
+
 ### 2.3 解决方法
 
 - **合并写入**：把头部和正文拼在一起，用一次 `send` 发出（或者用 `writev` 一次写入多个缓冲区）。这是最好的办法，还能减少系统调用；

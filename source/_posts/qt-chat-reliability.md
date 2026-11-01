@@ -299,3 +299,81 @@ QtChat 的可靠性设计覆盖了网络中断、服务器卡死、客户端崩�
 2. 让发送中超过 2 分钟的消息自动变成「失败」。重启程序后，这个计时应该从什么时候开始算？
 3. 修改服务器，让它在把消息写进 SQLite 后才回复 `ack`，并在启动时恢复用户表和离线消息。重做实验二，在服务器冻结时用 `docker kill` 杀掉服务器再启动，消息还能送到吗？
 4. 现在客户端按本地时间 `ts` 排序。两个客户端的系统时间相差 5 分钟时会出现什么问题？改用服务器 `ack` 中的 `ts` 排序，`MessageStore` 需要怎样修改？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 在消息列表上打开右键菜单：
+
+   ```cpp
+   m_messageView->setContextMenuPolicy(Qt::CustomContextMenu);
+   connect(m_messageView, &QWidget::customContextMenuRequested, this, [this](const QPoint &pos) {
+       QModelIndex index = m_messageView->indexAt(pos);
+       if (!index.isValid() || index.data(MessageModel::StatusRole).toInt() != ChatMessage::Failed)
+           return;
+       qint64 msgId = index.data(MessageModel::MsgIdRole).toLongLong();
+       QMenu menu;
+       menu.addAction("重发", this, [=] { m_client->resend(msgId); });
+       menu.addAction("删除", this, [=] { m_client->remove(msgId); });
+       menu.exec(m_messageView->viewport()->mapToGlobal(pos));
+   });
+   ```
+
+   `MessageModel` 要多提供一个角色 `MsgIdRole`，返回这一行的 `msgId`。`resend` 把状态改回「发送中」并重新发送；`remove` 从数据库和模型中删除这一行（`beginRemoveRows` / `endRemoveRows`）。
+
+   重发应该用**原来的编号**。「失败」只说明客户端没有收到确认，并不说明服务器没有处理：可能服务器处理了、转发给了对方，只是 `ack` 丢了，或者是超时（练习 2）被标成了失败。用原来的编号重发，服务器发现处理过了，只回复 `ack`，对方不会收到两条；用新的编号，服务器认为是一条新消息，对方就会看到两条一样的消息。
+
+   例外是服务器明确回复了 `error`（例如「没有这个用户」）的消息，它确实没有被处理过，用哪个编号都可以；但为了逻辑简单，统一用原来的编号。
+
+2. 每条「发送中」的消息记录**开始等待的时刻**，用一个定时器定期检查：
+
+   ```cpp
+   // 每 10 秒检查一次
+   connect(&m_expireTimer, &QTimer::timeout, this, [this] {
+       qint64 now = QDateTime::currentMSecsSinceEpoch();
+       for (const ChatMessage &m : m_store.pending())
+           if (now - m.waitingSince > 2 * 60 * 1000)
+               markFailed(m.msgId);
+   });
+   ```
+
+   重启后从什么时候开始算？不应该用消息的 `ts`（用户按下回车的时刻）：程序关着的这段时间，消息根本没有机会发送，如果用户昨天写了一条消息就关机了，今天一打开，它就立即变成了「失败」，而它其实一次都还没有尝试发送过。
+
+   合理的做法是：**从这一次运行中，第一次真正尝试发送它的时刻开始计时**，也就是登录成功、补发它的那一刻。这个时刻不需要存进数据库，每次启动后，由补发的代码记录在内存中（`waitingSince`）。没有网络、一直没有登录成功时，消息就一直是「发送中」，这符合用户的直觉：「还在等网络」。
+
+3. 服务器的修改（配合上一篇练习 2 的数据库）：
+
+   ```c
+   // on_chat 中，对方不在线时
+   if (save_offline(peer, fwd) != 0) {
+       // 写数据库失败：不回复 ack，客户端会在重连后重发
+       cJSON_Delete(fwd);
+       cJSON_Delete(reply);
+       return;
+   }
+   // ……写成功之后，才回复 ack
+   ```
+
+   重做实验二，服务器冻结时 `docker kill` 再启动：
+
+   - 冻结期间客户端发出的消息，服务器还没处理，没有 `ack`，客户端里仍然是「发送中」。服务器被杀之后，这些消息在服务器的内核缓冲区中，随进程一起丢了。
+   - 服务器重启后，客户端重连、登录成功，把所有「发送中」的消息重发一遍，这次服务器写进数据库、回复 `ack`。
+
+   所以消息**能送到**。之前「已发送」的离线消息也不会丢，因为它们在回复 `ack` 之前已经写进了数据库，重启时从数据库恢复。
+
+   还有一个问题：服务器重启后，内存中的去重记录（`seen`）没了。如果某条消息在服务器被杀之前已经转发了、但 `ack` 没送到客户端，重发时服务器认不出它，对方会收到两次。所以去重的记录也要和消息一起存进数据库（例如在消息表上建 `(sender, msg_id)` 的唯一索引），客户端也用 `idx_msg` 唯一索引兜底（实验三）。
+
+4. 两个客户端的系统时间相差 5 分钟（比如 lisi 的电脑快了 5 分钟）：
+
+   - lucky 在 12:00 发了一条，`ts` 是 12:00；lisi 立即回复，他的时钟是 12:05，`ts` 是 12:05。到这里顺序还是对的。
+   - 但反过来，如果 lucky 的时钟快了 5 分钟：lisi 在 12:00 发的问题，lucky 在 12:01 回复，`ts` 却是 12:06……再加上 lisi 接着在 12:02（他的时钟）发的消息，按 `ts` 排序后，lisi 12:02 的消息会排在 lucky「12:06」的回复**前面**，对话的顺序乱了，回复出现在问题之后很远的地方，时间也显示得不对。
+
+   改用服务器的 `ts` 排序：所有消息的时间都来自同一个时钟（服务器），双方看到的顺序一致。`MessageStore` 需要：
+
+   - **自己发的消息**：发送时还不知道服务器的时间，先用本地时间存进去（界面上立即显示），收到 `ack` 时，用 `ack` 中的 `ts` 更新这条消息：`UPDATE message SET ts = ?, status = 1 WHERE msg_id = ?`。模型中对应的那一行也要更新，如果它的位置变了，要移动这一行（`beginMoveRows`），或者简单地重新排序后发出 `layoutChanged`。
+   - **收到的消息**：直接用服务器转发时带的 `ts`，不用本地时间。
+   - **还在「发送中」的消息**：没有服务器时间，一直排在最后，这和大多数聊天软件的行为一致。
+
+   排序的依据从「本地时钟」变成了「服务器给的序号」，更进一步可以让服务器为每个会话分配一个递增的序号（`seq`），比时间戳更可靠：同一毫秒的两条消息也有确定的顺序。
+
+</details>

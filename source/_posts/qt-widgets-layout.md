@@ -372,3 +372,98 @@ macOS 的菜单不在窗口中，而在屏幕顶部的系统菜单栏上。Qt �
 2. 把 3.2 的登录框改成继承 `QDialog` 的类 `LoginDialog`，点「登录」时调用 `accept()`，点「取消」时调用 `reject()`。在 `main` 中用 `if (dialog.exec() == QDialog::Accepted)` 判断用户点了哪个。
 3. 在 4.2 的实验中，把窗口宽度改成 100，比三个按钮的建议宽度之和还小，会发生什么？窗口能缩到 100 吗？
 4. 给第 5 节的「打开…」动作设置快捷键 `QKeySequence::Open`，在 macOS 上它是什么键？在 Windows 上呢？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 参考代码：
+
+   ```cpp
+   QWidget window;
+   auto *grid = new QGridLayout(&window);
+   const char *keys[5][4] = {
+       {"C", "±", "%", "÷"},
+       {"7", "8", "9", "×"},
+       {"4", "5", "6", "-"},
+       {"1", "2", "3", "+"},
+       {"0", nullptr, ".", "="},
+   };
+   for (int r = 0; r < 5; ++r) {
+       for (int c = 0; c < 4; ++c) {
+           if (!keys[r][c])
+               continue;                          // 被 0 占掉的格子
+           auto *key = new QPushButton(keys[r][c]);
+           key->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+           int span = (r == 4 && c == 0) ? 2 : 1; // 0 占两列
+           grid->addWidget(key, r, c, 1, span);
+       }
+   }
+   ```
+
+   `addWidget(控件, 行, 列, 占几行, 占几列)` 的后两个参数就是跨行、跨列。按钮默认纵向是 `Fixed`，横向是 `Minimum`，不会主动变大，所以要把两个方向都设成 `Expanding`，窗口拉大时按键才会一起变大。
+
+2. 参考代码：
+
+   ```cpp
+   class LoginDialog : public QDialog
+   {
+   public:
+       explicit LoginDialog(QWidget *parent = nullptr) : QDialog(parent)
+       {
+           auto *user = new QLineEdit;
+           auto *pass = new QLineEdit;
+           pass->setEchoMode(QLineEdit::Password);
+           auto *form = new QFormLayout;
+           form->addRow("用户名", user);
+           form->addRow("密码", pass);
+
+           auto *cancel = new QPushButton("取消");
+           auto *login = new QPushButton("登录");
+           login->setDefault(true);
+           connect(cancel, &QPushButton::clicked, this, &QDialog::reject);
+           connect(login, &QPushButton::clicked, this, &QDialog::accept);
+
+           auto *buttons = new QHBoxLayout;
+           buttons->addStretch();
+           buttons->addWidget(cancel);
+           buttons->addWidget(login);
+
+           auto *root = new QVBoxLayout(this);
+           root->addLayout(form);
+           root->addLayout(buttons);
+       }
+   };
+
+   int main(int argc, char *argv[])
+   {
+       QApplication app(argc, argv);
+       LoginDialog dialog;
+       if (dialog.exec() == QDialog::Accepted)
+           std::printf("登录\n");
+       else
+           std::printf("取消\n");
+   }
+   ```
+
+   `exec()` 会一直等到对话框关闭才返回，返回值就是 `accept()` / `reject()` 设置的结果，按 Esc 或点关闭按钮等于 `reject()`。第二章第一篇会详细讲 `exec()` 和 `open()` 的区别。
+
+3. 窗口缩不到 100。实测窗口的宽度是 178，也就是布局的最小宽度：
+
+   ```
+   window 178, min 178, layout min 178, hint 178
+   A 39 B 39 C 40, button minHint 39 hint 39
+   ```
+
+   178 = 左右边距 20 + 20，加上三个按钮的最小宽度 39 + 39 + 40，再加上两个间距 10 + 10。布局默认的大小约束是 `SetDefaultConstraint`：把窗口的最小尺寸设成布局的最小尺寸，所以 `resize(100, 80)` 被改成了 178，用户用鼠标也拖不到更窄。
+
+   如果确实要缩到 100，可以调用 `row->setSizeConstraint(QLayout::SetNoConstraint)`，再清除窗口的最小尺寸。这时三个按钮被压到 13～14 像素宽，文字已经显示不下了。所以默认的约束是在保护界面：宁可窗口大一点，也不让控件小到不能用。
+
+4. 实测 `QKeySequence::keyBindings(QKeySequence::Open)` 的结果：
+
+   ```
+   Ctrl+O | ⌘O
+   ```
+
+   左边是可移植的写法，右边是在当前平台上显示的样子。在 macOS 上它是 **⌘O**（Command + O），在 Windows 和 Linux 上是 **Ctrl+O**。Qt 在 macOS 上把 `Qt::CTRL` 映射为 Command 键（真正的 Control 键是 `Qt::META`），所以用标准快捷键或者写 `Ctrl+O`，在两个平台上都符合用户的习惯。菜单中显示的快捷键也会自动变成各个平台的样子。
+
+</details>

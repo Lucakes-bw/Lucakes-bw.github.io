@@ -60,6 +60,27 @@ Jello
 - `name` 数组有 20 个字节，存放的字符串只有 3 个字符。`sizeof` 是数组的容量，`strlen` 是字符串的实际长度。
 - **存放 n 个字符的字符串，需要 n + 1 个字节的空间**。这是 C 字符串中最常出错的地方。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 272" role="img" aria-label="greeting 是 6 个字节：H e l l o 和结束符 \0，strlen 是 5，sizeof 是 6；name 有 20 个字节，前 3 个是 Tom，后面都是 \0，strlen 是 3，sizeof 是 20">
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="96" y="71" text-anchor="end" style="fill:var(--fg-2)">greeting</text>
+    <rect x="110" y="46" width="48" height="40" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="134.0" y="71" text-anchor="middle" style="fill:var(--fg);font-size:15px">'H'</text><text x="134.0" y="102" text-anchor="middle" style="fill:var(--muted);font-size:11px">72</text><rect x="158" y="46" width="48" height="40" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="182.0" y="71" text-anchor="middle" style="fill:var(--fg);font-size:15px">'e'</text><text x="182.0" y="102" text-anchor="middle" style="fill:var(--muted);font-size:11px">101</text><rect x="206" y="46" width="48" height="40" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="230.0" y="71" text-anchor="middle" style="fill:var(--fg);font-size:15px">'l'</text><text x="230.0" y="102" text-anchor="middle" style="fill:var(--muted);font-size:11px">108</text><rect x="254" y="46" width="48" height="40" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="278.0" y="71" text-anchor="middle" style="fill:var(--fg);font-size:15px">'l'</text><text x="278.0" y="102" text-anchor="middle" style="fill:var(--muted);font-size:11px">108</text><rect x="302" y="46" width="48" height="40" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="326.0" y="71" text-anchor="middle" style="fill:var(--fg);font-size:15px">'o'</text><text x="326.0" y="102" text-anchor="middle" style="fill:var(--muted);font-size:11px">111</text><rect x="350" y="46" width="48" height="40" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="374.0" y="71" text-anchor="middle" style="fill:var(--warn);font-size:15px">\0</text><text x="374.0" y="102" text-anchor="middle" style="fill:var(--muted);font-size:11px">0</text>
+    <path d="M110,38 v-8 h240 v8" style="fill:none;stroke:var(--accent);stroke-width:1.5"/>
+    <text x="230" y="22" text-anchor="middle" style="fill:var(--accent)">strlen = 5</text>
+    <path d="M110,110 v8 h288 v-8" style="fill:none;stroke:var(--link);stroke-width:1.5"/>
+    <text x="410" y="122" style="fill:var(--link)">sizeof = 6</text>
+    <text x="96" y="197" text-anchor="end" style="fill:var(--fg-2)">name</text>
+    <rect x="110" y="172" width="48" height="40" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="134.0" y="197" text-anchor="middle" style="fill:var(--fg);font-size:15px">'T'</text><text x="134.0" y="228" text-anchor="middle" style="fill:var(--muted);font-size:11px">84</text><rect x="158" y="172" width="48" height="40" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="182.0" y="197" text-anchor="middle" style="fill:var(--fg);font-size:15px">'o'</text><text x="182.0" y="228" text-anchor="middle" style="fill:var(--muted);font-size:11px">111</text><rect x="206" y="172" width="48" height="40" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="230.0" y="197" text-anchor="middle" style="fill:var(--fg);font-size:15px">'m'</text><text x="230.0" y="228" text-anchor="middle" style="fill:var(--muted);font-size:11px">109</text><rect x="254" y="172" width="48" height="40" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="278.0" y="197" text-anchor="middle" style="fill:var(--warn);font-size:15px">\0</text><text x="278.0" y="228" text-anchor="middle" style="fill:var(--muted);font-size:11px">0</text><rect x="302" y="172" width="48" height="40" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="326.0" y="197" text-anchor="middle" style="fill:var(--warn);font-size:15px">\0</text><text x="326.0" y="228" text-anchor="middle" style="fill:var(--muted);font-size:11px">0</text><rect x="350" y="172" width="48" height="40" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="374.0" y="197" text-anchor="middle" style="fill:var(--warn);font-size:15px">\0</text><text x="374.0" y="228" text-anchor="middle" style="fill:var(--muted);font-size:11px">0</text>
+    <rect x="398" y="172" width="190" height="40" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5;stroke-dasharray:4 3"/>
+    <text x="493" y="197" text-anchor="middle" style="fill:var(--warn)">\0 …（共 14 个）</text>
+    <path d="M110,164 v-8 h144 v8" style="fill:none;stroke:var(--accent);stroke-width:1.5"/>
+    <text x="182" y="150" text-anchor="middle" style="fill:var(--accent)">strlen = 3</text>
+    <path d="M110,236 v8 h478 v-8" style="fill:none;stroke:var(--link);stroke-width:1.5"/>
+    <text x="349" y="264" text-anchor="middle" style="fill:var(--link)">sizeof = 20</text>
+  </g>
+</svg>
+</figure>
+
 ### 1.1 没有 '\0' 会怎样
 
 ```c

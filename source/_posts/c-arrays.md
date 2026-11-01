@@ -72,6 +72,21 @@ sizeof(autoSize) = 24，元素个数 6
 - **`sizeof(数组) / sizeof(数组[0])`** 计算数组的元素个数：`autoSize` 占 24 字节，每个元素 4 字节，所以有 6 个元素。
 - 元素的地址每次增加 4，正好是一个 `int` 的大小：**数组的元素在内存中是连续存放的**。这也是为什么可以用下标快速访问任意一个元素：`scores[i]` 的地址就是「首元素的地址 + i × 4」。
 
+<figure class="diagram">
+<svg viewBox="0 0 680 190" role="img" aria-label="数组 scores 的 5 个元素在内存中连续存放，地址每次增加 4 字节；scores[5] 不存在，访问它就是越界">
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="60" y="56" width="100" height="44" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="110" y="84" text-anchor="middle" style="fill:var(--fg);font-size:15px">90</text><text x="110" y="44" text-anchor="middle" style="fill:var(--fg-2)">scores[0]</text><text x="60" y="120" text-anchor="middle" style="fill:var(--muted);font-size:11px">…530</text><rect x="160" y="56" width="100" height="44" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="210" y="84" text-anchor="middle" style="fill:var(--fg);font-size:15px">85</text><text x="210" y="44" text-anchor="middle" style="fill:var(--fg-2)">scores[1]</text><text x="160" y="120" text-anchor="middle" style="fill:var(--muted);font-size:11px">…534</text><rect x="260" y="56" width="100" height="44" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="310" y="84" text-anchor="middle" style="fill:var(--fg);font-size:15px">78</text><text x="310" y="44" text-anchor="middle" style="fill:var(--fg-2)">scores[2]</text><text x="260" y="120" text-anchor="middle" style="fill:var(--muted);font-size:11px">…538</text><rect x="360" y="56" width="100" height="44" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="410" y="84" text-anchor="middle" style="fill:var(--fg);font-size:15px">92</text><text x="410" y="44" text-anchor="middle" style="fill:var(--fg-2)">scores[3]</text><text x="360" y="120" text-anchor="middle" style="fill:var(--muted);font-size:11px">…53c</text><rect x="460" y="56" width="100" height="44" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="510" y="84" text-anchor="middle" style="fill:var(--fg);font-size:15px">66</text><text x="510" y="44" text-anchor="middle" style="fill:var(--fg-2)">scores[4]</text><text x="460" y="120" text-anchor="middle" style="fill:var(--muted);font-size:11px">…540</text>
+    <rect x="560" y="56" width="100" height="44" style="fill:none;stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 4"/>
+    <text x="610" y="84" text-anchor="middle" style="fill:var(--danger)">越界</text>
+    <text x="610" y="44" text-anchor="middle" style="fill:var(--danger)">scores[5]</text>
+    <text x="560" y="120" text-anchor="middle" style="fill:var(--muted);font-size:11px">…544</text>
+    <path d="M60,134 v8 h100 v-8" style="fill:none;stroke:var(--accent);stroke-width:1.5"/>
+    <text x="110" y="158" text-anchor="middle" style="fill:var(--accent)">4 字节</text>
+    <text x="20" y="182" style="fill:var(--fg-2)">&amp;scores[i] = 首元素的地址 + i × sizeof(int)，所以按下标访问任何一个元素都一样快</text>
+  </g>
+</svg>
+</figure>
+
 ## 2. 越界访问
 
 **C 语言不检查数组下标是否越界**。
@@ -298,6 +313,25 @@ sizeof(m) = 24，sizeof(m[0]) = 12
 按地址顺序: 1 2 3 4 5 6
 &m[0][2] = 0x16bcea558, &m[1][0] = 0x16bcea55c
 ```
+
+<figure class="diagram">
+<svg viewBox="0 0 700 200" role="img" aria-label="二维数组 m[2][3]：左边是逻辑上的 2 行 3 列，右边是它在内存中的样子，先存第 0 行的 3 个元素，紧接着存第 1 行，m[0][2] 和 m[1][0] 相邻">
+  <defs><marker id="rowm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="70" y="36" style="fill:var(--muted)">写代码时的样子</text>
+    <rect x="70" y="52" width="52" height="46" style="fill:var(--accent-soft);stroke:var(--border-2);stroke-width:1.5"/><text x="96" y="81" text-anchor="middle" style="fill:var(--fg);font-size:15px">1</text><rect x="122" y="52" width="52" height="46" style="fill:var(--accent-soft);stroke:var(--border-2);stroke-width:1.5"/><text x="148" y="81" text-anchor="middle" style="fill:var(--fg);font-size:15px">2</text><rect x="174" y="52" width="52" height="46" style="fill:var(--accent-soft);stroke:var(--border-2);stroke-width:1.5"/><text x="200" y="81" text-anchor="middle" style="fill:var(--fg);font-size:15px">3</text><text x="58" y="81" text-anchor="end" style="fill:var(--fg-2)">m[0]</text><rect x="70" y="98" width="52" height="46" style="fill:var(--mark);stroke:var(--border-2);stroke-width:1.5"/><text x="96" y="127" text-anchor="middle" style="fill:var(--fg);font-size:15px">4</text><rect x="122" y="98" width="52" height="46" style="fill:var(--mark);stroke:var(--border-2);stroke-width:1.5"/><text x="148" y="127" text-anchor="middle" style="fill:var(--fg);font-size:15px">5</text><rect x="174" y="98" width="52" height="46" style="fill:var(--mark);stroke:var(--border-2);stroke-width:1.5"/><text x="200" y="127" text-anchor="middle" style="fill:var(--fg);font-size:15px">6</text><text x="58" y="127" text-anchor="end" style="fill:var(--fg-2)">m[1]</text>
+    <line x1="240" y1="97" x2="288" y2="97" style="stroke:var(--accent);stroke-width:2" marker-end="url(#rowm-arrow)"/>
+    <text x="300" y="36" style="fill:var(--muted)">内存中的样子：一行接一行</text>
+    <rect x="300" y="75" width="62" height="44" style="fill:var(--accent-soft);stroke:var(--border-2);stroke-width:1.5"/><text x="331" y="103" text-anchor="middle" style="fill:var(--fg);font-size:15px">1</text><text x="331" y="66" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">m[0][0]</text><rect x="362" y="75" width="62" height="44" style="fill:var(--accent-soft);stroke:var(--border-2);stroke-width:1.5"/><text x="393" y="103" text-anchor="middle" style="fill:var(--fg);font-size:15px">2</text><text x="393" y="66" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">m[0][1]</text><rect x="424" y="75" width="62" height="44" style="fill:var(--accent-soft);stroke:var(--border-2);stroke-width:1.5"/><text x="455" y="103" text-anchor="middle" style="fill:var(--fg);font-size:15px">3</text><text x="455" y="66" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">m[0][2]</text><rect x="486" y="75" width="62" height="44" style="fill:var(--mark);stroke:var(--border-2);stroke-width:1.5"/><text x="517" y="103" text-anchor="middle" style="fill:var(--fg);font-size:15px">4</text><text x="517" y="66" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">m[1][0]</text><rect x="548" y="75" width="62" height="44" style="fill:var(--mark);stroke:var(--border-2);stroke-width:1.5"/><text x="579" y="103" text-anchor="middle" style="fill:var(--fg);font-size:15px">5</text><text x="579" y="66" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">m[1][1]</text><rect x="610" y="75" width="62" height="44" style="fill:var(--mark);stroke:var(--border-2);stroke-width:1.5"/><text x="641" y="103" text-anchor="middle" style="fill:var(--fg);font-size:15px">6</text><text x="641" y="66" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">m[1][2]</text>
+    <path d="M300,128 v8 h186 v-8" style="fill:none;stroke:var(--accent);stroke-width:1.5"/>
+    <text x="393" y="152" text-anchor="middle" style="fill:var(--accent)">m[0]，12 字节</text>
+    <path d="M486,128 v8 h186 v-8" style="fill:none;stroke:var(--warn);stroke-width:1.5"/>
+    <text x="579" y="152" text-anchor="middle" style="fill:var(--warn)">m[1]，12 字节</text>
+    <text x="455" y="180" text-anchor="middle" style="fill:var(--muted);font-size:11px">&amp;m[0][2] = …558</text>
+    <text x="520" y="196" text-anchor="middle" style="fill:var(--muted);font-size:11px">&amp;m[1][0] = …55c</text>
+  </g>
+</svg>
+</figure>
 
 - `int m[2][3]` 是一个 2 行 3 列的数组，`m[r][c]` 访问第 r 行第 c 列。
 - 二维数组在内存中仍然是**一整块连续的空间**，按行依次存放：先是第 0 行的 3 个元素，紧接着是第 1 行。`m[0][2]` 和 `m[1][0]` 的地址只差 4 个字节。
