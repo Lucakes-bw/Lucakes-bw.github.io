@@ -446,3 +446,101 @@ CHAT_SCRIPT="wait 2500; open zhangsan; wait 500; type 好啊，几点？; send; 
 2. 在两条消息的时间相差超过 5 分钟时，在它们之间显示一行居中的时间（类似「昨天 21:30」）。应该在委托中处理，还是在模型中插入一种特殊的行？
 3. 让气泡中的文字可以选中复制。为什么用委托画出来的文字不能直接选中？`QListView` 的 `setIndexWidget` 或者 `openPersistentEditor` 能解决吗，代价是什么？
 4. 在深色模式下运行 QtChat（第二章《样式表与深色模式》中的 `setColorScheme`），截图检查对方气泡的颜色。`AlternateBase` 在深色模式下是什么颜色？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. `MessageStore` 加一个查询：
+
+   ```cpp
+   // 比 beforeTs 更早的 limit 条，按时间正序返回
+   QList<ChatMessage> MessageStore::before(const QString &peer, qint64 beforeTs, int limit);
+   // SELECT ... FROM message WHERE peer = ? AND ts < ? ORDER BY ts DESC LIMIT ?，结果再反转
+   ```
+
+   `MessageModel` 保存一个 `MessageStore *m_store` 和一个标志 `m_reachedBeginning`（已经加载到最早的一条）：
+
+   ```cpp
+   bool MessageModel::canFetchMore(const QModelIndex &parent) const
+   {
+       return !parent.isValid() && !m_reachedBeginning;
+   }
+
+   void MessageModel::fetchMore(const QModelIndex &parent)
+   {
+       if (parent.isValid() || m_messages.isEmpty())
+           return;
+       QList<ChatMessage> older = m_store->before(m_peer, m_messages.first().ts, 200);
+       if (older.size() < 200)
+           m_reachedBeginning = true;
+       if (older.isEmpty())
+           return;
+       beginInsertRows({}, 0, int(older.size()) - 1);
+       m_messages = older + m_messages;
+       endInsertRows();
+   }
+   ```
+
+   注意：`QListView` 只在**滚动到底部**附近时才调用 `fetchMore`（这是为「往下滚动加载更多」设计的），聊天记录要在滚动到**顶部**时加载，需要自己监听滚动条：
+
+   ```cpp
+   connect(view->verticalScrollBar(), &QScrollBar::valueChanged, this, [=](int v) {
+       if (v == 0 && model->canFetchMore({})) {
+           QScrollBar *bar = view->verticalScrollBar();
+           int fromBottom = bar->maximum() - bar->value();   // 记下离底部的距离
+           model->fetchMore({});
+           view->doItemsLayout();                           // 立即计算新插入的行的高度
+           bar->setValue(bar->maximum() - fromBottom);      // 离底部的距离不变，正在看的消息就不动
+       }
+   });
+   ```
+
+   保持不跳动的关键是：在开头插入了 N 行，内容的总高度增加了，但「用户正在看的那条消息」离**底部**的距离没有变。所以插入前记下 `maximum - value`，插入后把滚动条设回同样的距离。如果直接保持 `value` 不变，用户看到的就会变成新插入的那批消息中的某一条。
+
+2. 应该在**委托**中处理，而不是在模型中插入特殊的行。
+
+   - 时间分隔是「怎样显示」的问题，不是数据。如果在模型中插入假的行，`MessageModel` 的行号和数据库中的消息就不再一一对应了，按编号找消息（`setStatus`）、加载更早的消息、删除消息时都要跳过这些假行，处处要特殊处理；而且插入或删除一条消息时，前后的分隔行也可能要跟着增删。
+   - 在委托中处理：`sizeHint` 和 `paint` 都能拿到 `index`，用 `index.siblingAtRow(row - 1)` 取出上一条消息的时间，相差超过 5 分钟，就在这一行的顶部多留一行的高度，画上居中的时间。分隔线永远和消息一起出现、一起消失，不需要维护。
+
+   ```cpp
+   static bool needsTimeHeader(const QModelIndex &index)
+   {
+       if (index.row() == 0)
+           return true;
+       qint64 cur = index.data(MessageModel::TimeRole).toLongLong();
+       qint64 prev = index.siblingAtRow(index.row() - 1).data(MessageModel::TimeRole).toLongLong();
+       return cur - prev > 5 * 60 * 1000;
+   }
+   ```
+
+   需要注意的是：某条消息的高度现在取决于它的上一条，在开头插入消息（练习 1）后，原来的第一条消息的高度可能会变，所以插入后要让视图重新计算这一行（发出它的 `dataChanged`）。
+
+3. 委托只是在 `paint` 中用 `QPainter::drawText` **画**了一段文字，画出来的就是一些像素，屏幕上并没有一个「文字控件」，鼠标拖动时没有任何对象知道光标落在了第几个字上，自然无法选中。视图中的每一行都只是委托画的一张图。
+
+   - `setIndexWidget(index, new QLabel(...))` 给某一行放一个真正的控件，`QLabel` 设置 `Qt::TextSelectableByMouse` 后就能选中复制。代价是每条消息都是一个真正的控件，2 万条消息就是 2 万个 `QLabel`，每个都有自己的窗口状态、布局、事件处理，内存和创建时间都会大幅增加，滚动时还要移动这么多控件。`setIndexWidget` 的文档也说明，它只适合显示少量的静态内容。
+   - `openPersistentEditor` 让某一行一直处于编辑状态，用委托的 `createEditor` 创建一个只读的 `QTextEdit`。代价和上面一样，只是控件由委托创建。
+
+   常见的折中做法：
+
+   - 只给**当前选中的**（或鼠标悬停的）那一条消息打开一个编辑器，其他消息仍然由委托绘制，同一时刻只有一个真正的控件。
+   - 不支持选中部分文字，而是在右键菜单中提供「复制」，复制整条消息。很多聊天软件就是这样做的。
+
+4. 列表视图的调色板在两种模式下（带透明度打印）：
+
+   ```
+   浅色: QListView Base #ffffffff AlternateBase #fff1f2f2 Text #ff000000
+   深色: QListView Base #ff171717 AlternateBase #0cffffff Text #ffffffff
+   ```
+
+   深色模式下，`AlternateBase` 是透明度只有 5%（`0x0c`）的白色，叠在 `#171717` 的背景上，大约是 `#222222`。对方的气泡几乎和背景融为一体，只能勉强看出一个轮廓，文字是白色的，还能看清。macOS 把 `AlternateBase` 设计成「表格隔行变色」用的颜色，只要和背景有一点点差别就够了，用来画气泡就太淡了。
+
+   注意如果直接打印 `QApplication::palette()`，得到的是 `#8e8e8e` 这样完全不同的值：每种控件有自己的调色板（macOS 样式为列表视图单独设置了颜色），委托中用的 `option.palette` 来自视图，要以视图的调色板为准。
+
+   改进：对方气泡的颜色不要直接用 `AlternateBase`，按当前的配色选择：
+
+   ```cpp
+   bool dark = option.palette.color(QPalette::Base).lightness() < 128;
+   QColor bg = out ? QColor("#0a84ff") : (dark ? QColor("#3a3a3c") : QColor("#e9e9eb"));
+   ```
+
+</details>

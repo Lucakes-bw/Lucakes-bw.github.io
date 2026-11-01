@@ -270,3 +270,112 @@ Qt 6 也可以让 QNAM 自动删除：`nam->setAutoDeleteReplies(true)`，或者
 2. 把第 2.1 节的 12 个请求改成请求 12 个不同的端口（启动 12 个测试服务器），还会分成两批吗？为什么？
 3. 用 `reply->abort()` 实现「用户离开页面时取消还没完成的请求」。`abort()` 之后 `finished` 还会发出吗？`error()` 是什么？
 4. 用 `QNetworkReply::downloadProgress` 信号显示下载进度。服务器没有返回 `Content-Length`（使用分块编码）时，总大小是多少？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 参考代码：
+
+   ```cpp
+   using OnSuccess = std::function<void(const QJsonDocument &)>;
+   using OnError = std::function<void(const QString &message, bool retryable)>;
+
+   void apiGet(QNetworkAccessManager *nam, const QString &path, QObject *context,
+               OnSuccess onSuccess, OnError onError)
+   {
+       QNetworkRequest req(QUrl(kBase + path));
+       req.setTransferTimeout(10000);
+       QNetworkReply *reply = nam->get(req);
+       QObject::connect(reply, &QNetworkReply::finished, context, [=] {
+           reply->deleteLater();
+           QVariant status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+           QByteArray body = reply->readAll();
+
+           if (!status.isValid()) {                         // 没有状态码：网络错误
+               onError("网络不可用：" + reply->errorString(), true);
+               return;
+           }
+           QJsonParseError err;
+           QJsonDocument doc = QJsonDocument::fromJson(body, &err);
+           int code = status.toInt();
+           if (code >= 400) {                               // HTTP 错误：读出服务器的 error 字段
+               QString msg = doc.isObject() && doc["error"].isString()
+                                 ? doc["error"].toString()
+                                 : QString("服务器错误（%1）").arg(code);
+               onError(msg, code >= 500);                   // 5xx 可以重试，4xx 不行
+               return;
+           }
+           if (err.error != QJsonParseError::NoError) {     // 2xx 但正文不是合法的 JSON
+               onError(QString("数据格式错误：%1（位置 %2）").arg(err.errorString()).arg(err.offset), false);
+               return;
+           }
+           onSuccess(doc);
+       });
+   }
+   ```
+
+   几点说明：
+
+   - 先判断有没有状态码，再看状态码的范围，最后才解析 JSON，顺序和第 3 节的表格一致。
+   - HTTP 错误时，服务器的正文也可能不是 JSON（例如代理返回的 HTML 错误页），所以取 `error` 字段之前要检查，取不到就用状态码组成一条通用的提示。
+   - `onError` 带一个 `retryable` 参数，让调用者决定要不要显示「重试」按钮。
+   - `context` 作为连接的上下文对象：请求还没完成时页面被关掉了，回调就不会再执行，不会访问已经删除的界面。
+
+2. 12 个请求分别发往 12 个端口（每个端口一个测试服务器），每个请求服务器处理 500 毫秒，实测：
+
+   ```
+     端口 29300 完成于 517 ms
+     端口 29309 完成于 517 ms
+     ……（中间 9 个都是 517 ms）
+     端口 29303 完成于 522 ms
+   ```
+
+   不再分成两批，12 个请求同时完成。QNAM 的「最多 6 个连接」是针对**同一个主机和端口**的：浏览器和 QNAM 限制的是「对同一个服务器」的并发，目的是不让一个客户端占用一个服务器太多的连接。12 个端口就是 12 个不同的服务器，各有各的 6 个名额。
+
+   这也是早年网站把图片放在 `img1.example.com`、`img2.example.com` 等多个域名下的原因（叫作域名分片），用来绕过浏览器的连接数限制。有了 HTTP/2 以后，一个连接就能并发传输多个请求，这个做法已经没有必要了。
+
+3. 实测（200 毫秒时对一个需要 2 秒的请求调用 `abort()`）：
+
+   ```
+     调用 abort()
+     errorOccurred(5)
+     abort 后 finished 发出，error = 5（Operation canceled）
+     abort() 返回
+   ```
+
+   `finished` **会**发出，`error()` 是 `OperationCanceledError`（5）。值得注意的是顺序：`errorOccurred` 和 `finished` 是在 `abort()` **内部**同步发出的，`abort()` 返回时，`finished` 的槽已经执行完了。
+
+   所以：
+
+   - `finished` 的槽中要把「被取消」当作一种正常的结局处理：`error() == OperationCanceledError` 时什么都不提示（用户自己离开了页面，不需要再弹出「请求失败」）。
+   - 槽中的 `deleteLater()` 照常执行，`abort()` 之后不需要自己再删除 `reply`。
+   - 在页面的析构函数中 `abort()` 时要小心：槽会立即执行，如果槽访问了页面的成员，而页面正在析构，就会访问半析构的对象。这又是一个应该把页面作为上下文对象传给 `connect` 的理由：页面开始析构后，连接已经断开，槽不会被调用。更简单的做法是在析构函数中先 `disconnect(reply, nullptr, this, nullptr)` 再 `abort()`。
+
+4. 参考代码：
+
+   ```cpp
+   QObject::connect(reply, &QNetworkReply::downloadProgress, bar, [bar](qint64 received, qint64 total) {
+       if (total > 0) {
+           bar->setRange(0, 100);
+           bar->setValue(int(received * 100 / total));
+       } else {
+           bar->setRange(0, 0);                   // 不知道总大小：显示「忙碌」样式的进度条
+       }
+   });
+   ```
+
+   测试服务器分 5 次、每次 64 KB 发送同样的数据，一个带 `Content-Length`，一个用分块编码，实测：
+
+   ```
+     /sized: 131072 / 327680
+     /chunked: 131072 / -1
+     /sized: 196608 / 327680
+     /chunked: 196608 / -1
+     ……
+     /sized: 327680 / 327680
+     /chunked: 327680 / 327680
+   ```
+
+   使用分块编码时，下载过程中总大小是 **-1**，表示未知；只有在下载完成时，最后一次信号的总大小才等于已收到的大小。所以进度的计算不能直接用 `received / total`（会得到负数），要先判断 `total`。`QProgressBar` 的范围设成 `(0, 0)` 时会显示成来回滚动的「忙碌」样式，适合这种情况；也可以只显示「已下载 192 KB」。
+
+</details>

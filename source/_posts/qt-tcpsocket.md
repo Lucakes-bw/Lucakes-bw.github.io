@@ -320,3 +320,128 @@ void sendMessage(QTcpSocket *socket, const QJsonObject &msg)
 2. 3.1 节中每取出一条消息就调用一次 `m_buffer.remove(0, ...)`，会把后面的数据整体往前移动。如果一次收到 1 万条很短的消息，这样做的总代价是多少？怎样改进？（提示：记录一个读取位置，最后再一次性删除。）
 3. 让服务器发送一个长度为 `0xFFFFFFFF` 的消息头，验证客户端会断开连接。如果去掉长度检查，客户端的内存会怎样变化？
 4. 用 `QDataStream` 的 `startTransaction` / `commitTransaction` 重写接收的逻辑，服务器用 Qt 的 `QTcpServer` 实现。
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 按换行分帧的接收循环：
+
+   ```cpp
+   void onReadyRead()
+   {
+       m_buffer += m_socket->readAll();
+       for (;;) {
+           qsizetype nl = m_buffer.indexOf('\n');
+           if (nl < 0) {
+               if (m_buffer.size() > 1 << 20)          // 1 MB 还没有换行：对方有问题
+                   m_socket->abort();
+               return;                                 // 一行还没收全
+           }
+           QByteArray line = m_buffer.left(nl);
+           m_buffer.remove(0, nl + 1);                 // 连同换行符一起取走
+           emit message(QJsonDocument::fromJson(line).object());
+       }
+   }
+   ```
+
+   问题在于：如果聊天消息本身就有换行（用户按 Shift+Enter 输入了两行），发送方直接把它写进去，接收方就会在消息中间切开，得到两段都不是合法 JSON 的数据。
+
+   解决办法有两种：
+
+   - **转义**：发送前把正文中的换行转成别的字符序列。用 JSON 时其实已经自动做到了：`QJsonDocument::toJson(QJsonDocument::Compact)` 会把字符串中的换行写成 `\n` 两个字符，生成的整行 JSON 中不会出现真正的换行符。所以「JSON + 换行分隔」（常叫 JSON Lines）是可行的，前提是一定用 `Compact` 格式，`Indented` 格式本身就带换行。
+   - **改用长度前缀**：不用在正文中寻找分隔符，正文中有什么都无所谓，也不需要转义，二进制数据（图片）也能直接传。这就是本文选择长度前缀的原因。
+
+   另外，查找分隔符时每次都要从缓冲区开头重新扫描，一条很长的消息分很多次到达时，前面的部分会被反复扫描。可以记下上次扫描到的位置，从那里继续找。
+
+2. 先在内存中模拟：把 1 万条和 10 万条短消息（每条约 27 字节）一次放进缓冲区，用 3.1 节的循环全部切出来，比较「每条都 `remove`」和「记录读取位置，最后一次删除」：
+
+   ```
+   10000 条（缓冲区 268890 字节）: 每次 remove 0.2 ms，记录位置 0.17 ms
+   100000 条（缓冲区 2788890 字节）: 每次 remove 1.8 ms，记录位置 1.46 ms
+   ```
+
+   两种方法几乎一样快，没有出现预期中的平方级代价。换成 `std::string` 的 `erase(0, n)` 再测：
+
+   ```
+   std::string 10000 条: 每次 erase(0, ...) 30.6 ms
+   QByteArray  10000 条: 每次 remove(0, ...) 0.0 ms
+   std::string 100000 条: 每次 erase(0, ...) 1861.9 ms
+   QByteArray  100000 条: 每次 remove(0, ...) 0.2 ms
+   ```
+
+   `std::string` 才是题目中说的情况：每次删除开头，都把后面的数据整体往前移动。n 条消息移动的总量约为 n² / 2 条消息的大小，消息数增加 10 倍，时间增加约 60 倍，10 万条要 1.9 秒。
+
+   `QByteArray` 没有这个问题，是因为 Qt 6 的容器记录了数据在分配的内存块中的**起始位置**：从开头删除时，只要把起始位置往后挪，不移动任何数据，代价是 O(1)。Qt 5 的 `QByteArray` 没有这个优化，和 `std::string` 一样是平方级的。
+
+   所以在 Qt 6 中，3.1 节的写法没有问题；用 `std::string`、`std::vector<char>` 或者 Qt 5 写同样的代码时，就要记录一个读取位置 `pos`，循环中只移动 `pos`，循环结束后一次性 `remove(0, pos)`，总代价是 O(n)。
+
+3. 服务器发送：
+
+   ```python
+   conn.sendall(b"\xff\xff\xff\xff")
+   ```
+
+   客户端打印「消息长度 4294967295 不合理，断开连接」，并 `abort()`。
+
+   去掉长度检查后，客户端的内存**并不会立即增长**：缓冲区中只有 4 个字节，循环发现正文还没收全，就返回等待了。真正的问题是：这个连接从此「卡住」了，客户端会一直等这 4 GB 的数据，之后服务器发来的所有正常消息都被当作这条消息的正文，存进缓冲区，一条也不会处理。如果服务器继续发送数据（或者是恶意的对端故意不停地发），缓冲区会一直增长，直到 4 GB 或内存耗尽。
+
+   所以长度检查的作用不仅是防止内存耗尽，更是**尽早发现「两边对协议的理解不一致」**：读到的长度不合理，通常说明数据已经错位了（比如对方发的是另一种格式），这时继续读下去不会有任何正确的结果，断开重连是唯一的出路。
+
+4. 服务器（Qt 版，替代 2.1 节的 Python 服务器）：
+
+   ```cpp
+   QTcpServer server;
+   server.listen(QHostAddress::LocalHost, 29200);
+   QObject::connect(&server, &QTcpServer::newConnection, [&] {
+       QTcpSocket *c = server.nextPendingConnection();
+       QObject::connect(c, &QTcpSocket::disconnected, c, &QObject::deleteLater);
+       QByteArray data = frame("hello") + frame("world") + frame(QByteArray(900, 'x'));
+       c->write(data.left(2));                       // 故意拆成三段发送
+       QTimer::singleShot(100, c, [c, data] { c->write(data.mid(2, 20)); });
+       QTimer::singleShot(200, c, [c, data] { c->write(data.mid(22)); });
+   });
+   ```
+
+   客户端用 `QDataStream` 的事务读取：
+
+   ```cpp
+   class StreamReader : public QObject
+   {
+   public:
+       explicit StreamReader(QTcpSocket *s) : m_socket(s), m_in(s)
+       {
+           m_in.setByteOrder(QDataStream::BigEndian);   // 默认就是大端，写出来更清楚
+           connect(s, &QTcpSocket::readyRead, this, &StreamReader::onReadyRead);
+       }
+
+   private:
+       void onReadyRead()
+       {
+           for (;;) {
+               m_in.startTransaction();                 // 记下当前的读取位置
+               quint32 len = 0;
+               m_in >> len;
+               if (m_in.status() == QDataStream::Ok && len > (1u << 20)) {
+                   m_in.abortTransaction();
+                   m_socket->abort();
+                   return;
+               }
+               QByteArray body(len, Qt::Uninitialized);
+               if (m_in.status() == QDataStream::Ok && m_in.readRawData(body.data(), len) != qint64(len))
+                   m_in.setStatus(QDataStream::ReadPastEnd);
+               if (!m_in.commitTransaction())
+                   return;                              // 数据不够：回滚到事务开始处，等下一次
+               emit message(body);
+           }
+       }
+
+       QTcpSocket *m_socket;
+       QDataStream m_in;
+   };
+   ```
+
+   实测三条消息都正确收到，`readyRead` 一共 3 次。
+
+   和 3.1 节的手写缓冲区相比：不需要自己的 `m_buffer`，数据留在套接字内部的缓冲区中；`startTransaction` 记下读取位置，读到一半发现数据不够时，`commitTransaction` 返回 `false` 并自动回滚，下一次从同一个位置重新读。缺点是规则更隐蔽：读取不完整时必须让流的状态变成 `ReadPastEnd`（`>>` 读整数时会自动设置，`readRawData` 读不够时要自己设置），否则事务会把半条消息当成完整的提交掉。
+
+</details>

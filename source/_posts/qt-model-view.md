@@ -399,3 +399,80 @@ std::sort 倒序:        67.5 ms，第一个是 联系人 999999
 2. 第 4.1 节中，打开 `uniformItemSizes` 前后，「滚动到中间」都只调用了几百次 `data()`。为什么不打开它时，滚动并不慢？
 3. 给第 5 节的表格模型加一个 `remove(int row)` 函数，用 `beginRemoveRows` / `endRemoveRows` 删除一行。如果忘了调用 `beginRemoveRows`，直接删掉数据再 `endRemoveRows`，会发生什么？用 ASan 运行试试。
 4. 重写 `QSortFilterProxyModel::lessThan`，按联系人编号（数字）而不是文字排序，使「联系人 9」排在「联系人 10」前面。排序 100 万行要多久？怎样才能更快？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 在 `data()` 中加一个分支：
+
+   ```cpp
+   case Qt::DecorationRole:
+       if (index.row() % 2 == 0) {
+           static const QIcon dot = [] {
+               QPixmap pm(12, 12);
+               pm.fill(Qt::transparent);
+               QPainter p(&pm);
+               p.setRenderHint(QPainter::Antialiasing);
+               p.setPen(Qt::NoPen);
+               p.setBrush(QColor("#ff3b30"));
+               p.drawEllipse(1, 1, 10, 10);
+               return QIcon(pm);
+           }();
+           return dot;
+       }
+       return {};
+   ```
+
+   直接 `fill(Qt::red)` 得到的是一个红色的方块，要画成圆点，先填充透明，再用 `QPainter` 画圆。图标用 `static` 只创建一次：`data()` 每次重画都会被调用，不要在里面反复创建图片。
+
+2. 慢的不是滚动，而是「量出每一行的大小」。不打开 `uniformItemSizes` 时，视图在**第一次显示**时就把 100 万行的大小全部问了一遍（800 万次 `data()`、4 秒），并把每一行的位置缓存了下来。之后滚动到第 50 万行，只要查缓存就知道它在哪里，再为屏幕上的 24 行调用 `data()` 画出来，所以只有几百次调用。代价都在显示和「修改任何一行」时（缓存失效，重新量一遍），而不在滚动。
+
+3. 正确的写法：
+
+   ```cpp
+   void ContactTable::remove(int row)
+   {
+       beginRemoveRows({}, row, row);
+       m_rows.erase(m_rows.begin() + row);
+       endRemoveRows();
+   }
+   ```
+
+   去掉 `beginRemoveRows`，只保留 `endRemoveRows`，用 ASan 运行，删除时立即崩溃：
+
+   ```
+   ==52693==ERROR: AddressSanitizer: SEGV on unknown address 0xffffffffffffffd8
+       #0 in QList<QAbstractItemModelPrivate::Change>::takeLast()
+       #1 in QAbstractItemModel::endRemoveRows()
+       #2 in Table::remove(int) rm.cpp:21
+   ```
+
+   `beginRemoveRows` 会把「要删除哪几行」压进模型内部的一个列表，`endRemoveRows` 从中取出最后一项，用它通知视图。没有 `begin`，列表是空的，`takeLast()` 读到了列表之外。Qt 的调试版会在这里用断言报错，发布版就是直接崩溃。
+
+   还有一种不容易发现的错误：先删数据，再调用 `begin` / `end`。实验中它没有崩溃，但 `beginRemoveRows` 发出 `rowsAboutToBeRemoved` 时，视图和代理模型以为第 `row` 行还在，可能会去读它，读到的是已经错位的数据，甚至越界。所以顺序必须是：`begin` → 修改数据 → `end`。
+
+4. 参考代码：
+
+   ```cpp
+   class ByNumber : public QSortFilterProxyModel
+   {
+   protected:
+       bool lessThan(const QModelIndex &a, const QModelIndex &b) const override
+       {
+           // 「联系人 123」去掉前 4 个字符就是数字
+           return a.data().toString().mid(4).toInt() < b.data().toString().mid(4).toInt();
+       }
+   };
+   ```
+
+   升序排序后，前几行是「联系人 0、1、2」，第 10 行是「联系人 9」，下一行才是「联系人 10」。100 万行排序（倒序），实测：
+
+   ```
+   解析文字中的数字:        1661.6 ms
+   UserRole 返回 int:        100.1 ms
+   setSortRole(UserRole):    125.2 ms
+   ```
+
+   每次比较都要生成两个字符串、截取、转换成数字，1.7 秒。更快的办法是让模型直接提供数字：在 `data()` 中对 `Qt::UserRole` 返回 `index.row()`（真实的程序中是联系人的编号），然后 `proxy.setSortRole(Qt::UserRole)`，代理模型比较的就是整数，降到 0.1 秒左右，不用重写 `lessThan`。原则和第 6 节一样：排序时比较的东西越接近原始数据越快；数据量再大，就在模型内部或者数据库中排好。
+
+</details>

@@ -401,3 +401,75 @@ int main(int argc, char *argv[])
 2. 把 3.2 节的 `LoginDialog` 改成用 `open()` 显示，在 `accepted` 信号的槽中打印用户名。
 3. 写一个「IP 地址」输入框：用 `QRegularExpressionValidator` 限制成四段数字和点。正则能保证每一段都不超过 255 吗？`setInputMask("000.000.000.000")` 又有什么效果？
 4. 加载翻译时把 `QLocale::China` 换成 `QLocale::Taiwan`，`QMessageBox` 的按钮会变成什么？去翻译目录中找一找对应的文件。
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 300 毫秒时打开第二个对话框，调用栈是两层嵌套的事件循环：
+
+   ```
+   main()
+   └── app.exec()                          ← 第 1 层：主事件循环
+       └── 定时器 → lambda
+           └── d1.exec()                   ← 第 2 层
+               └── 定时器 → lambda
+                   └── d2.exec()           ← 第 3 层：现在在这里取事件
+   ```
+
+   用定时器先关第一个（504 毫秒时 `d1.accept()`）、再关第二个（约 900 毫秒），实测：
+
+   ```
+    103 ms  d1.exec()
+    303 ms  d2.exec()
+    504 ms  d1.accept()，d1 已经隐藏
+    925 ms  d2.exec() 返回 1
+    932 ms  d1.exec() 返回 1
+   ```
+
+   窗口可以按任意顺序关闭：504 毫秒时第一个对话框就从屏幕上消失了。但 **`exec()` 只能先开后返回**：`d1.exec()` 在栈的下层，必须等上层的 `d2.exec()` 返回之后，才轮得到它返回。从 504 到 932 毫秒，第一个对话框已经关了，处理它结果的代码却还没有执行。嵌套越深，这种「关了但没返回」的情况越难推理，这也是推荐用 `open()` 的原因之一。
+
+2. 参考代码：
+
+   ```cpp
+   auto *dialog = new LoginDialog(&window);
+   dialog->setAttribute(Qt::WA_DeleteOnClose);     // 关闭后自动删除
+   QObject::connect(dialog, &QDialog::accepted, &window, [dialog] {
+       std::printf("用户名：%s\n", qPrintable(dialog->user()));
+   });
+   dialog->open();
+   ```
+
+   `accepted` 是在 `accept()` 中发出的，这时对话框还没有被删除（`WA_DeleteOnClose` 用的是 `deleteLater`），所以在槽中可以放心读取 `dialog->user()`。上下文对象传 `&window`：如果主窗口先被删除，连接自动断开。
+
+3. 用正则 `(\d{1,3}\.){3}\d{1,3}` 校验，实测：
+
+   ```
+   192.168.1.1  Acceptable
+   999.1.1.1    Acceptable
+   256.0.0.1    Acceptable
+   192.168      Intermediate
+   1.2.3.4.5    Invalid
+   ```
+
+   `\d{1,3}` 只限制了位数，`999` 也能通过。要限制每段不超过 255，正则要按数值范围展开：
+
+   ```cpp
+   QString octet = R"((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d))";
+   auto *validator = new QRegularExpressionValidator(
+       QRegularExpression(QString("(%1\\.){3}%1").arg(octet)), edit);
+   ```
+
+   这样 `999.1.1.1` 和 `256.0.0.1` 都变成了 `Invalid`，根本输入不进去。
+
+   `setInputMask("000.000.000.000")` 的效果是：输入框中一开始就显示 `   .   .   .   `，用户只能在空位中输入数字，点是固定的。它同样不检查数值，`999.999.999.999` 也是合格的输入；而且每段都占 3 位，输入 `192168001001` 会显示成 `192.168.001.001`，输入 `1.1.1.1` 反而很别扭。所以掩码适合固定格式的输入（日期、电话号码），IP 地址用正则校验器更合适。
+
+4. 按钮变成了繁体中文。实测加载的文件和翻译：
+
+   ```
+   /opt/homebrew/share/qt/translations/qtbase_zh_CN.qm: 保存 / 不保存 / 取消
+   /opt/homebrew/share/qt/translations/qtbase_zh_TW.qm: 儲存 / 不要儲存 / 取消
+   ```
+
+   `QTranslator::load(QLocale, "qtbase", "_", dir)` 按地区拼出文件名 `qtbase_zh_TW.qm`，翻译目录中简体和繁体是两个文件。用 `lconvert -i qtbase_zh_TW.qm -o zh_TW.ts` 可以把它转成文本格式查看。`load` 找不到完全匹配的文件时，会依次尝试更短的名字（`qtbase_zh.qm`、`qtbase.qm`），所以一般不会加载失败，但可能加载到不是你想要的语言。
+
+</details>

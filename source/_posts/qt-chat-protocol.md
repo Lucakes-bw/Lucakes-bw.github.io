@@ -362,3 +362,104 @@ cd server && docker build -t chatd . && docker run --rm -p 9000:9000 --name chat
 2. 服务器重启后，所有用户和离线消息都没了。用 SQLite（C 接口）把它们保存下来。
 3. `seen_before` 用的是线性查找，每条消息都要比较 256 次。用户很多、消息很多时，怎样改进？
 4. 给协议加一个「对方已读」的回执：客户端打开一个会话时，告诉服务器「我读到了第几条」，服务器转告对方。消息格式应该怎样设计？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 在 `send_json` 中，追加数据之前检查 `out` 的长度：
+
+   ```c
+   #define MAX_OUT (1 << 20)            // 每个连接最多缓存 1 MB 没发出去的数据
+
+   static void send_json(struct conn *c, cJSON *obj)
+   {
+       if (c->out.len > MAX_OUT) {
+           log_msg("%s 的发送缓冲区超过 1 MB，断开", c->user ? c->user->name : "?");
+           shutdown(c->fd, SHUT_RDWR);  // 不在这里 close：调用者可能还在使用 c
+           return;                      // 下一次 epoll 报告这个 fd 时按出错关闭
+       }
+       encode(&c->out, obj);
+       flush(c);
+   }
+   ```
+
+   不在 `send_json` 中直接关闭连接，是因为它可能是在转发别人的消息时被调用的（`on_chat` 中的 `send_json(peer->conn, fwd)`），调用者手上还拿着 `peer` 的指针，在这里释放连接，回到调用者就是悬空指针。`shutdown` 之后，epoll 会报告这个 fd 可读（读到 0）或出错，走正常的关闭流程。
+
+   测试用的 Python 客户端只登录、不读取：
+
+   ```python
+   s = socket.create_connection(("127.0.0.1", 9000))
+   s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4096)   # 接收缓冲区设小，更快堆积
+   s.sendall(frame({"type": "login", "user": "slow"}))
+   time.sleep(3600)                                           # 从不 recv
+   ```
+
+   另一个客户端循环给 `slow` 发消息。服务器先填满自己的发送缓冲区和对方的接收缓冲区（内核中的几百 KB），之后的数据才堆在 `out` 中，超过 1 MB 时日志中出现「断开」。注意被断开的用户如果有离线消息机制，后面的消息应该存进离线消息，而不是丢掉。
+
+2. 用 SQLite 的 C 接口（数据库专栏中用过 MySQL 的 C 接口，用法很像），两张表：
+
+   ```sql
+   CREATE TABLE IF NOT EXISTS user (name TEXT PRIMARY KEY);
+   CREATE TABLE IF NOT EXISTS offline (
+       id INTEGER PRIMARY KEY,
+       to_user TEXT NOT NULL,
+       frame BLOB NOT NULL               -- 已经编码好的一帧，上线时原样发出
+   );
+   CREATE INDEX IF NOT EXISTS idx_offline_to ON offline (to_user, id);
+   ```
+
+   ```c
+   static sqlite3 *db;
+   static sqlite3_stmt *st_save;
+
+   // 启动时
+   sqlite3_open("/data/chatd.db", &db);
+   sqlite3_exec(db, "PRAGMA journal_mode=WAL", NULL, NULL, NULL);
+   sqlite3_exec(db, kSchema, NULL, NULL, NULL);
+   sqlite3_prepare_v2(db, "INSERT INTO offline (to_user, frame) VALUES (?, ?)", -1, &st_save, NULL);
+
+   // 对方不在线时，代替 encode(&peer->offline, fwd)
+   static void save_offline(struct user *peer, cJSON *msg)
+   {
+       struct buf f = {0};
+       encode(&f, msg);
+       sqlite3_bind_text(st_save, 1, peer->name, -1, SQLITE_STATIC);
+       sqlite3_bind_blob(st_save, 2, f.data, (int)f.len, SQLITE_STATIC);
+       sqlite3_step(st_save);
+       sqlite3_reset(st_save);
+       free(f.data);
+   }
+   ```
+
+   登录成功时，`SELECT frame FROM offline WHERE to_user = ? ORDER BY id` 依次追加到 `out`，再 `DELETE FROM offline WHERE to_user = ?`。用户表在启动时全部读进 `users` 数组。
+
+   注意两点：一是**先存后确认**：消息写进数据库成功之后，才给发送者回复 `ack`，否则服务器在两者之间崩溃，客户端以为发出去了，消息却丢了（下一篇练习 3）。二是 `/data` 要挂载成 Docker 的数据卷（`docker run -v chatd-data:/data ...`），否则容器删除后数据库也没了。
+
+3. 现在每条消息都要线性扫描 256 个编号。改进的方向：
+
+   - **哈希集合**：每个用户维护一个大小固定的开放寻址哈希表，加上一个环形数组记录插入顺序；环形数组满了，淘汰最旧的编号时，同时从哈希表中删除。查找和插入都是 O(1)（数据结构专栏《哈希表》）。
+   - **按时间淘汰**：客户端只会在断线重连后重发「最近」的消息，可以只记住最近几分钟内的编号，而不是固定的 256 个。这样记住的数量随着消息的频率自动调整，不会因为一个用户发消息很快，就在重发之前把编号挤出去。
+   - **单调编号**：如果每个客户端的编号是递增的（不是随机的），服务器只要为每个「用户 + 设备」记住**最大的已处理编号**，比它小的就是重复的，O(1) 且只用 8 个字节。代价是客户端要持久化地保存计数器，并保证按编号的顺序发送和重发（QtChat 补发时是按插入顺序的，满足这个条件）。
+
+   256 次比较本身只要几十纳秒，在这个服务器上并不是瓶颈；真正要改它的原因是第二点：固定 256 条的窗口在消息很多时可能太小，导致去重失效。
+
+4. 客户端打开会话时发送：
+
+   ```json
+   {"type": "read", "peer": "zhangsan", "upto": 1730000123456}
+   ```
+
+   服务器转告对方：
+
+   ```json
+   {"type": "read", "from": "lucky", "upto": 1730000123456}
+   ```
+
+   设计时要考虑：
+
+   - **用什么表示「读到哪里」**：消息编号是随机的，没有先后，不能表示「第几条」。可以用服务器在 `ack` 和转发中给出的时间戳 `ts`，含义是「`ts` 不晚于它的消息都读过了」。对方收到后，把自己发出的、`ts` 不晚于 `upto` 的消息都标成「已读」。这也要求服务器的 `ts` 是单调递增的（同一毫秒的两条消息要错开）。
+   - **只发「最新的」**：快速翻看时不要每条消息都发一次回执，打开会话、收到新消息且窗口在前台时，合并成一条，可以延迟几百毫秒再发。
+   - **不需要确认和重发**：回执丢了没关系，下次打开会话时会再发一次更新的。所以它不需要 `id`，服务器也不需要去重，是一种「最多一次」的消息。
+   - **对方不在线**：服务器只要保存每个会话最新的一个 `upto`，对方上线时补发，而不是把每条回执都存成离线消息。
+
+</details>

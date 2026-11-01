@@ -308,3 +308,118 @@ update 两个小矩形: 重画 1 次，rect() 320x220+10+10，region() 由 2 个
 2. 把动画改成 `QPropertyAnimation`：用 `Q_PROPERTY(qreal pos READ pos WRITE setPos)` 声明一个属性，动画直接修改这个属性。和 `QVariantAnimation` 相比，代码有什么不同？
 3. 写一个圆形的进度环控件 `ProgressRing`，用 `drawArc` 画进度，中间用 `drawText` 显示百分比。进度从 0 变到 100 时，用 `update()` 而不是 `repaint()`，并验证 100 次 `setValue` 只引起很少几次重画。
 4. 在第 6 节的实验中，把每次画 2000 条线改成只画和 `event->rect()` 相交的线（提示：先算出线段的外接矩形，用 `intersects` 判断）。重新运行「两个小矩形」的实验，`paintEvent` 的耗时减少了多少？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. 参考代码：
+
+   ```cpp
+   Switch::Switch(QWidget *parent) : QWidget(parent), m_anim(new QVariantAnimation(this))
+   {
+       setFocusPolicy(Qt::StrongFocus);     // Tab 键和鼠标点击都能获得焦点
+       // ... 其余不变
+   }
+
+   void Switch::keyPressEvent(QKeyEvent *event)
+   {
+       if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
+           setChecked(!m_checked);
+           return;
+       }
+       QWidget::keyPressEvent(event);       // 其他键交给基类，例如 Tab 切换焦点
+   }
+
+   // paintEvent 的最后：
+   if (hasFocus()) {
+       QPen pen(palette().color(QPalette::Highlight), 2);
+       p.setPen(pen);
+       p.setBrush(Qt::NoBrush);
+       p.drawRoundedRect(QRectF(rect()).adjusted(1, 1, -1, -1), r - 1, r - 1);
+   }
+   ```
+
+   还要重写 `focusInEvent` / `focusOutEvent` 调用 `update()` 吗？不需要：`QWidget` 在焦点变化时会自动请求重画。按住空格不放会产生大量的自动重复按键，用 `isAutoRepeat()` 过滤掉，否则开关会来回跳。不处理的键一定要交给基类，否则 Tab 键在这个控件上就失效了。
+
+2. 参考代码：
+
+   ```cpp
+   class Switch : public QWidget
+   {
+       Q_OBJECT
+       Q_PROPERTY(qreal pos READ pos WRITE setPos)
+   public:
+       qreal pos() const { return m_pos; }
+       void setPos(qreal p) { m_pos = p; update(); }
+       // ...
+   };
+
+   Switch::Switch(QWidget *parent)
+       : QWidget(parent), m_anim(new QPropertyAnimation(this, "pos", this))
+   {
+       m_anim->setDuration(150);
+       m_anim->setEasingCurve(QEasingCurve::OutCubic);
+       // 不再需要 connect(valueChanged, ...)
+   }
+   ```
+
+   `setChecked` 不用改。区别是：`QVariantAnimation` 只负责算出每一帧的值，要自己连接 `valueChanged` 去修改成员、调用 `update()`；`QPropertyAnimation` 通过元对象系统按名字找到属性 `pos`，每一帧直接调用 `setPos`。代码少了一个 lambda，代价是要声明 `Q_PROPERTY`，而且属性名是字符串，写错了只会在运行时打印一条警告，不会编译失败。属性还有别的好处：可以在 Qt Designer 和样式表中使用。
+
+3. 参考代码：
+
+   ```cpp
+   class ProgressRing : public QWidget
+   {
+   public:
+       void setValue(int v)
+       {
+           v = qBound(0, v, 100);
+           if (v == m_value)
+               return;
+           m_value = v;
+           update();
+       }
+       QSize sizeHint() const override { return {120, 120}; }
+
+   protected:
+       void paintEvent(QPaintEvent *) override
+       {
+           QPainter p(this);
+           p.setRenderHint(QPainter::Antialiasing);
+           QRectF r = QRectF(rect()).adjusted(8, 8, -8, -8);    // 留出画笔一半的宽度
+           p.setPen(QPen(palette().color(QPalette::Mid), 10));
+           p.drawEllipse(r);                                     // 底圈
+           p.setPen(QPen(QColor("#0a84ff"), 10, Qt::SolidLine, Qt::RoundCap));
+           p.drawArc(r, 90 * 16, -m_value * 360 * 16 / 100);     // 从 12 点钟方向顺时针
+           p.setPen(palette().color(QPalette::Text));
+           p.drawText(rect(), Qt::AlignCenter, QString("%1%").arg(m_value));
+       }
+
+   private:
+       int m_value = 0;
+   };
+   ```
+
+   `drawArc` 的角度单位是 1/16 度，0 度在 3 点钟方向，正数是逆时针，所以起点是 `90 * 16`（12 点钟），跨度取负数表示顺时针。矩形要向内缩进画笔宽度的一半，否则粗线的外侧一半会被控件的边缘裁掉。
+
+   在一次事件处理中连续 `setValue(1)` 到 `setValue(100)`，再处理事件，实测：
+
+   ```
+   ProgressRing: setValue 100 次，重画 1 次
+   ```
+
+   100 次 `update()` 被合并成了一次重画，画出来的直接就是 100%。真实的进度通常来自另一个线程的信号，每个信号在不同的事件处理中到达，重画次数取决于信号到达的频率和屏幕的刷新节奏，但不会超过每秒 60～120 次。
+
+4. 实验用的是一个 400×300 的控件，随机画 2000 条长度不超过 40 的短线。每次 `update` 两个小矩形，重复 50 次，在屏幕上（cocoa）运行：
+
+   ```
+   全部画                   paintEvent 50 次，平均 1.192 ms，画了 2000 条线
+   只画和 rect() 相交的     paintEvent 50 次，平均 1.172 ms，画了 1304 条线
+   只画和 region() 相交的   paintEvent 50 次，平均 0.205 ms，画了 75 条线
+   ```
+
+   按 `rect()` 过滤**几乎没有效果**，只少画了三分之一的线，时间只减少了 2%。原因是 `rect()` 是两个小矩形的**外接矩形**，从 (10, 10) 到 (330, 230)，占了控件的一大半。改成和 `region()` 比较（`event->region().intersects(外接矩形)`），只画了 75 条线，时间降到原来的 1/6。
+
+   两点体会：一是只画需要的部分确实有用，但判断要用 `region()`，`rect()` 在多个分散的区域时太粗；二是即使全部画，被裁剪掉的部分也比真正画到屏幕上便宜，所以只有在画的东西很多时才值得做这种优化。
+
+</details>
