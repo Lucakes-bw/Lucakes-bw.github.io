@@ -171,6 +171,15 @@ x = 50
 
 `data[i]` 的类型是 `int&`，但 `auto` 返回类型把引用丢掉了，`getAuto` 返回的是一个副本。如果想返回引用，可以写 `auto&`，但那样就**只能**返回引用了。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 196" role="img" aria-label="auto 返回类型会丢掉引用：getAuto(0) 返回 data[0] 的一个副本；decltype(auto) 按表达式 data[i] 的类型推导出 int&，getRef(0) 返回的就是 data[0] 本身，可以给它赋值">
+  <defs><marker id="dt-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker><marker id="dt-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="24" text-anchor="start" style="fill:var(--fg);font-size:12px">std::vector&lt;int&gt; data{1, 2, 3}</text><rect x="260" y="10" width="60" height="30" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="290.0" y="30.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">1</text><rect x="320" y="10" width="60" height="30" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="350.0" y="30.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">2</text><rect x="380" y="10" width="60" height="30" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="410.0" y="30.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">3</text><text x="290" y="56" text-anchor="middle" style="fill:var(--muted);font-size:11px">data[0]</text><rect x="20" y="90" width="230" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="135.0" y="112.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">auto getAuto(0) → int</text><rect x="470" y="90" width="90" height="34" rx="0" style="fill:none;stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:4 3"/><text x="515.0" y="112.0" text-anchor="middle" style="fill:var(--muted);font-size:12px">1（副本）</text><line x1="250" y1="107" x2="466" y2="107" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#dt-a)"/><text x="358" y="100" text-anchor="middle" style="fill:var(--muted);font-size:11px">复制一份，与 data 无关</text><rect x="20" y="150" width="230" height="34" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="135.0" y="172.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">decltype(auto) getRef(0) → int&amp;</text><path d="M250,167 C 300,167 290,40 256,30" style="fill:none;stroke:var(--accent);stroke-width:1.5" marker-end="url(#dt-c)"/><text x="310" y="172" text-anchor="start" style="fill:var(--accent);font-size:11px">引用 data[0] 本身：getRef(0) = 100 改的就是它</text>
+  </g>
+</svg>
+</figure>
+
 **`decltype(auto)`** 的意思是：**用 `decltype` 的规则来推导**。回顾《auto 与 decltype》中的规则：
 
 - `decltype(变量名)`：变量声明时的类型；

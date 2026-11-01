@@ -211,6 +211,15 @@ void Connection::scheduleReconnect()
 
 1.1 节的输出中，等待时间依次是 584、1003、2336、3238 毫秒，围绕 500、1000、2000、4000 上下浮动。网络专栏中 TCP 重传 SYN 用的也是指数退避。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 242" role="img" aria-label="指数退避加随机抖动：1.1 节中四次重连前的等待时间分别是 584、1003、2336、3238 毫秒，基准值依次是 500、1000、2000、4000 毫秒，每次在基准值的正负 20% 之间随机取值">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="118" y="38" text-anchor="end" style="fill:var(--fg);font-size:12px">第 2 次重连前</text><rect x="178.0" y="22" width="24.0" height="24" style="fill:var(--accent);opacity:.18"/><line x1="190.0" y1="20" x2="190.0" y2="48" style="stroke:var(--fg-2);stroke-dasharray:3 3"/><rect x="130" y="28" width="70.1" height="12" style="fill:var(--accent);opacity:.8"/><text x="130" y="60" text-anchor="start" style="fill:var(--accent);font-size:11px">实际 584 ms（基准 500，±20%）</text><text x="118" y="84" text-anchor="end" style="fill:var(--fg);font-size:12px">第 3 次重连前</text><rect x="226.0" y="68" width="48.0" height="24" style="fill:var(--accent);opacity:.18"/><line x1="250.0" y1="66" x2="250.0" y2="94" style="stroke:var(--fg-2);stroke-dasharray:3 3"/><rect x="130" y="74" width="120.4" height="12" style="fill:var(--accent);opacity:.8"/><text x="130" y="106" text-anchor="start" style="fill:var(--accent);font-size:11px">实际 1003 ms（基准 1000，±20%）</text><text x="118" y="130" text-anchor="end" style="fill:var(--fg);font-size:12px">第 4 次重连前</text><rect x="322.0" y="114" width="96.0" height="24" style="fill:var(--accent);opacity:.18"/><line x1="370.0" y1="112" x2="370.0" y2="140" style="stroke:var(--fg-2);stroke-dasharray:3 3"/><rect x="130" y="120" width="280.3" height="12" style="fill:var(--accent);opacity:.8"/><text x="130" y="152" text-anchor="start" style="fill:var(--accent);font-size:11px">实际 2336 ms（基准 2000，±20%）</text><text x="118" y="176" text-anchor="end" style="fill:var(--fg);font-size:12px">第 5 次重连前</text><rect x="514.0" y="160" width="192.0" height="24" style="fill:var(--accent);opacity:.18"/><line x1="610.0" y1="158" x2="610.0" y2="186" style="stroke:var(--fg-2);stroke-dasharray:3 3"/><rect x="130" y="166" width="388.6" height="12" style="fill:var(--accent);opacity:.8"/><text x="130" y="198" text-anchor="start" style="fill:var(--accent);font-size:11px">实际 3238 ms（基准 4000，±20%）</text><text x="130.0" y="214" text-anchor="middle" style="fill:var(--muted);font-size:10px">0</text><text x="250.0" y="214" text-anchor="middle" style="fill:var(--muted);font-size:10px">1000</text><text x="370.0" y="214" text-anchor="middle" style="fill:var(--muted);font-size:10px">2000</text><text x="490.0" y="214" text-anchor="middle" style="fill:var(--muted);font-size:10px">3000</text><text x="610.0" y="214" text-anchor="middle" style="fill:var(--muted);font-size:10px">4000</text><text x="130" y="232" text-anchor="start" style="fill:var(--muted);font-size:11px">浅色区域是随机抖动的范围，虚线是基准值；每次翻倍，最多 30 秒</text>
+  </g>
+</svg>
+</figure>
+
 `std::min(m_attempt, 10)` 防止移位的位数过大：`1 << 40` 对 `int` 是未定义行为（C 语言专栏《运算符与表达式》）。
 
 ### 3.2 完整的 Connection 类

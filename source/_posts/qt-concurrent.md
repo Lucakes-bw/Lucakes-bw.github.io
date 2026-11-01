@@ -151,6 +151,15 @@ QList<QImage> b = QtConcurrent::blockingMapped(photos, thumbnail);  // 并行
 
 `blockingMapped` 一行代码就把工作分给了线程池中的线程，结果的顺序和输入一致，和单线程的结果完全相同。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 244" role="img" aria-label="生成 48 张缩略图的加速比：1 个线程 1.0 倍，2 个线程 1.9 倍，4 个 2.8 倍，8 个 3.5 倍，12 个 3.7 倍，远低于线程数是几就快几倍的理想情况">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <line x1="80" y1="200" x2="642" y2="200" style="stroke:var(--border-2)"/><line x1="80" y1="200" x2="80" y2="14" style="stroke:var(--border-2)"/><line x1="126" y1="185" x2="632" y2="20" style="stroke:var(--muted);stroke-dasharray:5 4"/><text x="494" y="50" text-anchor="start" style="fill:var(--muted);font-size:11px">理想：线程数是几就快几倍</text><path d="M126,185.0 L172,171.5 L264,158.0 L448,147.5 L632,144.5" style="fill:none;stroke:var(--accent);stroke-width:2"/><circle cx="126" cy="185.0" r="4" style="fill:var(--accent)"/><text x="126" y="175.0" text-anchor="middle" style="fill:var(--accent);font-size:11px">1.0</text><text x="126" y="216" text-anchor="middle" style="fill:var(--fg);font-size:11px">1</text><circle cx="172" cy="171.5" r="4" style="fill:var(--accent)"/><text x="172" y="161.5" text-anchor="middle" style="fill:var(--accent);font-size:11px">1.9</text><text x="172" y="216" text-anchor="middle" style="fill:var(--fg);font-size:11px">2</text><circle cx="264" cy="158.0" r="4" style="fill:var(--accent)"/><text x="264" y="148.0" text-anchor="middle" style="fill:var(--accent);font-size:11px">2.8</text><text x="264" y="216" text-anchor="middle" style="fill:var(--fg);font-size:11px">4</text><circle cx="448" cy="147.5" r="4" style="fill:var(--accent)"/><text x="448" y="137.5" text-anchor="middle" style="fill:var(--accent);font-size:11px">3.5</text><text x="448" y="216" text-anchor="middle" style="fill:var(--fg);font-size:11px">8</text><circle cx="632" cy="144.5" r="4" style="fill:var(--accent)"/><text x="632" y="134.5" text-anchor="middle" style="fill:var(--accent);font-size:11px">3.7</text><text x="632" y="216" text-anchor="middle" style="fill:var(--fg);font-size:11px">12</text><text x="72" y="174" text-anchor="end" style="fill:var(--muted);font-size:10px">2</text><text x="72" y="144" text-anchor="end" style="fill:var(--muted);font-size:10px">4</text><text x="72" y="114" text-anchor="end" style="fill:var(--muted);font-size:10px">6</text><text x="72" y="84" text-anchor="end" style="fill:var(--muted);font-size:10px">8</text><text x="72" y="54" text-anchor="end" style="fill:var(--muted);font-size:10px">10</text><text x="72" y="24" text-anchor="end" style="fill:var(--muted);font-size:10px">12</text><text x="356" y="234" text-anchor="middle" style="fill:var(--muted);font-size:11px">线程数</text><text x="20" y="18" text-anchor="start" style="fill:var(--muted);font-size:11px">加速比</text><text x="458" y="170" text-anchor="start" style="fill:var(--fg-2);font-size:11px">8 个线程以后几乎不再增加：</text><text x="458" y="186" text-anchor="start" style="fill:var(--fg-2);font-size:11px">受限于内存带宽和较慢的能效核</text>
+  </g>
+</svg>
+</figure>
+
 ### 3.2 为什么只快了 3.7 倍
 
 2 个线程快了 1.9 倍，接近理想的 2 倍；4 个线程只快 2.8 倍；12 个线程只有 3.7 倍，而且从 8 个线程到 12 个几乎没有变化。

@@ -13,6 +13,7 @@ order: 4
 description: 不同子网之间的通信要靠路由器。本文用网络命名空间搭一个「主机—路由器—路由器—主机」的网络，从零开始一条一条地配置路由，记录下每一步的失败：Network is unreachable、Destination Net Unreachable、被反向路径过滤悄悄丢弃；用 ip route get 验证最长前缀匹配；故意配出一个路由环路，看 TTL 从 63 减到 1；抓包看懂 traceroute 的原理；最后配置 NAT，看源地址怎样被替换。
 top_group_list: true
 disableNunjucks: true
+viz: [net-trace]
 ---
 
 > **本文目标**：理解路由表和路由器转发数据的过程；会用 `ip route` 查看和配置路由；理解默认路由和最长前缀匹配；理解 TTL 的作用；理解 ping 和 traceroute 所用的 ICMP 消息；理解 NAT 的工作方式。
@@ -264,6 +265,10 @@ IP (tos 0xc0, ttl 62, id 48994, offset 0, flags [none], proto ICMP (1), length 8
 3. 发 TTL = 3 的包，它到达了 h2。h2 上没有程序在监听 33436 这个不常用的端口，于是回复「**端口不可达**」，traceroute 知道已经到达终点。
 
 每个超时消息中还附带了原来那个包的 IP 头（输出中缩进的部分，这里省略了），traceroute 据此知道这是对哪个探测的回答。注意 h2 回复的 TTL 是 62，经过了两台路由器。
+
+把这个过程放慢，一跳一跳地看：
+
+<div class="dsviz" data-viz="traceroute"></div>
 
 在真实的互联网上，很多路由器出于安全考虑不回复 ICMP，traceroute 中会显示 `* * *`；也有防火墙会拦截 UDP，这时可以用 `traceroute -I`（用 ICMP 回显请求做探测）或 `-T`（用 TCP）。
 

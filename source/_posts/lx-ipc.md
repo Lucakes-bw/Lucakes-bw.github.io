@@ -34,6 +34,15 @@ disableNunjucks: true
 | 信号 | 只能传递一个编号 | 《信号》 |
 | 信号量 | 用于同步，不传递数据 | 本文第 4 节 |
 
+<figure class="diagram">
+<svg viewBox="0 0 700 204" role="img" aria-label="两种 IPC 的区别：管道和套接字经过内核缓冲区，写入时复制一次，读出时再复制一次；共享内存让两个进程的地址空间映射同一块物理内存，一方写入，另一方立即可见，但需要信号量等手段同步">
+  <defs><marker id="sh-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker><marker id="sh-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="30" y="20" width="170" height="150" rx="8" style="fill:none;stroke:var(--border-2);stroke-width:1.5"/><text x="115" y="40" text-anchor="middle" style="fill:var(--fg);font-size:12px">进程 A 的地址空间</text><rect x="45" y="56" width="140" height="26" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="115.0" y="74.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">栈、堆、代码…</text><rect x="45" y="104" width="140" height="34" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="115.0" y="126.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">共享区（地址可以不同）</text><rect x="500" y="20" width="170" height="150" rx="8" style="fill:none;stroke:var(--border-2);stroke-width:1.5"/><text x="585" y="40" text-anchor="middle" style="fill:var(--fg);font-size:12px">进程 B 的地址空间</text><rect x="515" y="56" width="140" height="26" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="585.0" y="74.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">栈、堆、代码…</text><rect x="515" y="104" width="140" height="34" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="585.0" y="126.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">共享区（地址可以不同）</text><rect x="275" y="104" width="150" height="40" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2"/><text x="350.0" y="129.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">同一块物理内存</text><line x1="185" y1="121" x2="271" y2="123" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#sh-a)"/><line x1="515" y1="121" x2="429" y2="123" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#sh-a)"/><rect x="240" y="22" width="220" height="36" rx="6" style="fill:var(--panel-2);stroke:var(--link);stroke-width:1.5"/><text x="350.0" y="45.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">管道 / 套接字：内核缓冲区</text><line x1="200" y1="50" x2="236" y2="40" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#sh-l)"/><line x1="460" y1="40" x2="496" y2="50" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#sh-l)"/><text x="350" y="76" text-anchor="middle" style="fill:var(--link);font-size:11px">写入复制一次、读出再复制一次</text><text x="350" y="192" text-anchor="middle" style="fill:var(--muted);font-size:11px">一方写进去，另一方立即能读到，不经过内核；但谁先写、谁后读要靠信号量等同步手段约定</text>
+  </g>
+</svg>
+</figure>
+
 ## 2. 命名管道 FIFO
 
 普通的管道没有名字，只能通过 `fork` 把描述符传给子进程。**命名管道**（FIFO）在文件系统中有一个名字，任何有权限的进程都可以用 `open` 打开它：
@@ -341,6 +350,15 @@ int main(int argc, char *argv[])
 块大小 1048576：套接字    0.06 秒， 18330 MB/s
 块大小 1048576：共享内存  0.05 秒， 21870 MB/s
 ```
+
+<figure class="diagram">
+<svg viewBox="0 0 700 272" role="img" aria-label="在两个进程之间传 1 GB 数据的吞吐量：块大小 4 KB 时，管道 6129、套接字 6631、共享内存只有 318 MB/s；64 KB 时分别是 3596、13209、4067；1 MB 时分别是 3585、18330、21870 MB/s。块越大，同步的次数越少，共享内存越快">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="106" y="54" text-anchor="end" style="fill:var(--fg);font-size:12px">块 4 KB</text><rect x="120" y="24" width="130.9" height="16" rx="2" style="fill:var(--link);opacity:.75"/><text x="256.9377272727273" y="37" text-anchor="start" style="fill:var(--link);font-size:11px">6129 MB/s</text><rect x="120" y="44" width="141.7" height="16" rx="2" style="fill:var(--accent);opacity:.75"/><text x="267.6622727272727" y="57" text-anchor="start" style="fill:var(--accent);font-size:11px">6631 MB/s</text><rect x="120" y="64" width="6.8" height="16" rx="2" style="fill:var(--warn);opacity:.75"/><text x="132.79363636363638" y="77" text-anchor="start" style="fill:var(--warn);font-size:11px">318 MB/s</text><text x="106" y="128" text-anchor="end" style="fill:var(--fg);font-size:12px">块 64 KB</text><rect x="120" y="98" width="76.8" height="16" rx="2" style="fill:var(--link);opacity:.75"/><text x="202.82363636363635" y="111" text-anchor="start" style="fill:var(--link);font-size:11px">3596 MB/s</text><rect x="120" y="118" width="282.2" height="16" rx="2" style="fill:var(--accent);opacity:.75"/><text x="408.1922727272727" y="131" text-anchor="start" style="fill:var(--accent);font-size:11px">13209 MB/s</text><rect x="120" y="138" width="86.9" height="16" rx="2" style="fill:var(--warn);opacity:.75"/><text x="212.88590909090908" y="151" text-anchor="start" style="fill:var(--warn);font-size:11px">4067 MB/s</text><text x="106" y="202" text-anchor="end" style="fill:var(--fg);font-size:12px">块 1 MB</text><rect x="120" y="172" width="76.6" height="16" rx="2" style="fill:var(--link);opacity:.75"/><text x="202.58863636363634" y="185" text-anchor="start" style="fill:var(--link);font-size:11px">3585 MB/s</text><rect x="120" y="192" width="391.6" height="16" rx="2" style="fill:var(--accent);opacity:.75"/><text x="517.5954545454545" y="205" text-anchor="start" style="fill:var(--accent);font-size:11px">18330 MB/s</text><rect x="120" y="212" width="467.2" height="16" rx="2" style="fill:var(--warn);opacity:.75"/><text x="593.2227272727273" y="225" text-anchor="start" style="fill:var(--warn);font-size:11px">21870 MB/s</text><rect x="120" y="250" width="12" height="12" style="fill:var(--link);opacity:.75"/><text x="138" y="260" text-anchor="start" style="fill:var(--fg);font-size:12px">管道</text><rect x="290" y="250" width="12" height="12" style="fill:var(--accent);opacity:.75"/><text x="308" y="260" text-anchor="start" style="fill:var(--fg);font-size:12px">Unix 域套接字</text><rect x="460" y="250" width="12" height="12" style="fill:var(--warn);opacity:.75"/><text x="478" y="260" text-anchor="start" style="fill:var(--fg);font-size:12px">共享内存 + 信号量</text>
+  </g>
+</svg>
+</figure>
 
 结果和「共享内存最快」的直觉并不一致：
 
