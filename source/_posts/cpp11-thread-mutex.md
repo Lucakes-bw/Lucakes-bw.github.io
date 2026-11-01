@@ -12,6 +12,7 @@ tags:
 order: 13
 description: C++11 第一次把线程写进了标准库。本文从创建线程开始，用实验展示数据竞争的后果，讲清楚 mutex、lock_guard、unique_lock 的用法，以及死锁的成因和避免方法，并介绍检测数据竞争的 ThreadSanitizer。
 disableNunjucks: true
+viz: [cpp-basics]
 ---
 
 > **本文目标**：会用 `std::thread` 创建线程，理解 `join` 和 `detach`；知道什么是数据竞争，以及为什么「结果正确」不代表没有数据竞争；会用 `std::mutex` 配合 `lock_guard`、`unique_lock` 保护共享数据；能识别和避免死锁；会用 ThreadSanitizer 检测数据竞争。
@@ -231,6 +232,10 @@ int main()
 线程 A：计算 6，写回 counter = 6
 线程 B：计算 6，写回 counter = 6     ← A 的那次加法丢失了
 ```
+
+用演示把这个交错过程放慢，再和加锁的情况对比（点「不加锁」「加锁」切换）：
+
+<div class="dsviz" data-viz="race"></div>
 
 ### 3.2 结果正确不代表没有问题
 

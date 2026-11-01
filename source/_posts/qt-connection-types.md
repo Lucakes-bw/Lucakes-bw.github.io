@@ -14,6 +14,7 @@ order: 3
 description: 同一条连接，在界面线程中 emit 时，槽被排进工作线程的队列，emit 立即返回；在工作线程中 emit 时，槽被直接调用。默认的 AutoConnection 是在每次 emit 时、根据发出信号的线程和接收者所在的线程决定的。本文逐一实测五种连接方式：DirectConnection 让工作线程的对象在界面线程中执行槽；同一线程中的 QueuedConnection 也要等回到事件循环；同一线程中的 BlockingQueuedConnection，Qt 打印出「Dead lock detected」之后，程序还是卡死了。跨线程传递 4000 万字节的 QByteArray 用了 0.34 毫秒，接收方拿到的是同一块内存；同样大小的 std::vector 被拷贝了一份，用了 5.9 毫秒。生产者 80 毫秒发出 100 万条消息，消费者要 15 秒才处理完，队列让内存多了 361 MB。
 top_group_list: true
 disableNunjucks: true
+viz: [qt-conn]
 ---
 
 > **本文目标**：理解五种连接方式：Auto、Direct、Queued、BlockingQueued、SingleShot / Unique 标志；知道 AutoConnection 是怎样、在什么时候做决定的；理解跨线程连接中参数的拷贝，知道隐式共享的类型为什么便宜；知道队列连接的死锁和堆积问题，以及怎样避免。
@@ -124,6 +125,10 @@ std::printf("   emit 返回（槽已经执行完了）\n");
 ```
 
 槽在工作线程中执行，`emit` 一直等到它执行完才返回。适合「需要对方先处理完，我才能继续」的场合，例如工作线程需要界面线程先确认一件事。
+
+把这三种方式放在一起，一步一步看两个线程和事件队列中发生了什么（点下面的按钮切换）：
+
+<div class="dsviz" data-viz="qt-conn"></div>
 
 ### 2.4 同一线程中的队列连接
 

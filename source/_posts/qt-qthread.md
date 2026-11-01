@@ -130,17 +130,40 @@ QTimer::singleShot(200, [&] {
 
 所以在接收结果的槽中，**可以放心地修改界面**，它就在界面线程中执行。这就是 Qt 多线程最常用的模式：
 
-```
-界面线程                                工作线程
-────────                                ────────
-用户点击「开始」
-  invokeMethod(worker, doWork) ──事件──► doWork() 开始
-（立即返回，继续处理界面事件）              │  耗时的计算
-                                         │  emit progress(50)
-  进度条更新到 50% ◄────────────事件──────┘
-                                         │  ……
-  显示结果 ◄────────────────────事件────── emit finished(结果)
-```
+<figure class="diagram">
+<svg viewBox="0 0 700 360" role="img" aria-label="时序图：界面线程调用 invokeMethod 后立即返回，继续处理界面事件；doWork 在工作线程中执行；工作线程 emit progress 和 finished 时，调用被打包成事件放进界面线程的队列，由界面线程执行更新进度条和显示结果">
+  <defs><marker id="th-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker><marker id="th-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="90" y="10" width="160" height="32" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/>
+    <text x="170" y="31" text-anchor="middle" style="fill:var(--fg)">界面线程</text>
+    <rect x="450" y="10" width="160" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--link);stroke-width:1.5"/>
+    <text x="530" y="31" text-anchor="middle" style="fill:var(--fg)">工作线程</text>
+    <line x1="170" y1="42" x2="170" y2="350" style="stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+    <line x1="530" y1="42" x2="530" y2="350" style="stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+    <rect x="523" y="92" width="14" height="210" style="fill:var(--link);opacity:.35"/>
+    <text x="546" y="104" style="fill:var(--fg)">doWork() 开始</text>
+    <text x="546" y="140" style="fill:var(--muted);font-size:12px">耗时的计算</text>
+    <text x="158" y="74" text-anchor="end" style="fill:var(--fg)">用户点击「开始」</text>
+    <line x1="170" y1="88" x2="520" y2="96" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#th-a)"/>
+    <text x="350" y="84" text-anchor="middle" style="fill:var(--link);font-size:12px">invokeMethod：放进对方的事件队列</text>
+    <text x="158" y="112" text-anchor="end" style="fill:var(--muted);font-size:12px">立即返回</text>
+    <g style="fill:var(--accent)">
+      <circle cx="170" cy="130" r="3"/><circle cx="170" cy="150" r="3"/><circle cx="170" cy="170" r="3"/>
+      <circle cx="170" cy="230" r="3"/><circle cx="170" cy="250" r="3"/><circle cx="170" cy="270" r="3"/>
+    </g>
+    <text x="158" y="154" text-anchor="end" style="fill:var(--muted);font-size:12px">照常处理重画、点击</text>
+    <line x1="520" y1="190" x2="174" y2="200" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#th-b)"/>
+    <text x="546" y="194" style="fill:var(--fg)">emit progress(50)</text>
+    <text x="350" y="186" text-anchor="middle" style="fill:var(--accent);font-size:12px">事件</text>
+    <text x="158" y="206" text-anchor="end" style="fill:var(--fg)">进度条更新到 50%</text>
+    <line x1="520" y1="300" x2="174" y2="310" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#th-b)"/>
+    <text x="546" y="304" style="fill:var(--fg)">emit finished(结果)</text>
+    <text x="350" y="296" text-anchor="middle" style="fill:var(--accent);font-size:12px">事件</text>
+    <text x="158" y="316" text-anchor="end" style="fill:var(--fg)">显示结果</text>
+    <text x="10" y="352" style="fill:var(--muted);font-size:11px">时间 ↓</text>
+  </g>
+</svg>
+</figure>
 
 ### 2.3 几个细节
 

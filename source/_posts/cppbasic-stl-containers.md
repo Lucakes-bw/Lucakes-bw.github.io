@@ -13,6 +13,7 @@ order: 12
 description: STL 提供了一组现成的数据结构。本文介绍 vector、deque、list、set、map、unordered_map 和三个容器适配器的用法，并用实测数据比较它们的插入、查找和遍历速度，最后给出一张选择容器的速查表。
 top_group_list: true
 disableNunjucks: true
+viz: [cpp-basics]
 ---
 
 > **本文目标**：熟练使用 `vector`、`map`、`unordered_map`、`set`；了解 `deque`、`list` 和 `stack`、`queue`、`priority_queue`；理解各容器操作的时间复杂度，并通过实测感受差距；能根据需求选择合适的容器。
@@ -108,6 +109,10 @@ reserve(100) 后: size = 0, capacity = 100
 - 空间不够时，`vector` 会**分配一块更大的内存（这里是原来的 2 倍），把所有元素搬过去，再释放旧内存**。添加 100 个元素只发生了 8 次扩容。因为每次扩容都翻倍，平均到每次 `push_back` 上的代价是常数，所以说 `push_back` 是**均摊 O(1)** 的。（GCC 的 libstdc++ 也是 2 倍，MSVC 是 1.5 倍。）
 - 如果事先知道大约有多少个元素，用 **`reserve(n)`** 预先分配空间，可以避免多次扩容。注意 `reserve` 不改变 `size()`。
 - 扩容会搬移元素，所以扩容后，**之前获取的指向元素的指针、引用和迭代器全部失效**。这个陷阱在下一篇会详细讲。
+
+一步一步看扩容时发生了什么（可以改变 n 重新运行）：
+
+<div class="dsviz" data-viz="vec-grow"></div>
 
 ## 3. deque 和 list
 

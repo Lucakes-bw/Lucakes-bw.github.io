@@ -113,24 +113,22 @@ QObject::connect(&button, &QPushButton::pressed, [] { std::printf("6. pressed �
 
 画成图：
 
-```
-事件循环取出一个事件
-  │
-  ▼
-QApplication::notify(接收者, 事件)       ← 1. 所有事件的总入口
-  │
-  ├─► QApplication 上的事件过滤器        ← 2. 返回 true 就到此为止
-  ├─► 接收者上的事件过滤器               ← 3. 返回 true 就到此为止
-  │      （装了多个时，后装的先调用）
-  ▼
-接收者->event(事件)                     ← 4. 按事件类型分派
-  │
-  ▼
-mousePressEvent / keyPressEvent / paintEvent ……   ← 5. 具体的处理函数
-  │
-  ▼
-控件自己决定发出什么信号（pressed、clicked、textChanged ……）   ← 6.
-```
+<figure class="diagram">
+<svg viewBox="0 0 700 430" role="img" aria-label="一个事件依次经过六站：1 QApplication::notify；2 QApplication 上的事件过滤器；3 接收者上的事件过滤器，过滤器返回 true 时事件就被拦截，不再往下走；4 接收者的 event 按类型分派；5 mousePressEvent 等具体的处理函数；6 控件发出 pressed、clicked 等信号">
+  <defs><marker id="ev-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker><marker id="ev-x" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--danger)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="240" y="22" text-anchor="middle" style="fill:var(--muted)">事件循环取出一个事件</text>
+    <line x1="240" y1="28" x2="240" y2="47" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/>
+    <circle cx="40" cy="69" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="74" text-anchor="middle" style="fill:var(--fg)">1</text><rect x="70" y="50" width="340" height="38" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="240" y="74" text-anchor="middle" style="fill:var(--fg)">QApplication::notify(接收者, 事件)</text><text x="424" y="74" style="fill:var(--muted);font-size:12px">所有事件的总入口</text><line x1="240" y1="88" x2="240" y2="108" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="131" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="136" text-anchor="middle" style="fill:var(--fg)">2</text><rect x="70" y="112" width="340" height="38" rx="6" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="240" y="136" text-anchor="middle" style="fill:var(--fg)">QApplication 上的事件过滤器</text><text x="424" y="136" style="fill:var(--muted);font-size:12px">返回 true 就拦截</text><line x1="240" y1="150" x2="240" y2="170" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="193" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="198" text-anchor="middle" style="fill:var(--fg)">3</text><rect x="70" y="174" width="340" height="38" rx="6" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="240" y="198" text-anchor="middle" style="fill:var(--fg)">接收者上的事件过滤器</text><text x="424" y="198" style="fill:var(--muted);font-size:12px">后安装的先调用</text><line x1="240" y1="212" x2="240" y2="232" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="255" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="260" text-anchor="middle" style="fill:var(--fg)">4</text><rect x="70" y="236" width="340" height="38" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="240" y="260" text-anchor="middle" style="fill:var(--fg)">接收者->event(事件)</text><text x="424" y="260" style="fill:var(--muted);font-size:12px">按事件类型分派</text><line x1="240" y1="274" x2="240" y2="294" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="317" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="322" text-anchor="middle" style="fill:var(--fg)">5</text><rect x="70" y="298" width="340" height="38" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="240" y="322" text-anchor="middle" style="fill:var(--fg)">mousePressEvent / keyPressEvent …</text><text x="424" y="322" style="fill:var(--muted);font-size:12px">具体的处理函数</text><line x1="240" y1="336" x2="240" y2="356" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ev-a)"/><circle cx="40" cy="379" r="13" style="fill:var(--panel);stroke:var(--fg-2);stroke-width:1.5"/><text x="40" y="384" text-anchor="middle" style="fill:var(--fg)">6</text><rect x="70" y="360" width="340" height="38" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="240" y="384" text-anchor="middle" style="fill:var(--fg)">发出信号：pressed、clicked …</text><text x="424" y="384" style="fill:var(--muted);font-size:12px">控件自己决定</text>
+    <rect x="590" y="118" width="100" height="90" rx="6" style="fill:none;stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 3"/>
+    <text x="640" y="156" text-anchor="middle" style="fill:var(--danger)">拦截</text>
+    <text x="640" y="178" text-anchor="middle" style="fill:var(--danger);font-size:12px">到此为止</text>
+    <path d="M566,131 L587,140" style="fill:none;stroke:var(--danger);stroke-width:1.5;stroke-dasharray:4 3" marker-end="url(#ev-x)"/>
+    <path d="M566,193 L587,186" style="fill:none;stroke:var(--danger);stroke-width:1.5;stroke-dasharray:4 3" marker-end="url(#ev-x)"/>
+    <text x="70" y="420" style="fill:var(--muted);font-size:12px">写控件的人处理 1～5 站的事件，用控件的人连接第 6 站的信号</text>
+  </g>
+</svg>
+</figure>
 
 拦截的那一次，事件到第 3 站就停了：按钮没有收到鼠标按下，也就不会发出 `pressed` 信号。对用户来说，这个按钮「点不动」了。
 

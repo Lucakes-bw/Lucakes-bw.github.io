@@ -93,14 +93,22 @@ sizeof(Employee) = 32, sizeof(Manager) = 40
 3. **派生类对象可以当作基类对象使用**：`Employee& ref = m;` 是合法的，因为经理就是一种员工。这是下一篇「多态」的基础。
 4. **派生类对象包含一个完整的基类对象**：`Manager` 的大小是 `Employee`（32 字节）加上自己的 `teamSize_`（4 字节），再对齐到 40 字节。
 
-```
-Manager 对象的内存：
-┌──────────────────────────┐
-│ Employee 部分             │  salary_、name_（32 字节）
-├──────────────────────────┤
-│ Manager 自己的部分        │  teamSize_（4 字节 + 4 字节对齐填充）
-└──────────────────────────┘
-```
+<figure class="diagram">
+<svg viewBox="0 0 680 160" role="img" aria-label="Manager 对象 40 字节：偏移 0 到 8 是 salary_，8 到 32 是 name_，这 32 字节是完整的 Employee 部分；32 到 36 是 Manager 自己的 teamSize_，36 到 40 是对齐填充">
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="40" y="70" width="120" height="46" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="100.0" y="92" text-anchor="middle" style="fill:var(--fg)">salary_</text><text x="100.0" y="108" text-anchor="middle" style="fill:var(--muted);font-size:11px">double，8</text>
+    <rect x="160" y="70" width="360" height="46" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="340.0" y="92" text-anchor="middle" style="fill:var(--fg)">name_</text><text x="340.0" y="108" text-anchor="middle" style="fill:var(--muted);font-size:11px">std::string，24</text>
+    <rect x="520" y="70" width="60" height="46" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="550.0" y="92" text-anchor="middle" style="fill:var(--fg)">team…</text><text x="550.0" y="108" text-anchor="middle" style="fill:var(--muted);font-size:11px">int</text>
+    <rect x="580" y="70" width="60" height="46" style="fill:none;stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:4 3"/><text x="610.0" y="92" text-anchor="middle" style="fill:var(--fg)"></text><text x="610.0" y="108" text-anchor="middle" style="fill:var(--muted);font-size:11px">填充</text>
+    <path d="M40,60 v-8 h480 v8" style="fill:none;stroke:var(--accent);stroke-width:1.5"/>
+    <text x="280" y="40" text-anchor="middle" style="fill:var(--accent)">Employee 部分（32 字节）：和一个独立的 Employee 对象完全一样</text>
+    <path d="M520,60 v-8 h120 v8" style="fill:none;stroke:var(--warn);stroke-width:1.5"/>
+    <text x="580" y="22" text-anchor="middle" style="fill:var(--warn)">Manager 新增</text>
+    <text x="40" y="134" text-anchor="middle" style="fill:var(--muted);font-size:11px">0</text><text x="160" y="134" text-anchor="middle" style="fill:var(--muted);font-size:11px">8</text><text x="520" y="134" text-anchor="middle" style="fill:var(--muted);font-size:11px">32</text><text x="580" y="134" text-anchor="middle" style="fill:var(--muted);font-size:11px">36</text><text x="640" y="134" text-anchor="middle" style="fill:var(--muted);font-size:11px">40</text>
+    <text x="40" y="154" style="fill:var(--muted);font-size:11px">偏移（字节），sizeof(Manager) = 40</text>
+  </g>
+</svg>
+</figure>
 
 > 编写这个示例时，我最初把 `Employee` 构造函数的初始化列表写成了 `name_(...), salary_(...)`，而类中先声明的是 `salary_`，编译器立刻给出了 `-Wreorder-ctor` 警告。这正是《构造与析构》中讲过的「成员按声明顺序初始化」，所以示例中调整了初始化列表的顺序。
 

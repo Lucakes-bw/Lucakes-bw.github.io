@@ -79,6 +79,15 @@ Node::root
 
 `dumpObjectTree()` 把整棵树打印出来（格式是「类名::对象名」），调试界面时可以用它查看控件的层次。
 
+<figure class="diagram">
+<svg viewBox="0 0 680 250" role="img" aria-label="对象树：root 有两个子对象 a 和 b，a 有子对象 a1、a2，b 有子对象 b1。delete root 时的析构顺序是 root、a、a1、a2、b、b1：先执行父对象自己的析构函数，再在 ~QObject 中依次删除子对象">
+  <g style="font-family:var(--mono);font-size:13px">
+    <line x1="330" y1="56" x2="200" y2="94" style="stroke:var(--fg-2);stroke-width:1.5"/><line x1="330" y1="56" x2="460" y2="94" style="stroke:var(--fg-2);stroke-width:1.5"/><line x1="200" y1="126" x2="140" y2="164" style="stroke:var(--fg-2);stroke-width:1.5"/><line x1="200" y1="126" x2="260" y2="164" style="stroke:var(--fg-2);stroke-width:1.5"/><line x1="460" y1="126" x2="460" y2="164" style="stroke:var(--fg-2);stroke-width:1.5"/><rect x="286" y="24" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="330" y="45" text-anchor="middle" style="fill:var(--fg)">root</text><circle cx="374" cy="24" r="10" style="fill:var(--warn)"/><text x="374" y="28" text-anchor="middle" style="fill:var(--bg);font-size:11px">1</text><rect x="156" y="94" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="200" y="115" text-anchor="middle" style="fill:var(--fg)">a</text><circle cx="244" cy="94" r="10" style="fill:var(--warn)"/><text x="244" y="98" text-anchor="middle" style="fill:var(--bg);font-size:11px">2</text><rect x="416" y="94" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="460" y="115" text-anchor="middle" style="fill:var(--fg)">b</text><circle cx="504" cy="94" r="10" style="fill:var(--warn)"/><text x="504" y="98" text-anchor="middle" style="fill:var(--bg);font-size:11px">5</text><rect x="96" y="164" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="140" y="185" text-anchor="middle" style="fill:var(--fg)">a1</text><circle cx="184" cy="164" r="10" style="fill:var(--warn)"/><text x="184" y="168" text-anchor="middle" style="fill:var(--bg);font-size:11px">3</text><rect x="216" y="164" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="260" y="185" text-anchor="middle" style="fill:var(--fg)">a2</text><circle cx="304" cy="164" r="10" style="fill:var(--warn)"/><text x="304" y="168" text-anchor="middle" style="fill:var(--bg);font-size:11px">4</text><rect x="416" y="164" width="88" height="32" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="460" y="185" text-anchor="middle" style="fill:var(--fg)">b1</text><circle cx="504" cy="164" r="10" style="fill:var(--warn)"/><text x="504" y="168" text-anchor="middle" style="fill:var(--bg);font-size:11px">6</text>
+    <text x="20" y="224" style="fill:var(--muted);font-size:12px">橙色数字：delete root 时析构的顺序。父对象的 ~Node 先执行，</text><text x="20" y="242" style="fill:var(--muted);font-size:12px">再在 ~QObject 中依次删除子对象；每个子对象同样先析构自己，再删自己的子对象</text>
+  </g>
+</svg>
+</figure>
+
 接着做三件事：直接删除一个子对象、把 `b` 从树中拿出来、删除根：
 
 ```cpp
