@@ -40,6 +40,15 @@ namespace fs = std::filesystem;
 
 `fs::path` 表示一个路径。它只是一个字符串的包装，**不要求路径真实存在**，所有操作都只是字符串处理。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 176" role="img" aria-label="fs::path 的各个部分：/home/lucky/projects/blog/source/_posts/cpp17-optional.md 中，root_path 是开头的斜杠，parent_path 是最后一个斜杠之前的目录，filename 是 cpp17-optional.md，其中 stem 是 cpp17-optional，extension 是 .md">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="22" y="70" style="fill:var(--fg);font-size:17px;font-family:var(--mono)" textLength="604.1999999999999" lengthAdjust="spacingAndGlyphs">/home/lucky/projects/blog/source/_posts/cpp17-optional.md</text><path d="M22.0,48 v-8 h10.600000000000001 v8" style="fill:none;stroke:var(--muted);stroke-width:1.5"/><text x="22.0" y="34" text-anchor="start" style="fill:var(--muted);font-size:12px">root_path() "/"</text><path d="M22.0,74 v8 h413.4 v-8" style="fill:none;stroke:var(--link);stroke-width:1.5"/><text x="228.7" y="98" text-anchor="middle" style="fill:var(--link);font-size:12px">parent_path()</text><path d="M446.0,48 v-8 h180.19999999999993 v8" style="fill:none;stroke:var(--accent);stroke-width:1.5"/><text x="536.0999999999999" y="34" text-anchor="middle" style="fill:var(--accent);font-size:12px">filename()</text><path d="M446.0,110 v8 h148.39999999999998 v-8" style="fill:none;stroke:var(--warn);stroke-width:1.5"/><text x="520.2" y="134" text-anchor="middle" style="fill:var(--warn);font-size:12px">stem()</text><path d="M594.4,110 v8 h31.799999999999955 v-8" style="fill:none;stroke:var(--danger);stroke-width:1.5"/><text x="610.3" y="134" text-anchor="middle" style="fill:var(--danger);font-size:12px">extension()</text><text x="22" y="166" text-anchor="start" style="fill:var(--muted);font-size:11px">这些都只是字符串处理，路径不需要真实存在</text>
+  </g>
+</svg>
+</figure>
+
 ```cpp
 #include <filesystem>
 #include <iostream>

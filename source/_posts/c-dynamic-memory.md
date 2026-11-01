@@ -37,6 +37,15 @@ disableNunjucks: true
 | 大小 | 较小，通常几 MB | 很大，受限于系统的可用内存 |
 | 大小何时确定 | 编译时 | 运行时 |
 
+<figure class="diagram">
+<svg viewBox="0 0 700 300" role="img" aria-label="一个进程的内存布局，从高地址到低地址：栈（局部变量，向下增长）、空闲区、堆（malloc 分配，向上增长）、全局和静态变量、代码和字符串字面量。实测栈上的变量在 0x16d5d6548 附近，malloc 得到的内存在 0x102db9160 附近">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="200" y="30" width="240" height="70" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="320" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">栈（stack）</text><text x="320" y="81.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">局部变量、参数、返回地址；向下增长</text><rect x="200" y="100" width="240" height="60" style="fill:none;stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:5 4"/><text x="320" y="135.0" text-anchor="middle" style="fill:var(--muted);font-size:13px">↓　　空闲　　↑</text><rect x="200" y="160" width="240" height="56" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="320" y="188.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">堆（heap）</text><text x="320" y="204.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">malloc / free 管理；向上增长</text><rect x="200" y="216" width="240" height="40" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="320" y="236.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">全局变量、静态变量</text><text x="320" y="252.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">整个程序运行期间都存在</text><rect x="200" y="256" width="240" height="36" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="320" y="274.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">代码、字符串字面量</text><text x="320" y="290.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">只读</text><text x="190" y="40" text-anchor="end" style="fill:var(--muted);font-size:11px">高地址</text><text x="190" y="288" text-anchor="end" style="fill:var(--muted);font-size:11px">低地址</text><text x="456" y="60" text-anchor="start" style="fill:var(--fg-2);font-size:12px">《函数》实测：factorial 的</text><text x="456" y="76" text-anchor="start" style="fill:var(--fg-2);font-size:12px">local 在 0x16d5d6548 附近</text><text x="456" y="180" text-anchor="start" style="fill:var(--fg-2);font-size:12px">第 3 节实测：malloc 返回</text><text x="456" y="196" text-anchor="start" style="fill:var(--fg-2);font-size:12px">0x102db9160 附近</text><text x="20" y="120" text-anchor="start" style="fill:var(--muted);font-size:11px">栈：函数返回就释放，</text><text x="20" y="136" text-anchor="start" style="fill:var(--muted);font-size:11px">通常只有几 MB</text><text x="20" y="176" text-anchor="start" style="fill:var(--muted);font-size:11px">堆：自己申请、自己释放，</text><text x="20" y="192" text-anchor="start" style="fill:var(--muted);font-size:11px">可以很大</text>
+  </g>
+</svg>
+</figure>
+
 ## 2. malloc 和 free
 
 ```c
@@ -188,6 +197,15 @@ Process 47572: 1 leak for 448 total leaked bytes.
 ```
 
 （报告中的 448 是分配器对齐后的大小。）**规则：总是用一个临时变量接收 `realloc` 的返回值，确认成功之后再赋值。**
+
+<figure class="diagram">
+<svg viewBox="0 0 700 228" role="img" aria-label="p = realloc(p, ...) 的陷阱：调用前 data 指向 400 字节的内存；realloc 失败返回 NULL，原来的内存没有被释放，但 data 被赋成了 NULL，那块内存再也找不到，造成泄漏。应该先用临时变量接收">
+  <defs><marker id="rl-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="24" text-anchor="start" style="fill:var(--muted);font-size:12px">调用之前</text><rect x="20" y="40" width="110" height="34" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="75.0" y="62.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">data</text><line x1="130" y1="57" x2="216" y2="57" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#rl-a)"/><rect x="220" y="40" width="196" height="34" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="318.0" y="62.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">400 字节，data[0] = 42</text><text x="20" y="124" text-anchor="start" style="fill:var(--danger);font-size:12px">data = realloc(data, SIZE_MAX / 2) 失败之后</text><rect x="20" y="140" width="110" height="34" rx="0" style="fill:var(--panel-2);stroke:var(--danger);stroke-width:1.5"/><text x="75.0" y="162.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">data = NULL</text><rect x="220" y="140" width="196" height="34" rx="0" style="fill:var(--mark);stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 3"/><text x="318.0" y="162.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">400 字节，data[0] = 42</text><text x="432" y="152" text-anchor="start" style="fill:var(--danger);font-size:12px">realloc 失败时不释放原来的内存，</text><text x="432" y="168" text-anchor="start" style="fill:var(--danger);font-size:12px">可唯一记着它地址的 data 被覆盖了：</text><text x="432" y="184" text-anchor="start" style="fill:var(--danger);font-size:12px">再也访问不到、也无法 free（泄漏）</text><text x="20" y="214" text-anchor="start" style="fill:var(--accent);font-size:12px">正确的写法：int* p = realloc(data, n); if (p != NULL) data = p;  失败时 data 仍然指向原来的内存</text>
+  </g>
+</svg>
+</figure>
 
 ## 4. 内存错误
 

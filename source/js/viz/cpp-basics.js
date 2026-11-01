@@ -157,4 +157,65 @@
       { label: '加锁', run: raceLocked }
     ]
   });
+
+  /* ---------------- remove_if：把要保留的元素往前搬（《迭代器与算法》） ---------------- */
+  function rmView(m, x) {
+    var cells = m.v.map(function (v, i) {
+      var hl = null;
+      if (m.done && i >= m.w) hl = 'dim';
+      if (x.hl && x.hl[i]) hl = x.hl[i];
+      return { v: v, hl: hl };
+    });
+    var ptrs = [];
+    if (m.r != null && m.r < m.v.length) ptrs.push({ name: 'i', at: m.r });
+    if (m.w != null) ptrs.push({ name: m.done ? 'newEnd' : 'first', at: m.w, hl: m.done ? 'warn' : null });
+    return { kind: 'array', cells: cells, cap: m.cap, ptrs: ptrs, ptrsBelow: true, top: 40, x0: 120, cellW: 60,
+      vars: { size: m.v.length } };
+  }
+
+  function rmRun(m, p, rec) {
+    m.v = [1, 2, 2, 3, 4, 4, 5]; m.cap = 7; m.r = null; m.w = null; m.done = false;
+    rec.step(1, 'v = {1, 2, 2, 3, 4, 4, 5}，要删掉所有的偶数。');
+    m.w = 0;
+    while (m.w < m.v.length && m.v[m.w] % 2) {
+      rec.step(3, 'first 从头开始找第一个要删除的元素：' + m.v[m.w] + ' 是奇数，保留，继续往后找。', { hl: (function (o) { o[m.w] = 'cmp'; return o; })({}) });
+      m.w++;
+    }
+    rec.step(3, m.v[m.w] + ' 是偶数，找到了：first 停在下标 ' + m.w + '。从这里开始，first 表示「下一个保留的元素要放到哪里」。', { hl: (function (o) { o[m.w] = 'warn'; return o; })({}) });
+    for (m.r = m.w + 1; m.r < m.v.length; m.r++) {
+      var h = {}; h[m.r] = 'cmp';
+      if (m.v[m.r] % 2 === 0) {
+        rec.step(5, 'i 指向 ' + m.v[m.r] + '，是偶数，跳过。', { hl: h });
+      } else {
+        rec.step(5, 'i 指向 ' + m.v[m.r] + '，是奇数，要保留。', { hl: h });
+        m.v[m.w] = m.v[m.r];
+        var h2 = {}; h2[m.w] = 'new';
+        rec.step(6, '把它移到 first 的位置（下标 ' + m.w + '），first 前进一格。', { hl: h2 });
+        m.w++;
+      }
+    }
+    m.r = null; m.done = true;
+    rec.step(7, 'i 到了末尾。remove_if 返回 first，就是 newEnd（下标 ' + m.w + '）。前 ' + m.w + ' 个是保留的元素；后面的是剩下的旧值，内容没有意义。size 仍然是 7：算法只能通过迭代器读写元素，改变不了容器的大小。');
+    m.v = m.v.slice(0, m.w);
+    rec.step(9, 'v.erase(newEnd, v.end()) 才真正删掉尾部，size 变成 ' + m.w + '。整个过程只遍历了一次。');
+  }
+
+  DSViz.register('remove-if', {
+    title: 'remove_if 做了什么：v.erase(remove_if(…), v.end())',
+    height: 150,
+    code: [
+      'std::vector<int> v{1, 2, 2, 3, 4, 4, 5};',
+      '// remove_if 内部（简化）：',
+      'auto first = find_if(v.begin(), v.end(), 是偶数);',
+      'for (auto i = first; ++i != v.end(); )',
+      '    if (!是偶数(*i))',
+      '        *first++ = std::move(*i);',
+      'return first;                   // newEnd',
+      '',
+      'v.erase(newEnd, v.end());'
+    ],
+    init: function () { return { v: [], cap: 7 }; },
+    view: rmView,
+    start: function (m, rec) { rmRun(m, {}, rec); }
+  });
 })();

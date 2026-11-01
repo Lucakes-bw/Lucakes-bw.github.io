@@ -119,6 +119,15 @@ transform_reduce串行 4.57225 ms, 并行 1.62183 ms, 结果 3.33434e+06 / 3.334
 1000 个元素排序 1000 次: 串行 0.465041 ms, 并行 2.50379 ms
 ```
 
+<figure class="diagram">
+<svg viewBox="0 0 700 236" role="img" aria-label="并行版本相对串行版本的加速比（12 线程）：较重的 transform 7.17 倍，transform_reduce 2.82 倍，大数组 sort 1.56 倍，小数组 sort 反而只有 0.19 倍，也就是慢了 5.4 倍">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="288" y="48" text-anchor="end" style="fill:var(--fg);font-size:12px">transform（每个元素做较重的计算）</text><rect x="300" y="34" width="286.7" height="22" style="fill:var(--accent);opacity:.75"/><text x="594.7264" y="50" text-anchor="start" style="fill:var(--accent);font-size:12px">7.17 倍</text><text x="288" y="94" text-anchor="end" style="fill:var(--fg);font-size:12px">transform_reduce（平方和）</text><rect x="300" y="80" width="112.8" height="22" style="fill:var(--accent);opacity:.75"/><text x="420.76767602029804" y="96" text-anchor="start" style="fill:var(--accent);font-size:12px">2.82 倍</text><text x="288" y="140" text-anchor="end" style="fill:var(--fg);font-size:12px">sort（1000 万个 double）</text><rect x="300" y="126" width="62.2" height="22" style="fill:var(--accent);opacity:.75"/><text x="370.2152" y="142" text-anchor="start" style="fill:var(--accent);font-size:12px">1.56 倍</text><text x="288" y="186" text-anchor="end" style="fill:var(--fg);font-size:12px">sort（1000 个元素 × 1000 次）</text><rect x="300" y="172" width="7.4" height="22" style="fill:var(--danger);opacity:.75"/><text x="315.4293930401511" y="188" text-anchor="start" style="fill:var(--danger);font-size:12px">0.19 倍（慢了 5.4 倍）</text><line x1="340" y1="20" x2="340" y2="212" style="stroke:var(--fg-2);stroke-dasharray:4 3"/><text x="346" y="16" text-anchor="start" style="fill:var(--muted);font-size:11px">← 1 倍：和串行一样快</text><line x1="300" y1="20" x2="300" y2="212" style="stroke:var(--border-2)"/><text x="340" y="226" text-anchor="middle" style="fill:var(--muted);font-size:11px">1</text><text x="380" y="226" text-anchor="middle" style="fill:var(--muted);font-size:11px">2</text><text x="460" y="226" text-anchor="middle" style="fill:var(--muted);font-size:11px">4</text><text x="540" y="226" text-anchor="middle" style="fill:var(--muted);font-size:11px">6</text><text x="620" y="226" text-anchor="middle" style="fill:var(--muted);font-size:11px">8</text>
+  </g>
+</svg>
+</figure>
+
 把结果整理一下：
 
 | 任务 | 加速比 | 原因 |

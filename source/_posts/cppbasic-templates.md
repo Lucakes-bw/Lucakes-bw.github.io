@@ -91,6 +91,15 @@ nm -C func | grep maxOf
 - 模板的类型替换**在编译期完成**，运行时没有任何额外开销，和手写三个函数一模一样。
 - 用到的类型越多，生成的代码越多。这就是模板的代价：**编译时间变长、程序体积变大**。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 232" role="img" aria-label="模板是生成函数的模具：源代码中只有一个 maxOf 模板，编译器看到 maxOf(3, 7)、maxOf(2.5, 1.5)、maxOf(s1, s2) 时，分别用 int、double、string 替换 T，生成三个真正的函数">
+  <defs><marker id="tp-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="30" y="80" width="210" height="70" rx="8" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="135.0" y="113.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">template &lt;typename T&gt;</text><text x="135.0" y="129.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">T maxOf(T a, T b)</text><text x="135" y="70" text-anchor="middle" style="fill:var(--warn);font-size:11px">源代码中的模具（不是函数）</text><line x1="240" y1="115" x2="396" y2="48" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#tp-a)"/><rect x="400" y="34" width="270" height="36" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="535.0" y="57.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">int maxOf&lt;int&gt;(int, int)</text><text x="404" y="25" text-anchor="start" style="fill:var(--muted);font-size:11px">maxOf(3, 7)</text><line x1="240" y1="115" x2="396" y2="113" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#tp-a)"/><rect x="400" y="99" width="270" height="36" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="535.0" y="122.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">double maxOf&lt;double&gt;(double, double)</text><text x="404" y="90" text-anchor="start" style="fill:var(--muted);font-size:11px">maxOf(2.5, 1.5)</text><line x1="240" y1="115" x2="396" y2="178" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#tp-a)"/><rect x="400" y="164" width="270" height="36" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="535.0" y="187.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">string maxOf&lt;string&gt;(string, string)</text><text x="404" y="155" text-anchor="start" style="fill:var(--muted);font-size:11px">maxOf(s1, s2)</text><text x="400" y="222" text-anchor="start" style="fill:var(--muted);font-size:11px">nm 能在程序中看到这三个函数</text>
+  </g>
+</svg>
+</figure>
+
 ### 2.2 推导失败
 
 ```cpp
