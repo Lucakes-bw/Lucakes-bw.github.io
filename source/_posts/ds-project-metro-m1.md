@@ -1,7 +1,7 @@
 ---
 title: 地铁换乘查询（一）：读取数据，建立地铁图
 date: 2026-10-24 10:40:00
-updated: 2026-10-24 12:00:00
+updated: 2026-11-03 10:40:00
 categories:
   - 数据结构
   - 实战项目
@@ -447,4 +447,4 @@ tests/run.sh m1
 
 全部测试通过以后，可以和参考实现对比：[solution/m1](https://github.com/Lucakes-bw/Lucakes-bw.github.io/tree/main/projects/ds-metro/solution/m1/src)。它的 `metro.c` 大约 200 行，`hashmap.c` 大约 80 行。
 
-下一个里程碑会用 BFS 找出站数最少的路线。
+下一个里程碑：[站数最少的路线](/posts/ds-project-metro-m2/)，用 BFS 找出经过车站最少的路线。

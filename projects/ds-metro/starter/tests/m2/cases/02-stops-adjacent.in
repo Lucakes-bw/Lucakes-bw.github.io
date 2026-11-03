@@ -1,0 +1,4 @@
+# stops：相邻的两站，正反两个方向
+stops 果园 西山
+stops 西山 果园
+stops 人民广场 南湖

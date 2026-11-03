@@ -1,0 +1,5 @@
+# stops：一万个车站的棋盘
+stops S0-0 S99-99
+stops S99-0 S0-99
+stops S50-50 S50-51
+stops S3-97 S88-2

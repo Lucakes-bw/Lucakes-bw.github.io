@@ -1,0 +1,4 @@
+# transfers：参数错误、找不到车站、起点和终点相同
+transfers 西山
+transfers 西山 天安门
+transfers 港口 港口

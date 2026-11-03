@@ -1,0 +1,5 @@
+# transfers：宁可慢一点，也不换乘
+transfers 甲 丙
+fastest 甲 丙
+transfers 甲 丁
+transfers 丁 甲

@@ -1091,6 +1091,7 @@ html.is-focus .site-main { padding-top: 40px; }
 .dsviz .dv-box rect, .dsviz .dv-circ circle, .dsviz .dv-column rect { fill: var(--panel-2); stroke: var(--border-2); stroke-width: 1.5; }
 .dsviz .dv-box line { stroke: var(--border-2); stroke-width: 1.5; }
 .dsviz .dv-sub, .dsviz .dv-w { font-size: 11px !important; fill: var(--muted) !important; }
+.dsviz .dv-circ .dv-sub, .dsviz .dv-w { paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }   /* 边从文字下面穿过时也看得清 */
 .dsviz .dv-arrow path, .dsviz .dv-line path { stroke: var(--fg-2); stroke-width: 1.6; }
 .dsviz .dv-marker { fill: var(--fg-2); }
 .dsviz .dv-ptr text { fill: var(--link); font-weight: 700; font-size: 12px; }

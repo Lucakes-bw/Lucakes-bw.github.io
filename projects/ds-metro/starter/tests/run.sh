@@ -171,7 +171,7 @@ for k in $(seq "$first" "$last"); do
             sed 's/^/      /' "$BUILD/err" | head -30
         elif [ $rc -eq 137 ]; then
             report 0 "$title"
-            echo "      超过 $TIMEOUT 秒没有结束，是不是死循环了？"
+            echo "      超过 $TIMEOUT 秒没有结束：是不是死循环了？如果是大数据的测试，也可能是算法太慢"
         elif [ $rc -ne "$want" ]; then
             report 0 "$title"
             echo "      退出码应该是 $want，实际是 $rc$([ $rc -gt 128 ] && echo "（程序崩溃了）")"

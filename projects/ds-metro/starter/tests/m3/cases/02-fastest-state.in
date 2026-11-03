@@ -1,0 +1,4 @@
+# fastest：先到达一个车站，不一定更好（要区分在哪条线路上）
+fastest 港口 老街
+fastest 港口 北站
+fastest 东湖 人民广场

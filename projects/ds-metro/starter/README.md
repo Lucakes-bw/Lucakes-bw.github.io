@@ -8,9 +8,10 @@
 ```
 Makefile          make 编译，make run 运行，make test 测试
 src/              你的代码：main.c 已经写好，其余文件中标了 TODO 的地方需要你实现
+                    metro.c、hashmap.c 是里程碑 1，route.c 是里程碑 2～4，search.c 是里程碑 5
 data/metro.txt    示例城的地铁线路数据
 tests/run.sh      测试脚本
-tests/m1/         里程碑 1 的测试用例
+tests/m1～m5/     每个里程碑的测试用例
 ```
 
 ## 常用命令
@@ -19,6 +20,7 @@ tests/m1/         里程碑 1 的测试用例
 make                  # 编译出 build/metro
 make run              # 用示例数据运行，输入 help 查看命令
 tests/run.sh m1       # 运行里程碑 1 的测试
+tests/run.sh m3       # 运行里程碑 1～3 的测试
 tests/run.sh m1 hash  # 只运行一组测试，分组见 tests/m1/groups
 tests/run.sh -v m1    # 失败时显示完整的差异
 ```

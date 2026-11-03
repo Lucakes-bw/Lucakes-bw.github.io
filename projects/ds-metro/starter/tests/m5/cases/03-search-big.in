@@ -1,0 +1,5 @@
+# search：一万个车站，结果按 strcmp 的顺序排列
+search S99-9
+search S5-5
+search S12-3
+search S100
