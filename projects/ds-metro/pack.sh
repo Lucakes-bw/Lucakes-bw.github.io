@@ -10,6 +10,7 @@ trap 'rm -rf "$TMP"' EXIT
 cp -R "$HERE/starter" "$TMP/ds-metro"
 rm -rf "$TMP/ds-metro/build"
 find "$TMP/ds-metro" -name .DS_Store -delete
+find "$TMP/ds-metro" -name '* [0-9]*' -delete      # 云盘同步产生的副本，比如「01-stats 2.in」
 mkdir -p "$(dirname "$OUT")"
 rm -f "$OUT"
 (cd "$TMP" && zip -qrX "$OUT" ds-metro)

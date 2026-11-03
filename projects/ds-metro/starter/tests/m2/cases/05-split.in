@@ -1,0 +1,5 @@
+# stops：两部分互不相连的线路
+stops 甲 丁
+stops 甲 庚
+stops 庚 戊
+stops 己 乙

@@ -1,0 +1,5 @@
+# fastest：两条线路都经过同一个区间
+fastest 甲 丙
+fastest 甲 丁
+fastest 丁 甲
+fastest 乙 丙

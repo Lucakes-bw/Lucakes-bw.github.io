@@ -1,0 +1,7 @@
+# stops：参数错误、找不到车站、起点和终点相同
+stops
+stops 西山
+stops 西山 港口 机场
+stops 天安门 港口
+stops 西山 天安门
+stops 西山 西山

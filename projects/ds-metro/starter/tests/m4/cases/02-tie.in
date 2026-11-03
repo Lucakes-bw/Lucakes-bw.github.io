@@ -1,0 +1,5 @@
+# transfers：换乘次数相同的走法有好几种时，选时间最短的
+transfers 人民广场 东湖
+transfers 东门 体育馆
+transfers 果园 南湖
+transfers 西山 东湖

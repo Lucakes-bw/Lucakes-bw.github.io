@@ -1,0 +1,5 @@
+# stops：站数相同的路线有好几条时，按邻接表的顺序 BFS
+stops 西山 港口
+stops 港口 西山
+stops 港口 植物园
+stops 果园 港口

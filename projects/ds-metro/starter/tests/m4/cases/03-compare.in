@@ -1,0 +1,7 @@
+# 同一对车站，三种路线各不相同
+stops 植物园 西站
+fastest 植物园 西站
+transfers 植物园 西站
+stops 花园路 植物园
+fastest 花园路 植物园
+transfers 花园路 植物园

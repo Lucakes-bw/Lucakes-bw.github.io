@@ -1,0 +1,4 @@
+# stops：小数据，手工可以验证
+stops 甲 丁
+stops 丙 甲
+stops 丁 丙
