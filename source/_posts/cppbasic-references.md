@@ -59,6 +59,15 @@ r = b 之后: a = 99, b = 99
 1. **定义时必须初始化**，指明它是谁的别名。`int& r;` 无法编译。
 2. **一旦绑定，就不能再改为引用别的变量**。`r = b;` 并不是让 `r` 改为引用 `b`，而是把 `b` 的值**赋给** `r` 所引用的 `a`，所以 `a` 变成了 99。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 200" role="img" aria-label="引用是变量的别名：a 和 r 是同一块内存（地址 0x16f306548）的两个名字；执行 r = b 并不是让 r 改为引用 b，而是把 b 的值 99 复制给 a">
+  <defs><marker id="rf-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--warn)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="200" y="40" width="140" height="44" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="270.0" y="60.0" text-anchor="middle" style="fill:var(--fg);font-size:15px">20</text><text x="270.0" y="76.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">0x16f306548</text><text x="190" y="58" text-anchor="end" style="fill:var(--fg);font-size:14px">a</text><text x="190" y="76" text-anchor="end" style="fill:var(--link);font-size:14px">r</text><text x="270" y="28" text-anchor="middle" style="fill:var(--accent);font-size:11px">同一块内存，两个名字</text><rect x="200" y="120" width="140" height="44" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="270.0" y="140.0" text-anchor="middle" style="fill:var(--fg);font-size:15px">99</text><text x="270.0" y="156.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">另一块内存</text><text x="190" y="146" text-anchor="end" style="fill:var(--fg);font-size:14px">b</text><path d="M340,142 C 400,142 400,62 344,62" style="fill:none;stroke:var(--warn);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#rf-w)"/><text x="410" y="96" text-anchor="start" style="fill:var(--warn);font-size:13px">r = b;</text><text x="410" y="114" text-anchor="start" style="fill:var(--warn);font-size:11px">只是把 99 复制给 a，</text><text x="410" y="130" text-anchor="start" style="fill:var(--warn);font-size:11px">r 仍然是 a 的别名</text><text x="20" y="190" text-anchor="start" style="fill:var(--muted);font-size:11px">&amp;r == &amp;a；引用定义时必须初始化，之后不能改为引用别的变量</text>
+  </g>
+</svg>
+</figure>
+
 ## 2. 引用作函数参数
 
 ### 2.1 修改实参

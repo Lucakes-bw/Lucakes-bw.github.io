@@ -200,6 +200,15 @@ WAL 日志，NORMAL 同步         1000 条逐条提交：    6.9 ms，每条 0.
 
 运行两次，结果几乎相同。WAL 让逐条提交快了 4.5 倍，再降低同步级别又快了 4.5 倍，总共 20 倍。客户端保存聊天记录，通常用 WAL 加 NORMAL：丢失断电前最后几条消息可以接受（服务器上还有），数据库损坏则不能接受。WAL 还有一个好处：读和写可以同时进行，界面线程读取聊天记录时，不会被后台线程写入新消息挡住。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 206" role="img" aria-label="插入 1000 条消息的耗时：每条自动提交 185.8 毫秒，放在一个事务中只要 1.1 毫秒；逐条提交时，默认的 DELETE 日志加 FULL 同步 139.7 毫秒，WAL 加 FULL 30.8 毫秒，WAL 加 NORMAL 6.9 毫秒">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="238" y="31" text-anchor="end" style="fill:var(--fg);font-size:12px">1000 条，每条自动提交</text><rect x="250" y="18" width="362.3" height="18" style="fill:var(--danger);opacity:.75"/><text x="620.31" y="32" text-anchor="start" style="fill:var(--danger);font-size:11px">185.8 ms</text><text x="238" y="65" text-anchor="end" style="fill:var(--fg);font-size:12px">1000 条，放在一个事务中</text><rect x="250" y="52" width="2.1" height="18" style="fill:var(--accent);opacity:.75"/><text x="260.145" y="66" text-anchor="start" style="fill:var(--accent);font-size:11px">1.1 ms</text><text x="238" y="113" text-anchor="end" style="fill:var(--fg);font-size:12px">逐条提交：DELETE 日志 + FULL</text><rect x="250" y="100" width="272.4" height="18" style="fill:var(--danger);opacity:.75"/><text x="530.415" y="114" text-anchor="start" style="fill:var(--danger);font-size:11px">139.7 ms</text><text x="238" y="147" text-anchor="end" style="fill:var(--fg);font-size:12px">逐条提交：WAL + FULL</text><rect x="250" y="134" width="60.1" height="18" style="fill:var(--warn);opacity:.75"/><text x="318.06" y="148" text-anchor="start" style="fill:var(--warn);font-size:11px">30.8 ms</text><text x="238" y="181" text-anchor="end" style="fill:var(--fg);font-size:12px">逐条提交：WAL + NORMAL</text><rect x="250" y="168" width="13.5" height="18" style="fill:var(--accent);opacity:.75"/><text x="271.455" y="182" text-anchor="start" style="fill:var(--accent);font-size:11px">6.9 ms</text><line x1="20" y1="88" x2="680" y2="88" style="stroke:var(--border);stroke-dasharray:4 4"/>
+  </g>
+</svg>
+</figure>
+
 WAL 模式会保存在数据库文件中，设置一次以后一直有效；同步级别不会保存，每次打开连接都要重新设置：
 
 ```cpp

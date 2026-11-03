@@ -77,6 +77,15 @@ Hello, C!
 - `-std=c11` 指定使用 C11 标准；`-Wall -Wextra` 打开警告，帮助发现代码中的问题。**建议始终加上**。
 - `./hello` 运行当前目录下的 `hello`。在 Windows 上生成的是 `hello.exe`，运行时输入 `hello.exe` 或 `.\hello.exe`。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 134" role="img" aria-label="编译和运行：编译器 gcc 把源文件 hello.c 翻译成可执行程序 hello，执行 ./hello 运行它，输出 Hello, C!，main 的返回值可以用 echo $? 查看。修改源代码后必须重新编译">
+  <defs><marker id="ov-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="40" width="120" height="44" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="80.0" y="60.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">hello.c</text><text x="80.0" y="76.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">源代码（文本）</text><line x1="140" y1="62" x2="236" y2="62" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ov-a)"/><text x="188" y="52" text-anchor="middle" style="fill:var(--link);font-size:11px">gcc … -o hello</text><rect x="240" y="40" width="150" height="44" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="315.0" y="60.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">hello</text><text x="315.0" y="76.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">可执行程序（机器码）</text><line x1="390" y1="62" x2="476" y2="62" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ov-a)"/><text x="433" y="52" text-anchor="middle" style="fill:var(--link);font-size:11px">./hello</text><rect x="480" y="40" width="190" height="44" rx="6" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="575.0" y="60.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">Hello, C!</text><text x="575.0" y="76.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">程序运行，输出</text><text x="575" y="112" text-anchor="middle" style="fill:var(--muted);font-size:11px">main 返回 0 → echo $? 显示 0</text><text x="20" y="122" text-anchor="start" style="fill:var(--danger);font-size:11px">改了 hello.c，一定要重新编译，否则运行的还是旧的 hello</text>
+  </g>
+</svg>
+</figure>
+
 编译的背后其实有预处理、编译、汇编、链接四个步骤，《开发环境与编程工具》的第 1 节用实际的输出详细展示了每一步。这里只需要记住：**修改了源代码之后，要重新编译才能看到效果**。
 
 ### 3.1 main 的返回值

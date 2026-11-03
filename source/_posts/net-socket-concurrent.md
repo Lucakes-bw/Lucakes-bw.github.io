@@ -264,6 +264,15 @@ echo_thread：PSS 之和 12.2 MB，RSS 之和 13 MB，VSZ 之和 8065 MB
 
 用 `ps` 看内存时，要清楚看的是哪一种。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 174" role="img" aria-label="1000 个连接时服务器的内存：多进程版本 RSS 之和 329 MB，但 PSS 之和只有 27.4 MB；多线程版本 RSS 之和 13 MB，PSS 之和 12.2 MB。RSS 重复计算了共享的页，PSS 才是真实的占用">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="108" y="48" text-anchor="end" style="fill:var(--fg);font-size:12px">多进程</text><rect x="120" y="24" width="427.7" height="16" style="fill:var(--danger);opacity:.3"/><text x="553.7" y="37" text-anchor="start" style="fill:var(--muted);font-size:11px">RSS 之和 329 MB</text><rect x="120" y="44" width="35.6" height="16" style="fill:var(--danger);opacity:.85"/><text x="161.62" y="57" text-anchor="start" style="fill:var(--danger);font-size:11px">PSS 之和 27.4 MB（每个连接约 28 KB）</text><text x="108" y="112" text-anchor="end" style="fill:var(--fg);font-size:12px">多线程</text><rect x="120" y="88" width="16.9" height="16" style="fill:var(--accent);opacity:.3"/><text x="142.9" y="101" text-anchor="start" style="fill:var(--muted);font-size:11px">RSS 之和 13 MB</text><rect x="120" y="108" width="15.9" height="16" style="fill:var(--accent);opacity:.85"/><text x="141.86" y="121" text-anchor="start" style="fill:var(--accent);font-size:11px">PSS 之和 12.2 MB（每个连接约 12 KB）</text><text x="20" y="162" text-anchor="start" style="fill:var(--muted);font-size:11px">RSS 把共享的页（代码、库）在每个进程里都算一遍；PSS 按共享的进程数分摊，才是真实的占用</text>
+  </g>
+</svg>
+</figure>
+
 ## 5. C10K
 
 1999 年，Dan Kegel 提出了 **C10K 问题**：一台服务器怎样同时处理 1 万个连接？用 `ulimit -n 30000` 放宽描述符的限制，试一下 10000 个连接、每个往返 2 次：

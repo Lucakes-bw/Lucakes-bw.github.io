@@ -113,6 +113,15 @@ INSERT INTO order_item VALUES (8, 9, 1, 399.00);
 
 只恢复全量备份是不够的：它会回到备份的时刻，备份之后的两个订单也丢了。要用 **全量备份 + binlog**：先恢复备份，再重放备份之后的 binlog，跳过 `DELETE`。这叫**按时间点恢复**（point-in-time recovery）。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 196" role="img" aria-label="全量备份加 binlog 的恢复：时间线上依次是全量备份、14:00 的新订单、误操作 DELETE、14:30 的新订单。恢复时先导入全量备份，再重放 binlog 中 DELETE 之前和之后的两段，跳过 DELETE，最终得到 8 个订单、12 行明细">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <line x1="30" y1="70" x2="680" y2="70" style="stroke:var(--fg-2);stroke-width:1.5"/><circle cx="60" cy="70" r="6" style="fill:var(--warn)"/><text x="60" y="50" text-anchor="middle" style="fill:var(--warn);font-size:12px">全量备份</text><text x="60" y="34" text-anchor="middle" style="fill:var(--muted);font-size:11px">6 个订单、10 行明细</text><circle cx="230" cy="70" r="6" style="fill:var(--accent)"/><text x="230" y="50" text-anchor="middle" style="fill:var(--accent);font-size:12px">14:00 新订单</text><text x="230" y="34" text-anchor="middle" style="fill:var(--muted);font-size:11px">binlog 158～756</text><circle cx="400" cy="70" r="6" style="fill:var(--danger)"/><text x="400" y="50" text-anchor="middle" style="fill:var(--danger);font-size:12px">DELETE FROM order_item</text><text x="400" y="34" text-anchor="middle" style="fill:var(--muted);font-size:11px">binlog 756～1235</text><circle cx="570" cy="70" r="6" style="fill:var(--accent)"/><text x="570" y="50" text-anchor="middle" style="fill:var(--accent);font-size:12px">14:30 新订单</text><text x="570" y="34" text-anchor="middle" style="fill:var(--muted);font-size:11px">binlog 1235～1833</text><text x="670" y="92" text-anchor="end" style="fill:var(--muted);font-size:11px">时间 →</text><text x="30" y="120" text-anchor="start" style="fill:var(--fg);font-size:12px">恢复：</text><rect x="80" y="106" width="140" height="30" rx="4" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="150.0" y="126.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">导入 shop-full.sql</text><rect x="230" y="106" width="150" height="30" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="305.0" y="126.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">重放 part1（158～756）</text><rect x="390" y="106" width="110" height="30" rx="4" style="fill:none;stroke:var(--danger);stroke-width:1.5;stroke-dasharray:4 3"/><text x="445.0" y="126.0" text-anchor="middle" style="fill:var(--danger);font-size:11px">跳过 DELETE</text><rect x="510" y="106" width="160" height="30" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="590.0" y="126.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">重放 part2（1235～1833）</text><text x="80" y="166" text-anchor="start" style="fill:var(--accent);font-size:12px">结果：8 个订单、12 行明细，除了那条 DELETE，其他操作都生效</text><text x="80" y="184" text-anchor="start" style="fill:var(--muted);font-size:11px">只恢复全量备份，会回到备份的时刻，之后的两个订单也丢了</text>
+  </g>
+</svg>
+</figure>
+
 ## 5. 恢复
 
 ### 5.1 在 binlog 中找到误操作

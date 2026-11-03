@@ -116,6 +116,15 @@ int main()
 - **`kPrimes` 整张表都是在编译时算出来的**，程序运行时它就是一段现成的只读数据，没有任何计算开销。这种技巧常用于 CRC 校验表、三角函数表、字符分类表等。
 - 四个 `static_assert` 相当于**在编译期运行的单元测试**：函数写错了，程序根本编译不过。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 192" role="img" aria-label="constexpr 函数在编译期和运行期都能使用：kPrimes 整张表在编译时由编译器算好，作为只读数据写进程序，static_assert 是编译期的单元测试；运行时输入的 n 只能在运行期调用 isPrime 计算">
+  <defs><marker id="ce-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--warn)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="20" width="300" height="160" rx="8" style="fill:none;stroke:var(--warn);stroke-width:1.5;stroke-dasharray:5 4"/><text x="32" y="40" text-anchor="start" style="fill:var(--warn);font-size:12px">编译时（编译器在执行代码）</text><rect x="36" y="54" width="268" height="30" rx="4" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="170.0" y="74.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">makePrimeTable()：算出 25 个质数</text><rect x="36" y="94" width="268" height="30" rx="4" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="170.0" y="114.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">static_assert(isPrime(97)) …</text><text x="36" y="146" text-anchor="start" style="fill:var(--muted);font-size:11px">写错了：编译失败，</text><text x="36" y="162" text-anchor="start" style="fill:var(--muted);font-size:11px">程序根本生成不出来</text><rect x="380" y="20" width="300" height="160" rx="8" style="fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 4"/><text x="392" y="40" text-anchor="start" style="fill:var(--accent);font-size:12px">运行时</text><rect x="396" y="54" width="268" height="30" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="530.0" y="74.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">kPrimes：现成的只读数据 2 3 5 … 97</text><rect x="396" y="104" width="268" height="30" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="530.0" y="124.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">isPrime(n)：n 是输入的，只能现场算</text><line x1="304" y1="69" x2="392" y2="69" style="stroke:var(--warn);stroke-width:1.5" marker-end="url(#ce-a)"/><text x="348" y="62" text-anchor="middle" style="fill:var(--warn);font-size:10px">结果写进程序</text><text x="396" y="160" text-anchor="start" style="fill:var(--muted);font-size:11px">同一个 constexpr 函数，两边都能用</text>
+  </g>
+</svg>
+</figure>
+
 > 为什么用自定义的 `PrimeTable` 结构体，而不用 `std::array`？因为 C++14 中 `std::array` 的非 const `operator[]` 还不是 `constexpr`，不能在 `constexpr` 函数里给它的元素赋值。这个问题在 C++17 中被修复。
 
 ### 1.2 constexpr 成员函数不再隐式 const

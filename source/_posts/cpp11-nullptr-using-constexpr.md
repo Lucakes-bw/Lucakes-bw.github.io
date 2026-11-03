@@ -42,6 +42,15 @@ note: candidate function
 
 编译器不知道 `NULL` 应该当整数还是当指针。在 `NULL` 定义为 `0` 的编译器上，情况更糟：代码能编译，但会**悄悄调用 `show(int)`**，和你的意图完全相反。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 208" role="img" aria-label="NULL 的歧义：NULL 既可以当整数也可以当指针，show(NULL) 在 show(int) 和 show(char*) 之间无法选择，有的编译器还会悄悄调用 show(int)；nullptr 只能转换成指针，show(nullptr) 一定调用 show(char*)">
+  <defs><marker id="nl-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--danger)"/></marker><marker id="nl-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="60" width="140" height="36" rx="6" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="90.0" y="83.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">show(NULL)</text><rect x="300" y="20" width="180" height="36" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="390.0" y="43.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">show(int)</text><rect x="300" y="100" width="180" height="36" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="390.0" y="123.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">show(char*)</text><line x1="160" y1="72" x2="296" y2="42" style="stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#nl-d)"/><line x1="160" y1="86" x2="296" y2="114" style="stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#nl-d)"/><text x="230" y="82" text-anchor="middle" style="fill:var(--danger);font-size:11px">都可以</text><text x="500" y="70" text-anchor="start" style="fill:var(--danger);font-size:12px">Clang：call is ambiguous</text><text x="500" y="88" text-anchor="start" style="fill:var(--danger);font-size:11px">有的编译器悄悄选 show(int)</text><rect x="20" y="160" width="140" height="36" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="90.0" y="183.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">show(nullptr)</text><line x1="160" y1="178" x2="296" y2="136" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#nl-a)"/><text x="500" y="170" text-anchor="start" style="fill:var(--accent);font-size:12px">nullptr 的类型是 nullptr_t，</text><text x="500" y="188" text-anchor="start" style="fill:var(--accent);font-size:11px">只能转换成指针，不能转换成 int</text>
+  </g>
+</svg>
+</figure>
+
 ### 1.2 nullptr
 
 C++11 引入了关键字 `nullptr`，它的类型是 `std::nullptr_t`，**只能转换成指针类型，不能转换成整数**：

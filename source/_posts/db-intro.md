@@ -293,6 +293,15 @@ Threads:	37
 
 一个刚启动、几乎没有数据的 `mysqld` 就有 37 个线程，占用约 474 MB 内存，大部分是 InnoDB 的缓冲池（缓存数据页的内存，默认 128 MB）和各种后台线程。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 158" role="img" aria-label="MySQL 的客户端和服务器：mysql 客户端把 SQL 通过连接发给服务器进程 mysqld，mysqld 有 37 个线程，占用约 474 MB 内存，其中缓冲池默认 128 MB，由它读写磁盘上的数据文件，再把结果返回给客户端">
+  <defs><marker id="ci-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker><marker id="ci-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="50" width="130" height="50" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="85.0" y="73.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">mysql</text><text x="85.0" y="89.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">客户端</text><rect x="260" y="30" width="220" height="90" rx="8" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="370.0" y="80.0" text-anchor="middle" style="fill:var(--fg);font-size:13px"></text><text x="270" y="50" text-anchor="start" style="fill:var(--accent);font-size:12px">mysqld（服务器进程，共约 474 MB）</text><rect x="274" y="62" width="92" height="44" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="320.0" y="89.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">37 个线程</text><rect x="374" y="62" width="96" height="44" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="422.0" y="82.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">缓冲池</text><text x="422.0" y="98.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">默认 128 MB</text><rect x="560" y="50" width="120" height="50" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="620.0" y="73.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">数据文件</text><text x="620.0" y="89.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">.ibd、redo…</text><line x1="150" y1="75" x2="256" y2="75" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#ci-l)"/><text x="203" y="66" text-anchor="middle" style="fill:var(--link);font-size:11px">SQL</text><line x1="256" y1="90" x2="150" y2="90" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#ci-l)"/><text x="203" y="106" text-anchor="middle" style="fill:var(--link);font-size:11px">结果</text><line x1="480" y1="75" x2="556" y2="75" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#ci-g)"/><text x="20" y="146" text-anchor="start" style="fill:var(--muted);font-size:11px">连接方式：同一台机器用 UNIX 套接字，远程用 TCP 3306；客户端从不直接读写数据文件</text>
+  </g>
+</svg>
+</figure>
+
 客户端和服务器之间通过连接通信。客户端中执行 `status`（或 `\s`）可以看到连接方式：
 
 ```

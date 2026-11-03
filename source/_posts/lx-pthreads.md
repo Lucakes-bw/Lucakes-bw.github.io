@@ -31,6 +31,15 @@ disableNunjucks: true
 
 和 `fork` 出的子进程相比：进程之间要交换数据，需要上一篇的 IPC；线程之间直接读写同一个变量就行。代价是，一个线程的错误会影响整个进程。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 248" role="img" aria-label="同一进程中的线程：代码、全局变量、堆、文件描述符、当前目录、信号处理方式都是共享的；每个线程有自己的栈、寄存器、errno 和线程 ID">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="16" width="660" height="196" rx="10" style="fill:none;stroke:var(--fg-2);stroke-width:1.5"/><text x="34" y="36" text-anchor="start" style="fill:var(--fg);font-size:13px">一个进程</text><rect x="40" y="50" width="620" height="36" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="350.0" y="73.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">共享：代码、全局变量、堆（malloc 的内存）、打开的文件描述符、当前目录、信号处理方式</text><rect x="40" y="102" width="196" height="96" rx="8" style="fill:none;stroke:var(--link);stroke-width:1.5;stroke-dasharray:5 3"/><text x="138" y="120" text-anchor="middle" style="fill:var(--link);font-size:12px">线程 1</text><rect x="52" y="128" width="172" height="26" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="138.0" y="146.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">栈（局部变量）</text><rect x="52" y="160" width="172" height="26" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="138.0" y="178.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">寄存器、errno、线程 ID</text><rect x="252" y="102" width="196" height="96" rx="8" style="fill:none;stroke:var(--link);stroke-width:1.5;stroke-dasharray:5 3"/><text x="350" y="120" text-anchor="middle" style="fill:var(--link);font-size:12px">线程 2</text><rect x="264" y="128" width="172" height="26" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="350.0" y="146.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">栈（局部变量）</text><rect x="264" y="160" width="172" height="26" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="350.0" y="178.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">寄存器、errno、线程 ID</text><rect x="464" y="102" width="196" height="96" rx="8" style="fill:none;stroke:var(--link);stroke-width:1.5;stroke-dasharray:5 3"/><text x="562" y="120" text-anchor="middle" style="fill:var(--link);font-size:12px">线程 3</text><rect x="476" y="128" width="172" height="26" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="562.0" y="146.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">栈（局部变量）</text><rect x="476" y="160" width="172" height="26" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="562.0" y="178.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">寄存器、errno、线程 ID</text><text x="20" y="236" text-anchor="start" style="fill:var(--muted);font-size:11px">线程之间直接读写同一个全局变量或堆上的对象就能交换数据；代价是一个线程的错误会影响整个进程</text>
+  </g>
+</svg>
+</figure>
+
 ## 2. 创建和等待线程
 
 ```c

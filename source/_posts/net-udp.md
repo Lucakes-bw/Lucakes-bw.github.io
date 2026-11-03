@@ -71,6 +71,15 @@ s 上的 nc 输出了 `hello`。抓到的包：
 | 长度 | 2 字节 | `000e` = 14 | 头部 8 + 数据 6 |
 | 校验和 | 2 字节 | `1422` | 检查头部和数据在传输中是否出错 |
 
+<figure class="diagram">
+<svg viewBox="0 0 700 142" role="img" aria-label="抓到的 UDP 数据报：前 8 个字节是头部，依次是源端口 b6fa（46842）、目的端口 2328（9000）、长度 000e（14，头部 8 加数据 6）、校验和 1422，后面 6 个字节是数据 hello 和换行">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="30" y="40" width="120" height="40" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="90.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:14px">b6fa</text><text x="90" y="30" text-anchor="middle" style="fill:var(--accent);font-size:11px">源端口（2 字节）</text><text x="90" y="98" text-anchor="middle" style="fill:var(--muted);font-size:11px">46842</text><rect x="150" y="40" width="120" height="40" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="210.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:14px">2328</text><text x="210" y="30" text-anchor="middle" style="fill:var(--accent);font-size:11px">目的端口（2 字节）</text><text x="210" y="98" text-anchor="middle" style="fill:var(--muted);font-size:11px">9000</text><rect x="270" y="40" width="120" height="40" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="330.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:14px">000e</text><text x="330" y="30" text-anchor="middle" style="fill:var(--accent);font-size:11px">长度（2 字节）</text><text x="330" y="98" text-anchor="middle" style="fill:var(--muted);font-size:11px">14 = 8 + 6</text><rect x="390" y="40" width="120" height="40" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="450.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:14px">1422</text><text x="450" y="30" text-anchor="middle" style="fill:var(--accent);font-size:11px">校验和（2 字节）</text><rect x="510" y="40" width="160" height="40" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="590.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">68 65 6c 6c 6f 0a</text><text x="590" y="30" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">数据（6 字节）</text><text x="590" y="98" text-anchor="middle" style="fill:var(--muted);font-size:11px">hello\n</text><path d="M30,108 v6 h480 v-6" style="fill:none;stroke:var(--accent);stroke-width:1.5"/><text x="270" y="130" text-anchor="middle" style="fill:var(--accent);font-size:12px">UDP 头部只有 8 个字节</text>
+  </g>
+</svg>
+</figure>
+
 就这些。和 IP 相比，UDP 只多做了两件事：用**端口**把数据交给正确的程序，用**校验和**发现损坏的数据（发现了就直接丢弃，不会通知谁）。
 
 第二个数据报发往 9001 端口，s 上没有程序监听，于是 s 的内核回复了一个 **ICMP 端口不可达**（和第 1.4 篇 traceroute 最后一跳的回复是同一种消息）。但发送方的 bash 并不会知道这件事：数据报已经发出去了，它不等待任何回复。

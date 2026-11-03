@@ -309,6 +309,15 @@ curl -s -o /dev/null ... -w "..." http://example.com/ http://example.com/ http:/
 - 新连接的请求每次约 0.2 秒，其中约 0.13 秒花在「连接」上：DNS 查询加上 TCP 握手。
 - 复用连接时，第一个请求一样要 0.2 秒，之后的请求不需要建立连接（`num_connects=0`），只要约 **0.075 秒**，也就是一个往返时间。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 170" role="img" aria-label="持久连接的效果：每个请求都新建连接时，每次约 0.2 秒，其中约 0.13 秒是 DNS 查询和 TCP 握手；复用连接时，第一个请求一样要 0.2 秒，之后的请求不需要建立连接，每个只要约 0.075 秒">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="148" y="40" text-anchor="end" style="fill:var(--fg);font-size:12px">5 个 curl，各自建连接</text><rect x="160.0" y="30" width="78.0" height="14" style="fill:var(--muted);opacity:.75"/><rect x="238.0" y="30" width="42.0" height="14" style="fill:var(--link);opacity:.75"/><text x="288.0" y="42" text-anchor="start" style="fill:var(--muted);font-size:11px">每个都要约 0.2 秒（其中约 0.13 秒是 DNS 和 TCP 握手）</text><text x="148" y="84" text-anchor="end" style="fill:var(--fg);font-size:12px">一个 curl，复用连接</text><rect x="160.0" y="74" width="78.0" height="14" style="fill:var(--muted);opacity:.75"/><rect x="238.0" y="74" width="42.0" height="14" style="fill:var(--link);opacity:.75"/><rect x="280.0" y="94" width="45.0" height="14" style="fill:var(--link);opacity:.75"/><rect x="325.0" y="114" width="45.0" height="14" style="fill:var(--link);opacity:.75"/><text x="376.0" y="108" text-anchor="start" style="fill:var(--accent);font-size:11px">之后的请求只要约 0.075 秒（一个往返）</text><rect x="160" y="150" width="12" height="10" style="fill:var(--muted);opacity:.75"/><text x="176" y="159" text-anchor="start" style="fill:var(--fg);font-size:11px">建立连接</text><rect x="250" y="150" width="12" height="10" style="fill:var(--link);opacity:.75"/><text x="266" y="159" text-anchor="start" style="fill:var(--fg);font-size:11px">请求和响应</text>
+  </g>
+</svg>
+</figure>
+
 `curl -v` 可以看到复用的过程：
 
 ```

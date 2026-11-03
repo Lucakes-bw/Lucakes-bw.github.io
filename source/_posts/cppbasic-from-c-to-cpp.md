@@ -261,6 +261,15 @@ maxOf(int, int)
 
 这也解释了 C++ 调用 C 语言库时为什么需要 **`extern "C"`**：C 编译器编译出的函数名没有修饰，C++ 代码需要用 `extern "C" { ... }` 告诉编译器「这些函数按 C 的规则命名」，否则链接时会找不到。标准库中的 `<cstdio>` 等头文件已经替你处理好了。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 212" role="img" aria-label="名字修饰：C++ 编译器把参数类型编码进函数名，maxOf(int, int) 变成 _Z5maxOfii，maxOf(double, double) 变成 _Z5maxOfdd，两个重载的函数在目标文件中名字不同；C 编译器不修饰，函数名就是 maxOf，所以 C++ 调用 C 函数要写 extern "C"">
+  <defs><marker id="mg-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="30" width="230" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="135.0" y="52.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">int maxOf(int, int)</text><rect x="20" y="80" width="230" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="135.0" y="102.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">double maxOf(double, double)</text><line x1="250" y1="47" x2="336" y2="47" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#mg-a)"/><line x1="250" y1="97" x2="336" y2="97" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#mg-a)"/><text x="293" y="40" text-anchor="middle" style="fill:var(--link);font-size:11px">g++</text><text x="293" y="90" text-anchor="middle" style="fill:var(--link);font-size:11px">g++</text><rect x="340" y="30" width="180" height="34" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="430.0" y="52.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">_Z5maxOfii</text><rect x="340" y="80" width="180" height="34" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="430.0" y="102.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">_Z5maxOfdd</text><text x="530" y="52" text-anchor="start" style="fill:var(--muted);font-size:11px">5 = 名字长度，ii = 两个 int</text><text x="530" y="102" text-anchor="start" style="fill:var(--muted);font-size:11px">dd = 两个 double</text><rect x="20" y="140" width="230" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="135.0" y="162.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">C 编译的 maxOf</text><line x1="250" y1="157" x2="336" y2="157" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#mg-a)"/><rect x="340" y="140" width="180" height="34" rx="4" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="430.0" y="162.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">maxOf</text><text x="530" y="162" text-anchor="start" style="fill:var(--muted);font-size:11px">不修饰，所以 C 不能重载</text><text x="20" y="200" text-anchor="start" style="fill:var(--fg-2);font-size:11px">C++ 调用 C 库时要写 extern "C"，让编译器按不修饰的名字去找</text>
+  </g>
+</svg>
+</figure>
+
 ## 6. 默认参数
 
 上面的 `connect` 函数给 `port` 和 `timeout` 指定了**默认值**，调用时可以省略。规则：

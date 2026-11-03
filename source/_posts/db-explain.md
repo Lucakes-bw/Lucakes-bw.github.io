@@ -291,6 +291,15 @@ SELECT id, name FROM t WHERE id > 900000 ORDER BY id LIMIT 10;
 
 `id > 900000` 可以用索引直接定位到起点，只读 10 行，不管翻到第几页，速度都一样。代价是不能直接跳到任意一页，只能「下一页」，这正好是很多场景（无限滚动、按时间线浏览）的需要。排序的列不唯一时，要把主键也加进去，写成 `WHERE (k, id) > (上一页最后的 k, 上一页最后的 id)`，否则 `k` 相同的行会被漏掉或者重复。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 174" role="img" aria-label="深分页：LIMIT 10 OFFSET 900000 要从索引开头读 900010 行，扔掉前 90 万行，用时 69 毫秒；改成 WHERE id > 900000 LIMIT 10，用索引直接定位到起点，只读 10 行，0.06 毫秒">
+  <defs><marker id="dp-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="20" text-anchor="start" style="fill:var(--fg);font-size:12px">主键索引上的 id（共约 100 万）</text><rect x="40" y="30" width="620" height="20" style="fill:var(--panel-2);stroke:var(--border-2)"/><text x="40.0" y="64" text-anchor="middle" style="fill:var(--muted);font-size:10px">0</text><text x="226.0" y="64" text-anchor="middle" style="fill:var(--muted);font-size:10px">300000</text><text x="412.0" y="64" text-anchor="middle" style="fill:var(--muted);font-size:10px">600000</text><text x="598.0" y="64" text-anchor="middle" style="fill:var(--muted);font-size:10px">900000</text><rect x="40" y="80" width="558" height="14" style="fill:var(--danger);opacity:.45"/><rect x="598" y="80" width="6" height="14" style="fill:var(--danger)"/><text x="40" y="112" text-anchor="start" style="fill:var(--danger);font-size:12px">LIMIT 10 OFFSET 900000：从头读 900010 行，扔掉前 90 万行 → 69 毫秒</text><rect x="598" y="128" width="6" height="14" style="fill:var(--accent)"/><path d="M40,135 C 240,118 398.0,118 594.0,134" style="fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#dp-a)"/><text x="40" y="162" text-anchor="start" style="fill:var(--accent);font-size:12px">WHERE id &gt; 900000 LIMIT 10：用索引直接定位，只读 10 行 → 0.06 毫秒</text>
+  </g>
+</svg>
+</figure>
+
 ## 7. 连接
 
 订单表 `o` 有 20 万行，`t_id` 引用 `t.id`，但 `t_id` 上没有索引。查 100 个用户的订单金额：

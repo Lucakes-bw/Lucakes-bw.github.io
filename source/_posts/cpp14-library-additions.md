@@ -269,6 +269,15 @@ int main()
 
 4 个读者同时持有读锁，总耗时和一个读者一样。如果换成 `std::mutex`，4 次读取必须排队，总耗时约 200ms。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 272" role="img" aria-label="读写锁的时间线：4 个读者各读 50 毫秒，用 shared_timed_mutex 时读锁可以同时持有，4 个读者并行，总共约 50 毫秒；用 std::mutex 时只能一个接一个，总共约 200 毫秒">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="22" text-anchor="start" style="fill:var(--accent);font-size:12px">shared_timed_mutex（读锁共享）</text><text x="150" y="43" text-anchor="end" style="fill:var(--fg);font-size:11px">读者 1</text><rect x="160.0" y="30" width="120.0" height="16" rx="3" style="fill:var(--accent);opacity:.7"/><text x="150" y="63" text-anchor="end" style="fill:var(--fg);font-size:11px">读者 2</text><rect x="160.0" y="50" width="120.0" height="16" rx="3" style="fill:var(--accent);opacity:.7"/><text x="150" y="83" text-anchor="end" style="fill:var(--fg);font-size:11px">读者 3</text><rect x="160.0" y="70" width="120.0" height="16" rx="3" style="fill:var(--accent);opacity:.7"/><text x="150" y="103" text-anchor="end" style="fill:var(--fg);font-size:11px">读者 4</text><rect x="160.0" y="90" width="120.0" height="16" rx="3" style="fill:var(--accent);opacity:.7"/><line x1="280.0" y1="26" x2="280.0" y2="110" style="stroke:var(--accent);stroke-dasharray:4 3"/><text x="286.0" y="74" text-anchor="start" style="fill:var(--accent);font-size:12px">约 50 ms</text><text x="20" y="142" text-anchor="start" style="fill:var(--warn);font-size:12px">std::mutex（排队）</text><text x="150" y="163" text-anchor="end" style="fill:var(--fg);font-size:11px">读者 1</text><rect x="160.0" y="150" width="120.0" height="16" rx="3" style="fill:var(--warn);opacity:.7"/><text x="150" y="183" text-anchor="end" style="fill:var(--fg);font-size:11px">读者 2</text><rect x="280.0" y="170" width="120.0" height="16" rx="3" style="fill:var(--warn);opacity:.7"/><text x="150" y="203" text-anchor="end" style="fill:var(--fg);font-size:11px">读者 3</text><rect x="400.0" y="190" width="120.0" height="16" rx="3" style="fill:var(--warn);opacity:.7"/><text x="150" y="223" text-anchor="end" style="fill:var(--fg);font-size:11px">读者 4</text><rect x="520.0" y="210" width="120.0" height="16" rx="3" style="fill:var(--warn);opacity:.7"/><line x1="640.0" y1="146" x2="640.0" y2="230" style="stroke:var(--warn);stroke-dasharray:4 3"/><text x="646.0" y="194" text-anchor="start" style="fill:var(--warn);font-size:12px">约 200 ms</text><text x="160.0" y="262" text-anchor="middle" style="fill:var(--muted);font-size:11px">0</text><text x="280.0" y="262" text-anchor="middle" style="fill:var(--muted);font-size:11px">50</text><text x="400.0" y="262" text-anchor="middle" style="fill:var(--muted);font-size:11px">100</text><text x="520.0" y="262" text-anchor="middle" style="fill:var(--muted);font-size:11px">150</text><text x="640.0" y="262" text-anchor="middle" style="fill:var(--muted);font-size:11px">200</text><text x="664.0" y="262" text-anchor="start" style="fill:var(--muted);font-size:11px">ms</text>
+  </g>
+</svg>
+</figure>
+
 - 读操作用 **`std::shared_lock`**（C++14 新增），写操作用 `std::unique_lock` 或 `std::lock_guard`。
 - `mutable` 让 `const` 成员函数 `get` 也能加锁。
 

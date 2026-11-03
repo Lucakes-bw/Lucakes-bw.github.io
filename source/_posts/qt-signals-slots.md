@@ -262,6 +262,15 @@ echo $?
 
 运行三次，都在第 13000 次之后崩溃。139 = 128 + 11，进程被 `SIGSEGV` 终止：`a.setValue` → `emit` → `b.setValue` → `emit` → `a.setValue` → ……每来回一次，调用栈就加深几层，约 13000 次后用完了 8 MB 的栈（`ulimit -s` 是 8176 KB），平均每来回一次用掉约 600 字节。这正是第 3.1 节说的「`emit` 就是函数调用」的直接后果。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 174" role="img" aria-label="信号与槽的无限循环：a 的 valueChanged 连接到 b.setValue，b 的 valueChanged 又连接回 a.setValue，如果 setValue 不检查值有没有变化就发信号，两边会无限地互相调用，每一圈都在栈上嵌套一层，约 13000 次后栈溢出崩溃">
+  <defs><marker id="ss-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--danger)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="60" y="40" width="180" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="150.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">a.setValue(v)</text><rect x="460" y="40" width="180" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="550.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">b.setValue(v)</text><path d="M240,52 C 320,20 380,20 456,52" style="fill:none;stroke:var(--danger);stroke-width:1.5" marker-end="url(#ss-d)"/><text x="350" y="24" text-anchor="middle" style="fill:var(--danger);font-size:11px">emit a.valueChanged</text><path d="M460,70 C 380,104 320,104 244,70" style="fill:none;stroke:var(--danger);stroke-width:1.5" marker-end="url(#ss-d)"/><text x="350" y="112" text-anchor="middle" style="fill:var(--danger);font-size:11px">emit b.valueChanged</text><text x="20" y="144" text-anchor="start" style="fill:var(--danger);font-size:11px">不检查「值没变」就 emit：每一圈都是一次嵌套的函数调用，栈越来越深，第 13000 次左右栈溢出，SIGSEGV（139）</text><text x="20" y="162" text-anchor="start" style="fill:var(--accent);font-size:11px">setValue 开头 if (value == m_value) return; 第二圈值不变，就不再发信号，循环结束</text>
+  </g>
+</svg>
+</figure>
+
 实际开发中这种循环往往不那么明显，例如滑块和数字输入框互相同步、模型和界面互相更新。只要两个对象之间有双向连接，就要确认「值没变时不发信号」。
 
 ## 5. 函数指针写法与字符串写法

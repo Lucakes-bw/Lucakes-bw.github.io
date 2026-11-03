@@ -187,6 +187,15 @@ int main(int argc, char *argv[])
 
 但用户名是用户输入的，它可以包含任何字符，包括单引号。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 216" role="img" aria-label="SQL 注入：把用户名 admin' -- 拼进 SQL 后，单引号提前结束了字符串，-- 把后面的密码检查变成注释，数据混进了 SQL 的结构；预处理语句先发送带问号的 SQL，参数单独发送，参数只会被当作一个值">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="22" text-anchor="start" style="fill:var(--danger);font-size:12px">拼接字符串：用户名输入 admin' -- </text><text x="20" y="50" style="fill:var(--link);font-size:12px">WHERE username = '</text><text x="150.5" y="50" style="fill:var(--warn);font-size:12px">admin' -- </text><text x="223.0" y="50" style="fill:var(--muted);font-size:12px">' AND password_hash = SHA2(…)</text><path d="M150,58 v6 h72 v-6" style="fill:none;stroke:var(--warn);stroke-width:1.5"/><text x="150.5" y="80" text-anchor="start" style="fill:var(--warn);font-size:11px">用户的输入：单引号提前结束了字符串，-- 把后面变成注释</text><line x1="223" y1="46" x2="433" y2="46" style="stroke:var(--danger);stroke-width:1.5"/><text x="20" y="102" text-anchor="start" style="fill:var(--danger);font-size:11px">数据混进了 SQL 的「结构」，密码检查被删掉了：不知道密码也能登录 admin</text><line x1="20" y1="118" x2="680" y2="118" style="stroke:var(--border);stroke-dasharray:4 4"/><text x="20" y="140" text-anchor="start" style="fill:var(--accent);font-size:12px">预处理语句：SQL 和数据分开发送</text><rect x="20" y="152" width="400" height="32" rx="4" style="fill:var(--panel-2);stroke:var(--link);stroke-width:1.5"/><text x="220.0" y="173.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">WHERE username = ? AND password_hash = SHA2(?, 256)</text><rect x="440" y="152" width="120" height="32" rx="4" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="500.0" y="173.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">admin' -- </text><rect x="570" y="152" width="110" height="32" rx="4" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="625.0" y="173.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">anything</text><text x="20" y="204" text-anchor="start" style="fill:var(--accent);font-size:11px">结构先被解析好，参数只能是一个值：不管里面有什么字符，都只是要比较的用户名</text>
+  </g>
+</svg>
+</figure>
+
 ### 3.2 四种攻击
 
 **注释掉密码检查。** 用户名输入 `admin' -- `，密码随便填：

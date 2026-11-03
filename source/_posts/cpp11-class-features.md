@@ -253,6 +253,15 @@ private:
 
 调用链是：默认构造 → 两参数版本 → 三参数版本。先执行被委托的构造函数（包括它的函数体），再回来执行委托者自己的函数体。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 152" role="img" aria-label="委托构造函数的调用链：默认构造函数委托给两参数版本，两参数版本再委托给三参数的主构造函数；执行时先完成主构造函数，再依次回到两参数版本和默认构造函数的函数体">
+  <defs><marker id="dg-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker><marker id="dg-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="40" width="180" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="110.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">Connection()</text><rect x="260" y="40" width="200" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="360.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">Connection(host, port)</text><rect x="520" y="40" width="160" height="40" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="600.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">(host, port, timeout)</text><line x1="200" y1="54" x2="256" y2="54" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#dg-a)"/><text x="228" y="34" text-anchor="middle" style="fill:var(--link);font-size:10px">"localhost", 80</text><line x1="460" y1="54" x2="516" y2="54" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#dg-a)"/><text x="488" y="34" text-anchor="middle" style="fill:var(--link);font-size:10px">…, 30</text><line x1="520" y1="72" x2="464" y2="72" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#dg-g)"/><line x1="260" y1="72" x2="204" y2="72" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#dg-g)"/><text x="600" y="104" text-anchor="middle" style="fill:var(--accent);font-size:11px">① 主构造函数先执行</text><text x="360" y="104" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">② 再执行自己的函数体</text><text x="110" y="104" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">③ 最后是这里</text><text x="20" y="140" text-anchor="start" style="fill:var(--muted);font-size:11px">Connection c; 的输出：「主构造函数: localhost:80 timeout=30」，然后「两参数版本（委托完成后再执行这里）」</text>
+  </g>
+</svg>
+</figure>
+
 两条规则：
 
 1. **委托构造的初始化列表里只能有委托调用**，不能再初始化其他成员。`Connection() : Connection("localhost", 80), timeout_(10) {}` 是错误的。

@@ -192,6 +192,15 @@ exit=137
 - 收到 SIGTERM，脚本执行了清理，临时文件被删除了；
 - 收到 SIGKILL，进程被内核直接终止，**没有任何机会做清理**，临时文件留了下来。退出码 137 = 128 + 9，表示被 9 号信号杀死。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 178" role="img" aria-label="SIGTERM 与 SIGKILL：收到 SIGTERM 时脚本执行 trap 设置的处理，删除临时文件后以 0 退出；收到 SIGKILL 时内核直接终止进程，没有任何清理，退出码 137，临时文件留了下来">
+  <defs><marker id="sk-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="20" width="150" height="34" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="95.0" y="42.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">kill（SIGTERM）</text><line x1="174" y1="37" x2="186" y2="37" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#sk-g)"/><rect x="190" y="20" width="190" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="285.0" y="42.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">trap 的处理：rm 临时文件</text><line x1="384" y1="37" x2="396" y2="37" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#sk-g)"/><rect x="400" y="20" width="190" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="495.0" y="42.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">exit 0</text><text x="20" y="72" text-anchor="start" style="fill:var(--accent);font-size:11px">退出码 0，临时文件被删除</text><rect x="20" y="90" width="150" height="34" rx="4" style="fill:var(--mark);stroke:var(--danger);stroke-width:1.5"/><text x="95.0" y="112.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">kill -9（SIGKILL）</text><line x1="174" y1="107" x2="186" y2="107" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#sk-g)"/><rect x="190" y="90" width="190" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="285.0" y="112.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">内核直接终止进程</text><text x="20" y="142" text-anchor="start" style="fill:var(--danger);font-size:11px">退出码 137 = 128 + 9，临时文件留下</text><text x="20" y="166" text-anchor="start" style="fill:var(--muted);font-size:11px">先用 kill，等一会儿还不退出再用 kill -9；SIGKILL 不能被捕获，程序没有机会保存数据</text>
+  </g>
+</svg>
+</figure>
+
 所以**应该先用 `kill`（SIGTERM），等一会儿还不退出，才用 `kill -9`**。数据库这样的程序被 `kill -9` 时，可能来不及把数据写回磁盘。
 
 ### 3.2 按名字发送信号

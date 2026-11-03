@@ -347,6 +347,15 @@ Thread 1 (Thread 0xf96a56394ee0 (LWP 61023) "deadlock"):
 
 两个线程各自拿着对方需要的锁，同时等待对方释放，谁也不会让步，这就是**死锁**。主线程则在第 50 行的 `pthread_join` 中等它们结束。《信号》中「处理函数等待被它打断的主程序释放 malloc 的锁」，是死锁在单个线程中的形式。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 178" role="img" aria-label="死锁：a_to_b 线程持有锁 A、等待锁 B，b_to_a 线程持有锁 B、等待锁 A，两个线程互相等待对方释放，形成一个环，谁也无法继续">
+  <defs><marker id="dl-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker><marker id="dl-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--danger)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="40" y="40" width="150" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--link);stroke-width:1.5"/><text x="115.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">a_to_b 线程</text><rect x="510" y="40" width="150" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--link);stroke-width:1.5"/><text x="585.0" y="65.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">b_to_a 线程</text><rect x="275" y="10" width="150" height="36" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="350.0" y="33.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">锁 A</text><rect x="275" y="100" width="150" height="36" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="350.0" y="123.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">锁 B</text><line x1="275" y1="28" x2="194" y2="52" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#dl-a)"/><text x="210" y="30" text-anchor="start" style="fill:var(--accent);font-size:11px">已持有</text><line x1="425" y1="118" x2="506" y2="72" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#dl-a)"/><text x="480" y="112" text-anchor="start" style="fill:var(--accent);font-size:11px">已持有</text><line x1="190" y1="72" x2="271" y2="112" style="stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#dl-d)"/><text x="196" y="108" text-anchor="start" style="fill:var(--danger);font-size:11px">等待</text><line x1="510" y1="52" x2="429" y2="32" style="stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#dl-d)"/><text x="470" y="26" text-anchor="start" style="fill:var(--danger);font-size:11px">等待</text><text x="20" y="166" text-anchor="start" style="fill:var(--muted);font-size:11px">各自拿着对方需要的锁，同时等对方释放，形成环：GDB 中两个线程都停在第 24 行的第二个 pthread_mutex_lock</text>
+  </g>
+</svg>
+</figure>
+
 ### 3.2 避免死锁
 
 死锁需要同时满足四个条件：资源互斥使用；拿着一个资源的同时等待另一个；资源不能被抢走；存在循环等待。只要破坏其中一个，就不会死锁。最实用的方法是破坏**循环等待**：**所有线程都按照同一个顺序加锁**。转账时总是先锁 id 小的账户：

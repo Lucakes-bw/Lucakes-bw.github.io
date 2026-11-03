@@ -210,6 +210,15 @@ counter = 2
 id: 1 2 3
 ```
 
+<figure class="diagram">
+<svg viewBox="0 0 700 208" role="img" aria-label="移动捕获：捕获之前 ptr 指向堆上的字符串；[p = std::move(ptr)] 之后，闭包对象 g 中有一个成员 p，接管了这块内存，ptr 变成空指针，字符串本身没有被复制">
+  <defs><marker id="mv-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="22" text-anchor="start" style="fill:var(--muted);font-size:12px">捕获之前</text><rect x="20" y="36" width="120" height="34" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="80.0" y="58.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">ptr</text><line x1="140" y1="53" x2="226" y2="53" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#mv-a)"/><rect x="230" y="36" width="200" height="34" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="330.0" y="58.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">"只能移动的资源"（堆上）</text><text x="20" y="112" text-anchor="start" style="fill:var(--muted);font-size:12px">auto g = [p = std::move(ptr)]() { … };　之后</text><rect x="20" y="128" width="120" height="34" rx="0" style="fill:none;stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:4 3"/><text x="80.0" y="150.0" text-anchor="middle" style="fill:var(--muted);font-size:12px">ptr = nullptr</text><rect x="200" y="122" width="160" height="56" rx="8" style="fill:none;stroke:var(--link);stroke-width:1.5"/><text x="212" y="140" text-anchor="start" style="fill:var(--link);font-size:11px">闭包对象 g</text><rect x="212" y="146" width="136" height="26" rx="0" style="fill:var(--panel-2);stroke:var(--link)"/><text x="280.0" y="164.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">成员 p（unique_ptr）</text><rect x="430" y="132" width="200" height="34" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="530.0" y="154.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">"只能移动的资源"（堆上）</text><line x1="348" y1="159" x2="426" y2="151" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#mv-a)"/><text x="430" y="196" text-anchor="start" style="fill:var(--muted);font-size:11px">同一块内存，没有复制，只是换了主人</text>
+  </g>
+</svg>
+</figure>
+
 逐个说明：
 
 1. **任意表达式**：`offset = base * 2` 把计算结果保存为 lambda 的成员，`offset` 的类型由初始值推导（规则和 `auto` 一样）。

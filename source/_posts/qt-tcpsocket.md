@@ -167,6 +167,15 @@ UTF-8 中一个汉字占 3 个字节。服务器从「气」字的 3 个字节�
 
 这些现象的原因，网络专栏《TCP 的常见问题》第 1 节已经讲过：TCP 是**字节流**，只保证字节按顺序、不丢失地到达，不保留「每次 `send` 了多少」的边界。粘包、拆包不是 TCP 的毛病，而是应用程序要自己划分消息的边界。Qt 的 `readyRead` 只是告诉你「又来了一些字节」，和网络专栏中 `recv` 返回的字节数一样，不代表任何消息边界。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 352" role="img" aria-label="TCP 是字节流，没有消息边界：服务器三次 send 的三行，客户端一次 readyRead 就全部收到；一次 send 的一行，可能分两次 readyRead 到达；如果从一个汉字的 3 个字节中间切开，两段单独转换都会出现替换字符">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="14" text-anchor="start" style="fill:var(--fg);font-size:12px">粘包：三次 send</text><rect x="150" y="22" width="70" height="26" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="185.0" y="40.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">你好\n</text><rect x="224" y="22" width="90" height="26" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="269.0" y="40.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">在吗？\n</text><rect x="318" y="22" width="140" height="26" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="388.0" y="40.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">晚上一起吃饭\n</text><text x="140" y="40" text-anchor="end" style="fill:var(--muted);font-size:10px">send</text><rect x="150" y="56" width="308" height="26" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="304.0" y="74.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">你好\n在吗？\n晚上一起吃饭\n（36 字节）</text><text x="140" y="74" text-anchor="end" style="fill:var(--muted);font-size:10px">readyRead</text><text x="150" y="100" text-anchor="start" style="fill:var(--danger);font-size:11px">三条消息一次到达</text><text x="20" y="122" text-anchor="start" style="fill:var(--fg);font-size:12px">拆包：一次 send</text><rect x="150" y="130" width="220" height="26" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="260.0" y="148.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">今天天气不错\n（19 字节）</text><text x="140" y="148" text-anchor="end" style="fill:var(--muted);font-size:10px">send</text><rect x="150" y="164" width="110" height="26" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="205.0" y="182.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">今天天（9）</text><rect x="264" y="164" width="106" height="26" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="317.0" y="182.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">气不错\n（10）</text><text x="140" y="182" text-anchor="end" style="fill:var(--muted);font-size:10px">readyRead</text><text x="150" y="208" text-anchor="start" style="fill:var(--danger);font-size:11px">一条消息分两次到达</text><text x="20" y="230" text-anchor="start" style="fill:var(--fg);font-size:12px">切断汉字</text><rect x="150" y="238" width="220" height="26" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="260.0" y="256.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">今天天气不错\n</text><text x="140" y="256" text-anchor="end" style="fill:var(--muted);font-size:10px">send</text><rect x="150" y="272" width="150" height="26" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="225.0" y="290.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">今天天 + 气的 1 字节</text><rect x="304" y="272" width="150" height="26" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="379.0" y="290.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">气的 2 字节 + 不错\n</text><text x="140" y="290" text-anchor="end" style="fill:var(--muted);font-size:10px">readyRead</text><text x="150" y="316" text-anchor="start" style="fill:var(--danger);font-size:11px">分别 fromUtf8：两段都出现 �</text><text x="20" y="340" text-anchor="start" style="fill:var(--muted);font-size:11px">TCP 只保证字节按顺序、不丢失，不保留「每次 send 了多少」的边界；分几次到、每次多大，每次运行都可能不同</text>
+  </g>
+</svg>
+</figure>
+
 ## 3. 消息分帧
 
 把字节流重新切成一条条消息，叫作**分帧**（framing）。常用的方法有两种：
@@ -178,12 +187,14 @@ UTF-8 中一个汉字占 3 个字节。服务器从「气」字的 3 个字节�
 
 聊天消息中可能有换行，也可能要传图片，所以用长度前缀：每条消息是 **4 字节的长度（大端）+ 这么多字节的 JSON 正文**。
 
-```
-┌────────────┬──────────────────────────────────────┐
-│ 00 00 00 21 │ {"from":"张三","text":"你好"}           │
-│  长度 = 33   │ 33 字节的 UTF-8 JSON                    │
-└────────────┴──────────────────────────────────────┘
-```
+<figure class="diagram">
+<svg viewBox="0 0 700 152" role="img" aria-label="长度前缀分帧：每条消息先是 4 字节大端的长度，00 00 00 21 即 33，后面是 33 字节的 UTF-8 JSON 正文；下一条消息紧接着开始">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="40" y="30" width="160" height="40" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="120.0" y="55.0" text-anchor="middle" style="fill:var(--fg);font-size:14px">00 00 00 21</text><rect x="200" y="30" width="440" height="40" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="420.0" y="55.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">{"from":"张三","text":"你好"}</text><text x="120" y="90" text-anchor="middle" style="fill:var(--warn);font-size:11px">长度 = 33（4 字节大端）</text><text x="420" y="90" text-anchor="middle" style="fill:var(--accent);font-size:11px">33 字节的 UTF-8 JSON 正文</text><rect x="40" y="110" width="160" height="30" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="120.0" y="130.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">00 00 00 3A</text><rect x="200" y="110" width="200" height="30" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="300.0" y="130.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">下一条消息的正文…</text><text x="410" y="130" text-anchor="start" style="fill:var(--muted);font-size:11px">一条接一条，读到长度就知道还差多少字节</text>
+  </g>
+</svg>
+</figure>
 
 长度用**大端**（网络字节序）表示，和网络专栏中 `htonl` / `ntohl` 的约定一致，发送方和接收方的机器字节序不同也不会出错。正文用 JSON，扩展字段方便，下一章的聊天协议也会用它。
 

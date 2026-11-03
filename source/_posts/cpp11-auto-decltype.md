@@ -99,6 +99,15 @@ Bob 有 3 个成绩
 
 > **`auto` 单独使用时，会丢掉初始值的引用和顶层 `const`；想保留，就自己加上 `&` 或 `const`。**
 
+<figure class="diagram">
+<svg viewBox="0 0 700 184" role="img" aria-label="auto 会丢掉引用：rx 是 x 的引用，auto a2 = rx 推导出 int，a2 是 x 的一个副本，修改 a2 不影响 x；写成 auto& 才得到引用，就是 x 本身">
+  <defs><marker id="ad-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker><marker id="ad-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="30" y="30" width="120" height="40" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="90.0" y="55.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">x = 1</text><text x="20" y="54" text-anchor="end" style="fill:var(--fg);font-size:12px">x</text><text x="90" y="92" text-anchor="middle" style="fill:var(--accent);font-size:11px">rx 是 x 的别名</text><rect x="300" y="30" width="150" height="40" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="375.0" y="55.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">a2 = 1 → 100</text><text x="290" y="54" text-anchor="end" style="fill:var(--fg);font-size:12px">auto a2 = rx</text><path d="M150,42 C 210,20 240,20 296,42" style="fill:none;stroke:var(--fg-2);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#ad-g)"/><text x="222" y="22" text-anchor="middle" style="fill:var(--fg-2);font-size:11px">复制一份（int）</text><text x="460" y="54" text-anchor="start" style="fill:var(--muted);font-size:11px">a2 = 100 改的是副本，x 仍然是 1</text><rect x="300" y="100" width="150" height="40" rx="6" style="fill:none;stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:4 3"/><text x="375.0" y="125.0" text-anchor="middle" style="fill:var(--muted);font-size:12px">（就是 x 本身）</text><text x="290" y="124" text-anchor="end" style="fill:var(--fg);font-size:12px">auto&amp; a = rx</text><path d="M150,62 C 220,110 230,120 296,120" style="fill:none;stroke:var(--accent);stroke-width:1.5" marker-end="url(#ad-a)"/><text x="460" y="124" text-anchor="start" style="fill:var(--accent);font-size:11px">加上 &amp; 才保留引用</text><text x="20" y="172" text-anchor="start" style="fill:var(--muted);font-size:11px">auto 单独使用时丢掉引用和顶层 const；想保留就自己写 auto&amp;、const auto</text>
+  </g>
+</svg>
+</figure>
+
 用 `static_assert` 加 `std::is_same` 可以在编译期验证推导结果，类型不对就编译失败。下面的代码能编译通过，说明注释里写的类型全部正确：
 
 ```cpp
