@@ -1,0 +1,63 @@
+# wordfreq 的持续集成：每次推送和每个拉取请求都运行
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # 在几种系统和编译器上构建，运行全部测试
+  build-and-test:
+    strategy:
+      fail-fast: false                 # 一个组合失败了，其他的继续跑完
+      matrix:
+        include:
+          - { os: ubuntu-24.04, cxx: g++ }
+          - { os: ubuntu-24.04, cxx: clang++ }
+          - { os: macos-15, cxx: clang++ }
+    runs-on: ${{ matrix.os }}
+    env:
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Ninja
+        run: ${{ runner.os == 'Linux' && 'sudo apt-get install -y ninja-build' || 'brew install ninja' }}
+      - name: 配置
+        run: cmake --preset debug -G Ninja
+      - name: 编译
+        run: cmake --build --preset debug
+      - name: 测试
+        run: ctest --preset debug
+
+  # 用 Sanitizer 运行测试：asan 包括 AddressSanitizer 和 UndefinedBehaviorSanitizer
+  sanitizers:
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [asan, tsan]
+    runs-on: ubuntu-24.04
+    env:
+      CXX: g++                         # Ubuntu 的 clang 包不带 Sanitizer 的运行库，GCC 自带
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y ninja-build
+      # 较新的 Linux 内核把地址随机化的范围调大了，ThreadSanitizer 会因此启动失败，调回 28 位
+      - name: 调整地址随机化
+        if: matrix.preset == 'tsan'
+        run: sudo sysctl vm.mmap_rnd_bits=28
+      - run: cmake --preset ${{ matrix.preset }} -G Ninja
+      - run: cmake --build --preset ${{ matrix.preset }}
+      - run: ctest --preset ${{ matrix.preset }}
+
+  # 代码格式和静态检查
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y ninja-build clang-format clang-tidy
+      - name: 检查代码格式
+        run: clang-format --dry-run --Werror $(git ls-files '*.cpp' '*.h')
+      - name: 静态检查
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DWORDFREQ_BUILD_TESTS=OFF
+          clang-tidy -p build --warnings-as-errors='*' src/*.cpp app/*.cpp
