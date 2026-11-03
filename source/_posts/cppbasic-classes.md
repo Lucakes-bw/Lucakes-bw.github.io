@@ -268,6 +268,15 @@ a = (1, 2), b = (10, 20)
 
 **每个对象只保存自己的成员变量**，所以 `Point` 和包含两个 `int` 的 C 结构体一样大。成员函数的代码只有一份，所有对象共用，通过 `this` 区分操作的是哪个对象。所以封装**没有任何额外的内存开销**，成员函数调用也和普通函数调用一样快。（有虚函数的类除外，见《多态与虚函数》。）
 
+<figure class="diagram">
+<svg viewBox="0 0 700 188" role="img" aria-label="对象的内存与 this：对象 a 和 b 各自只保存 x_ 和 y_ 两个 int，共 8 字节；成员函数 move 的代码只有一份，调用 a.move(1, 2) 时编译器把 a 的地址作为隐藏的参数 this 传入，相当于 move(&a, 1, 2)">
+  <defs><marker id="cl-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="22" text-anchor="start" style="fill:var(--fg);font-size:12px">每个对象只有自己的数据（sizeof(Point) = 8）</text><text x="40" y="62" text-anchor="end" style="fill:var(--fg);font-size:13px">a</text><rect x="50" y="36" width="80" height="40" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="90.0" y="61.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">x_ = 1</text><rect x="130" y="36" width="80" height="40" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="170.0" y="61.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">y_ = 2</text><text x="40" y="132" text-anchor="end" style="fill:var(--fg);font-size:13px">b</text><rect x="50" y="106" width="80" height="40" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="90.0" y="131.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">x_ = 10</text><rect x="130" y="106" width="80" height="40" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="170.0" y="131.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">y_ = 20</text><text x="400" y="22" text-anchor="start" style="fill:var(--fg);font-size:12px">成员函数的代码只有一份</text><rect x="400" y="36" width="270" height="50" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="535.0" y="59.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">Point::move(Point* this, dx, dy)</text><text x="535.0" y="75.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">x_ += dx 就是 this-&gt;x_ += dx</text><text x="400" y="122" text-anchor="start" style="fill:var(--link);font-size:12px">a.move(1, 2)　→　move(&amp;a, 1, 2)</text><text x="400" y="142" text-anchor="start" style="fill:var(--link);font-size:12px">b.move(10, 20) → move(&amp;b, 10, 20)</text><path d="M396,118 C 300,110 260,60 214,56" style="fill:none;stroke:var(--link);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#cl-l)"/><path d="M396,138 C 300,140 260,126 214,126" style="fill:none;stroke:var(--link);stroke-width:1.2;stroke-dasharray:4 3" marker-end="url(#cl-l)"/><text x="20" y="176" text-anchor="start" style="fill:var(--muted);font-size:11px">调用成员函数时，编译器把对象的地址作为隐藏的第一个参数 this 传进去；所以 this 的值就是 &amp;b</text>
+  </g>
+</svg>
+</figure>
+
 ## 7. 把类拆成头文件和源文件
 
 实际项目中，类的**声明**放在头文件（`.h`）中，供其他文件包含；成员函数的**定义**放在源文件（`.cpp`）中：

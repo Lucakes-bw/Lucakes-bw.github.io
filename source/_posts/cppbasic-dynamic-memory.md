@@ -143,6 +143,15 @@ malloc Student:
 
 最关键的区别是第四行。上面的例子中，`malloc` 出来的 `Student` 中，`name` 这个 `std::string` 根本没有被构造，它的内部数据是随机的，如果对它赋值，程序很可能崩溃。**在 C++ 中，不要用 `malloc` 创建对象。**
 
+<figure class="diagram">
+<svg viewBox="0 0 700 202" role="img" aria-label="new 和 malloc 的区别：new 先分配内存，再调用构造函数，对象中的 string 是构造好的；malloc 只分配内存，不调用构造函数，string 的内部是随机的字节，对它赋值是未定义行为">
+  <defs><marker id="nm-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker><marker id="nm-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--danger)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="22" text-anchor="start" style="fill:var(--accent);font-size:13px">new Student</text><rect x="20" y="34" width="150" height="36" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="95.0" y="57.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">① 分配内存</text><line x1="170" y1="52" x2="196" y2="52" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#nm-a)"/><rect x="200" y="34" width="190" height="36" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="295.0" y="57.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">② 调用构造函数</text><rect x="420" y="30" width="250" height="44" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="545.0" y="50.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">name：构造好的空 string</text><text x="545.0" y="66.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">可以放心赋值</text><line x1="390" y1="52" x2="416" y2="52" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#nm-a)"/><text x="20" y="112" text-anchor="start" style="fill:var(--danger);font-size:13px">(Student*)malloc(sizeof(Student))</text><rect x="20" y="124" width="150" height="36" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="95.0" y="147.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">① 分配内存</text><rect x="200" y="124" width="190" height="36" rx="0" style="fill:none;stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:4 3"/><text x="295.0" y="147.0" text-anchor="middle" style="fill:var(--muted);font-size:12px">不调用构造函数</text><rect x="420" y="120" width="250" height="44" rx="6" style="fill:var(--mark);stroke:var(--danger);stroke-width:1.5"/><text x="545.0" y="140.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">name：随机的字节</text><text x="545.0" y="156.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">对它赋值就是未定义行为</text><line x1="170" y1="142" x2="416" y2="142" style="stroke:var(--danger);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#nm-d)"/><text x="20" y="190" text-anchor="start" style="fill:var(--muted);font-size:11px">delete 先调用析构函数再释放；free 只释放。所以 C++ 中一律用 new / delete（更好的是智能指针）</text>
+  </g>
+</svg>
+</figure>
+
 ### 2.2 分配失败
 
 ```cpp
