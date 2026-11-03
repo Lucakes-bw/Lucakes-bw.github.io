@@ -1,0 +1,122 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "WORDFREQ_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug：调试用",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release：优化，带性能测试",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "WORDFREQ_BUILD_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "asan",
+      "displayName": "AddressSanitizer + UndefinedBehaviorSanitizer",
+      "inherits": "debug",
+      "cacheVariables": {
+        "WORDFREQ_SANITIZE": "address,undefined"
+      }
+    },
+    {
+      "name": "tsan",
+      "displayName": "ThreadSanitizer",
+      "inherits": "debug",
+      "cacheVariables": {
+        "WORDFREQ_SANITIZE": "thread"
+      }
+    },
+    {
+      "name": "coverage",
+      "displayName": "测试覆盖率（需要 Clang）",
+      "inherits": "debug",
+      "cacheVariables": {
+        "WORDFREQ_COVERAGE": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "configuration": "Release"
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "tsan",
+      "configurePreset": "tsan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage",
+      "configuration": "Debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "configurePreset": "debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "asan",
+      "inherits": "base",
+      "configurePreset": "asan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "tsan",
+      "inherits": "base",
+      "configurePreset": "tsan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "coverage",
+      "inherits": "base",
+      "configurePreset": "coverage",
+      "environment": {
+        "LLVM_PROFILE_FILE": "${sourceDir}/build/coverage/profiles/%p.profraw"
+      },
+      "configuration": "Debug"
+    }
+  ]
+}

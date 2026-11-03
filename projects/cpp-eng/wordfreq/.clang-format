@@ -1,0 +1,14 @@
+# 代码格式：在 Google 风格的基础上改了几处，和本专栏文章中的代码一致
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 120
+AccessModifierOffset: -4
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true          # 函数的左花括号另起一行，其他的不另起
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: true
+DerivePointerAlignment: false
+PointerAlignment: Left
+IncludeBlocks: Preserve
