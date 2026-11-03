@@ -154,6 +154,15 @@ sum = 175
 $1 = 0xb38805150ad0 "dave"
 ```
 
+<figure class="diagram">
+<svg viewBox="0 0 700 134" role="img" aria-label="core dump 的用法：程序收到 SIGSEGV 崩溃时，系统把那一刻的内存保存成 core 文件；用 gdb ./crash core 打开，可以看到崩溃在 crash.c 第 27 行，调用栈和局部变量 i = 2、names[i] = "dave"">
+  <defs><marker id="cd-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--danger)"/></marker><marker id="cd-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="40" width="120" height="44" rx="6" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="80.0" y="60.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">./crash</text><text x="80.0" y="76.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">运行</text><line x1="140" y1="62" x2="196" y2="62" style="stroke:var(--danger);stroke-width:1.5" marker-end="url(#cd-d)"/><text x="168" y="52" text-anchor="middle" style="fill:var(--danger);font-size:10px">SIGSEGV</text><rect x="200" y="40" width="140" height="44" rx="6" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="270.0" y="60.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">core</text><text x="270.0" y="76.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">崩溃那一刻的内存</text><line x1="340" y1="62" x2="396" y2="62" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#cd-g)"/><text x="368" y="52" text-anchor="middle" style="fill:var(--link);font-size:10px">gdb</text><rect x="400" y="26" width="280" height="72" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="540.0" y="67.0" text-anchor="middle" style="fill:var(--fg);font-size:13px"></text><text x="412" y="46" text-anchor="start" style="fill:var(--fg);font-size:11px">#0 total(...) at crash.c:27</text><text x="412" y="64" text-anchor="start" style="fill:var(--fg);font-size:11px">#1 main () at crash.c:35</text><text x="412" y="84" text-anchor="start" style="fill:var(--accent);font-size:11px">i = 2，names[i] = "dave"</text><text x="20" y="122" text-anchor="start" style="fill:var(--muted);font-size:11px">不用重现问题，就能看到崩溃时的调用栈和变量：find("dave") 返回了 NULL，没有检查就访问了 -&gt;score</text>
+  </g>
+</svg>
+</figure>
+
 GDB 一打开 core 文件，就告诉我们程序因为 SIGSEGV 终止，停在 `crash.c` 的第 27 行。更有用的是，**崩溃时所有变量的值都还在**：
 
 - `i = 2`，正在处理第 3 个名字 `"dave"`；

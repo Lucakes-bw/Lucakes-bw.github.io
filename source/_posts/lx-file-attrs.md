@@ -115,6 +115,15 @@ stat -c "%s %b" sparse.img
 
 大小是 1 GB，占用的空间却是 **0**。这是一个**稀疏文件**（sparse file）：从来没有写过的部分不分配磁盘块，读取时得到的是 0。虚拟机的磁盘镜像常常是稀疏文件，所以一个「100 GB」的磁盘镜像实际可能只占几 GB。`ls -l` 显示的是大小，`du` 显示的是占用的空间。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 162" role="img" aria-label="文件的大小和占用的空间：a.txt 只有 6 个字节，但文件系统按块分配，占用 4096 字节；用 truncate 创建的 1 GB 稀疏文件从来没有写过，不分配任何磁盘块，大小是 1 GB，占用却是 0">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="22" text-anchor="start" style="fill:var(--fg);font-size:12px">a.txt：6 字节的内容，占 1 块（4 KB）</text><rect x="20" y="32" width="200" height="26" style="fill:none;stroke:var(--border-2)"/><rect x="20" y="32" width="12" height="26" style="fill:var(--accent);opacity:.8"/><text x="230" y="50" text-anchor="start" style="fill:var(--muted);font-size:11px">大小 6，占用 4096</text><text x="20" y="92" text-anchor="start" style="fill:var(--fg);font-size:12px">sparse.img：truncate -s 1G</text><rect x="20" y="102" width="640" height="26" style="fill:none;stroke:var(--border-2);stroke-dasharray:4 3"/><text x="340" y="120" text-anchor="middle" style="fill:var(--muted);font-size:11px">从没写过的「洞」：不分配磁盘块，读出来是 0</text><text x="20" y="150" text-anchor="start" style="fill:var(--accent);font-size:11px">ls -l 显示大小 1073741824，du 显示占用 0：大小是逻辑长度，占用是真正分配的块</text>
+  </g>
+</svg>
+</figure>
+
 ### 1.3 修改时间和变更时间
 
 ```bash

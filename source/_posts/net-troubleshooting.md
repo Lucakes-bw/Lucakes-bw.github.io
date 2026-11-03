@@ -36,6 +36,15 @@ disableNunjucks: true
 
 每一步的结果都缩小了范围：ping 得通目标 IP，网络层就基本没问题；端口连得上，问题就在应用层。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 258" role="img" aria-label="网络问题的排查顺序，由下往上逐层确认：本机的网卡、地址和路由；能否到达网关和目标 IP；域名能否解析；端口能否连上；应用层的请求和响应；最后抓包">
+  <defs><marker id="ts-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="196" width="300" height="28" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="170.0" y="215.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">① 本机的网卡、地址、路由</text><text x="334" y="215" text-anchor="start" style="fill:var(--muted);font-size:11px">ip addr、ip route</text><rect x="20" y="164" width="300" height="28" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="170.0" y="183.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">② 能到网关、目标 IP 吗</text><text x="334" y="183" text-anchor="start" style="fill:var(--muted);font-size:11px">ping、traceroute</text><rect x="20" y="132" width="300" height="28" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="170.0" y="151.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">③ 域名能解析吗</text><text x="334" y="151" text-anchor="start" style="fill:var(--muted);font-size:11px">dig、getent hosts</text><rect x="20" y="100" width="300" height="28" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="170.0" y="119.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">④ 端口能连上吗</text><text x="334" y="119" text-anchor="start" style="fill:var(--muted);font-size:11px">nc -zv、curl -v</text><rect x="20" y="68" width="300" height="28" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="170.0" y="87.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">⑤ 应用层请求和响应</text><text x="334" y="87" text-anchor="start" style="fill:var(--muted);font-size:11px">curl -v、openssl s_client</text><rect x="20" y="36" width="300" height="28" rx="4" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="170.0" y="55.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">⑥ 还看不出来：抓包</text><text x="334" y="55" text-anchor="start" style="fill:var(--muted);font-size:11px">tcpdump、tshark</text><path d="M560,210 L560,30" style="stroke:var(--link);stroke-width:2" marker-end="url(#ts-l)"/><text x="572" y="120" text-anchor="start" style="fill:var(--link);font-size:12px">由下往上</text><text x="572" y="138" text-anchor="start" style="fill:var(--link);font-size:12px">逐层确认</text><text x="20" y="246" text-anchor="start" style="fill:var(--muted);font-size:11px">错误的表现也是线索：立即失败（有人回答「不行」）、等很久后超时（包被丢了）、成功但很慢（看时间花在哪一段）</text>
+  </g>
+</svg>
+</figure>
+
 **错误的表现方式本身就是线索**，最重要的是区分三种情况：
 
 - **立即失败，并且有明确的原因**（`Network is unreachable`、`Connection refused`）：有人明确地回答了「不行」；

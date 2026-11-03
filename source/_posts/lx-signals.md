@@ -272,6 +272,15 @@ read 读到 3 字节
 - 不加 `SA_RESTART`：处理函数返回后，`read` 不再继续等待，而是返回 -1，`errno` 为 **`EINTR`**；
 - 加上 `SA_RESTART`：处理函数返回后，内核自动重新执行 `read`，2 秒后读到了 `hi\n`。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 182" role="img" aria-label="信号打断系统调用：read 阻塞等待输入，1 秒时收到 SIGALRM，处理函数返回后，不加 SA_RESTART 的 read 返回 -1、errno 为 EINTR；加上 SA_RESTART 时内核重新执行 read，2 秒时读到 hi">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="138" y="46" text-anchor="end" style="fill:var(--fg);font-size:12px">不加 SA_RESTART</text><rect x="150" y="34" width="160" height="16" rx="3" style="fill:var(--link);opacity:.45"/><text x="156" y="46" text-anchor="start" style="fill:var(--fg);font-size:10px">read 阻塞等待</text><line x1="310" y1="26" x2="310" y2="58" style="stroke:var(--warn);stroke-width:2"/><text x="310" y="22" text-anchor="middle" style="fill:var(--warn);font-size:10px">SIGALRM（1 秒）</text><text x="322" y="46" text-anchor="start" style="fill:var(--danger);font-size:11px">read 返回 -1，errno = EINTR</text><text x="138" y="116" text-anchor="end" style="fill:var(--fg);font-size:12px">加上 SA_RESTART</text><rect x="150" y="104" width="160" height="16" rx="3" style="fill:var(--link);opacity:.45"/><text x="156" y="116" text-anchor="start" style="fill:var(--fg);font-size:10px">read 阻塞等待</text><line x1="310" y1="96" x2="310" y2="128" style="stroke:var(--warn);stroke-width:2"/><text x="310" y="92" text-anchor="middle" style="fill:var(--warn);font-size:10px">SIGALRM（1 秒）</text><rect x="314" y="104" width="156" height="16" rx="3" style="fill:var(--link);opacity:.45"/><circle cx="470" cy="112" r="5" style="fill:var(--accent)"/><text x="482" y="116" text-anchor="start" style="fill:var(--accent);font-size:11px">内核重新执行 read，2 秒时读到 hi</text><text x="150" y="172" text-anchor="middle" style="fill:var(--muted);font-size:10px">0 秒</text><text x="310" y="172" text-anchor="middle" style="fill:var(--muted);font-size:10px">1 秒</text><text x="470" y="172" text-anchor="middle" style="fill:var(--muted);font-size:10px">2 秒</text>
+  </g>
+</svg>
+</figure>
+
 所以设置了信号处理函数的程序，要么使用 `SA_RESTART`，要么在调用慢速系统调用时检查 `EINTR` 并重试。注意 `SA_RESTART` 并不对所有的调用都有效，`sleep`、`nanosleep`、`pause` 等被打断后总是提前返回，后面的例子会遇到这一点。
 
 ## 5. SIGCHLD：子进程结束的通知

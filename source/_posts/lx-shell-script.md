@@ -170,6 +170,15 @@ notes.txt
 
 **要删除的文件还在，另外两个不相干的文件 `my` 和 `report.txt` 却被删除了。**`$f` 不加引号，被拆成了 `my` 和 `report.txt` 两个参数，`rm` 就删除了这两个文件。正确的写法是 `rm "$f"`。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 158" role="img" aria-label="变量要加双引号：f 的值是 my report.txt，rm $f 被拆成 rm、my、report.txt 三个参数，删除了另外两个文件；rm "$f" 只有一个完整的参数 my report.txt">
+  <defs><marker id="qt-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--danger)"/></marker><marker id="qt-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="22" text-anchor="start" style="fill:var(--fg);font-size:13px">f="my report.txt"</text><text x="20" y="56" text-anchor="start" style="fill:var(--danger);font-size:13px">rm $f</text><line x1="80" y1="51" x2="126" y2="51" style="stroke:var(--danger);stroke-width:1.5" marker-end="url(#qt-d)"/><rect x="130" y="36" width="90" height="30" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="175.0" y="56.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">rm</text><rect x="224" y="36" width="80" height="30" rx="0" style="fill:var(--mark);stroke:var(--danger);stroke-width:1.5"/><text x="264.0" y="56.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">my</text><rect x="308" y="36" width="120" height="30" rx="0" style="fill:var(--mark);stroke:var(--danger);stroke-width:1.5"/><text x="368.0" y="56.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">report.txt</text><text x="440" y="56" text-anchor="start" style="fill:var(--danger);font-size:11px">按空格拆成两个参数：删错了文件</text><text x="20" y="106" text-anchor="start" style="fill:var(--accent);font-size:13px">rm "$f"</text><line x1="80" y1="101" x2="126" y2="101" style="stroke:var(--accent);stroke-width:1.5" marker-end="url(#qt-a)"/><rect x="130" y="86" width="90" height="30" rx="0" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="175.0" y="106.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">rm</text><rect x="224" y="86" width="160" height="30" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="304.0" y="106.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">my report.txt</text><text x="400" y="106" text-anchor="start" style="fill:var(--accent);font-size:11px">一个完整的参数</text><text x="20" y="146" text-anchor="start" style="fill:var(--muted);font-size:11px">不加引号的变量展开后还会被按空白拆分、按通配符展开；使用变量时总是写 "$f"、"$@"</text>
+  </g>
+</svg>
+</figure>
+
 遍历文件时也是同样的问题：
 
 ```bash
