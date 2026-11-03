@@ -301,6 +301,15 @@ public:
 1. **间接调用**：每次调用都要经过一次类似虚函数的间接跳转，编译器通常无法内联。
 2. **可能的堆分配**：被保存的对象可能需要放到堆上。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 180" role="img" aria-label="std::function 的类型擦除：std::function<int(int)> 对外只提供 operator()，内部用一个指针指向 CallableImpl<具体类型>，可以是 lambda、函数指针或函数对象；调用时经过一次类似虚函数的间接跳转；对象小时放在内部缓冲区，大时放在堆上">
+  <defs><marker id="tf-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="40" width="210" height="56" rx="6" style="fill:var(--panel-2);stroke:var(--link);stroke-width:1.5"/><text x="125.0" y="66.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">std::function&lt;int(int)&gt;</text><text x="125.0" y="82.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">对外只有 operator()(int)</text><rect x="300" y="20" width="200" height="34" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="400.0" y="42.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">CallableImpl&lt;lambda&gt;</text><rect x="300" y="64" width="200" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="400.0" y="86.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">CallableImpl&lt;函数指针&gt;</text><rect x="300" y="108" width="200" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="400.0" y="130.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">CallableImpl&lt;函数对象&gt;</text><line x1="230" y1="60" x2="296" y2="38" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#tf-l)"/><text x="258" y="36" text-anchor="middle" style="fill:var(--link);font-size:10px">内部指针</text><line x1="230" y1="72" x2="296" y2="81" style="stroke:var(--border-2);stroke-dasharray:3 3"/><line x1="230" y1="80" x2="296" y2="124" style="stroke:var(--border-2);stroke-dasharray:3 3"/><text x="520" y="36" text-anchor="start" style="fill:var(--muted);font-size:11px">具体类型被「藏」在派生类里</text><text x="520" y="80" text-anchor="start" style="fill:var(--muted);font-size:11px">调用时经过一次虚函数跳转，</text><text x="520" y="96" text-anchor="start" style="fill:var(--muted);font-size:11px">编译器通常无法内联</text><text x="20" y="168" text-anchor="start" style="fill:var(--muted);font-size:11px">对象小时放在 std::function 内部的缓冲区里（小对象优化），大时才在堆上分配</text>
+  </g>
+</svg>
+</figure>
+
 ### 7.2 小对象优化
 
 为了减少堆分配，标准库实现都会在 `std::function` 内部预留一小块缓冲区，对象足够小就直接放在里面，这叫**小对象优化**（small buffer optimization）。用自定义的 `operator new` 统计堆分配次数（Clang + libc++）：

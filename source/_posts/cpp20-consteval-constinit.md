@@ -149,6 +149,15 @@ main 中 appName = "lucky-server"
 
 第二种顺序下，`globalLogger` 构造时，`appName` **还没有被初始化**，它读到的是一个尚未构造的 `std::string`（这里恰好表现为空字符串，严格来说是未定义行为）。这就是著名的**静态初始化顺序灾难**（static initialization order fiasco）：程序的行为取决于链接顺序，换一个构建系统、增加一个文件，问题就可能突然出现或消失。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 208" role="img" aria-label="静态初始化顺序灾难：config.cpp 在前时，appName 先初始化，globalLogger 构造时读到 lucky-server；logger.cpp 在前时，globalLogger 先构造，读到的 appName 还没有初始化，是空字符串">
+  <defs><marker id="si-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg-2)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="24" text-anchor="start" style="fill:var(--fg);font-size:12px">链接顺序：config.cpp logger.cpp</text><rect x="20" y="34" width="260" height="32" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="150.0" y="55.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">① appName = "lucky-server"</text><line x1="280" y1="50" x2="316" y2="50" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#si-g)"/><rect x="320" y="34" width="260" height="32" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="450.0" y="55.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">② globalLogger 构造：读 appName</text><text x="600" y="54" text-anchor="start" style="fill:var(--accent);font-size:11px">✓ 正常</text><text x="20" y="108" text-anchor="start" style="fill:var(--fg);font-size:12px">链接顺序：logger.cpp config.cpp</text><rect x="20" y="118" width="260" height="32" rx="4" style="fill:var(--mark);stroke:var(--danger);stroke-width:1.5"/><text x="150.0" y="139.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">① globalLogger 构造：读 appName</text><line x1="280" y1="134" x2="316" y2="134" style="stroke:var(--fg-2);stroke-width:1.5" marker-end="url(#si-g)"/><rect x="320" y="118" width="260" height="32" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="450.0" y="139.0" text-anchor="middle" style="fill:var(--fg);font-size:11px">② appName = "lucky-server"</text><text x="600" y="138" text-anchor="start" style="fill:var(--danger);font-size:11px">✗ 读到空串</text><text x="20" y="196" text-anchor="start" style="fill:var(--muted);font-size:11px">不同 .cpp 中全局变量的初始化顺序没有规定；constinit 要求在编译期初始化，从根本上避免这个问题</text>
+  </g>
+</svg>
+</figure>
+
 ### 3.2 constinit
 
 C++20 的 **`constinit`** 要求变量**必须在编译期完成初始化**（称为常量初始化），这样的变量在任何动态初始化开始之前就已经有了正确的值，与初始化顺序无关：

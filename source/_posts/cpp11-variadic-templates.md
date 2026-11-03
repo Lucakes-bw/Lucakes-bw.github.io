@@ -98,6 +98,15 @@ print(1, 2.5, "three")   first = 1,       rest = (2.5, "three")
 
 注意这里的「递归」和普通函数的递归不同：每一层都是**一个不同的函数**（模板的不同实例），在编译期就全部生成好了，运行时只是普通的函数调用，编译器通常会把它们全部内联。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 212" role="img" aria-label="递归处理参数包：print(1, 2.5, "three") 输出 1 后调用 print(2.5, "three")，再调用 print("three")，最后调用非模板的终点版本 print()；每一层都是模板的一个不同实例，在编译期生成">
+  <defs><marker id="vt-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--link)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="20" width="220" height="32" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="130.0" y="41.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">print(1, 2.5, "three")</text><text x="256" y="41" text-anchor="start" style="fill:var(--muted);font-size:11px">print&lt;int, double, const char*&gt;</text><text x="680" y="41" text-anchor="end" style="fill:var(--fg-2);font-size:11px">输出 1</text><line x1="50" y1="52" x2="80" y2="62" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#vt-a)"/><rect x="50" y="64" width="220" height="32" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="160.0" y="85.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">print(2.5, "three")</text><text x="286" y="85" text-anchor="start" style="fill:var(--muted);font-size:11px">print&lt;double, const char*&gt;</text><text x="680" y="85" text-anchor="end" style="fill:var(--fg-2);font-size:11px">输出 2.5</text><line x1="80" y1="96" x2="110" y2="106" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#vt-a)"/><rect x="80" y="108" width="220" height="32" rx="4" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="190.0" y="129.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">print("three")</text><text x="316" y="129" text-anchor="start" style="fill:var(--muted);font-size:11px">print&lt;const char*&gt;</text><text x="680" y="129" text-anchor="end" style="fill:var(--fg-2);font-size:11px">输出 three</text><line x1="110" y1="140" x2="140" y2="150" style="stroke:var(--link);stroke-width:1.5" marker-end="url(#vt-a)"/><rect x="110" y="152" width="220" height="32" rx="4" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="220.0" y="173.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">print()</text><text x="346" y="173" text-anchor="start" style="fill:var(--muted);font-size:11px">非模板的终点版本</text><text x="680" y="173" text-anchor="end" style="fill:var(--fg-2);font-size:11px">输出 换行</text><text x="20" y="200" text-anchor="start" style="fill:var(--muted);font-size:11px">每一层都是一个不同的函数（模板的不同实例），在编译期全部生成好，运行时通常被内联</text>
+  </g>
+</svg>
+</figure>
+
 `rest...` 中的 `...` 是**包展开**：把包 `rest` 展开成用逗号分隔的各个元素，`print(rest...)` 就变成了 `print(2.5, "three")`。
 
 再看一个求和的例子：

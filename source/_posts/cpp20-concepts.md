@@ -78,6 +78,15 @@ note: because 'iterator_t<std::list<int> &>' does not satisfy 'random_access_ite
 
 **「`std::list<int>&` 不满足 `random_access_range`」**，一句话就说清楚了。这就是 **Concepts**（概念）的作用：在模板的**接口**上写明对类型的要求，编译器在调用处就检查，不满足时直接报告哪个要求没满足。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 148" role="img" aria-label="同一个错误（对 std::list 排序）的错误信息长度：不带约束的 std::sort 输出 138 行；带概念约束的 std::ranges::sort 只有 22 行，并且直接说明 list 不满足 random_access_range">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="20" y="24" text-anchor="start" style="fill:var(--fg);font-size:12px">std::sort(l)（list 不能随机访问）的错误信息</text><rect x="200" y="40" width="469" height="26" style="fill:var(--danger);opacity:.7"/><text x="190" y="58" text-anchor="end" style="fill:var(--danger);font-size:12px">不带约束：138 行</text><rect x="200" y="80" width="75" height="26" style="fill:var(--accent);opacity:.8"/><text x="190" y="98" text-anchor="end" style="fill:var(--accent);font-size:12px">ranges::sort：22 行</text><text x="290" y="98" text-anchor="start" style="fill:var(--accent);font-size:11px">而且直接指出：不满足 random_access_range</text><text x="20" y="136" text-anchor="start" style="fill:var(--muted);font-size:11px">不带约束的模板要等到展开到内部某一行才出错；概念在接口上就把要求说清楚了</text>
+  </g>
+</svg>
+</figure>
+
 ## 3. 使用概念的四种写法
 
 ```cpp

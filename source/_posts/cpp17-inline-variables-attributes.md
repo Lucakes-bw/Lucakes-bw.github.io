@@ -41,6 +41,15 @@ ld: 2 duplicate symbols
 
 原因是 C++ 的**单一定义规则**（ODR）：每个 `.cpp` 文件独立编译成一个目标文件，`#include` 只是把头文件的内容原样复制进来。三个 `.cpp` 都包含了这个头文件，于是三个目标文件中都有一个 `requestCount` 的**定义**，链接器不知道该用哪一个。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 204" role="img" aria-label="头文件中定义变量：config.h 被 a.cpp、b.cpp、main.cpp 三个文件包含，每个目标文件中都有一个 requestCount 的定义，链接时报重复定义；写成 inline 变量后，链接器只保留一份">
+  <defs><marker id="iv-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--warn)"/></marker></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="270" y="14" width="160" height="40" rx="6" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="350.0" y="32.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">config.h</text><text x="350.0" y="48.0" text-anchor="middle" style="fill:var(--muted);font-size:11px">int requestCount = 0;</text><rect x="60" y="90" width="140" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="130.0" y="112.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">a.cpp → .o</text><line x1="350" y1="54" x2="130" y2="88" style="stroke:var(--warn);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#iv-w)"/><text x="130" y="142" text-anchor="middle" style="fill:var(--danger);font-size:10px">各有一个 requestCount</text><rect x="280" y="90" width="140" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="350.0" y="112.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">b.cpp → .o</text><line x1="350" y1="54" x2="350" y2="88" style="stroke:var(--warn);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#iv-w)"/><text x="350" y="142" text-anchor="middle" style="fill:var(--danger);font-size:10px">各有一个 requestCount</text><rect x="500" y="90" width="140" height="34" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="570.0" y="112.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">main.cpp → .o</text><line x1="350" y1="54" x2="570" y2="88" style="stroke:var(--warn);stroke-width:1.5;stroke-dasharray:5 3" marker-end="url(#iv-w)"/><text x="570" y="142" text-anchor="middle" style="fill:var(--danger);font-size:10px">各有一个 requestCount</text><text x="20" y="172" text-anchor="start" style="fill:var(--danger);font-size:12px">普通变量：3 个定义 → 链接时 duplicate symbol</text><text x="20" y="192" text-anchor="start" style="fill:var(--accent);font-size:12px">inline int requestCount = 0;：链接器只保留一份，所有 .cpp 用的是同一个变量</text>
+  </g>
+</svg>
+</figure>
+
 C++17 之前的解决办法是：头文件中只写**声明** `extern int requestCount;`，然后在**某一个** `.cpp` 文件中写定义 `int requestCount = 0;`。声明和定义分在两处，修改时容易漏掉。类的静态成员变量也有同样的问题：类内只能声明，必须在某个 `.cpp` 中再定义一次（`int Logger::instances = 0;`），这也是很多「纯头文件库」难以实现的原因。
 
 ### 1.2 inline 变量

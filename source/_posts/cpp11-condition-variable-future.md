@@ -161,6 +161,15 @@ while (!条件()) {
 
 **规则：永远使用带谓词（条件）的 `wait`，并且条件中用到的变量必须在同一个互斥锁的保护下修改。** 即使条件只是一个 `bool` 标志，修改它时也要加锁，否则仍可能出现丢失唤醒。
 
+<figure class="diagram">
+<svg viewBox="0 0 700 210" role="img" aria-label="丢失的唤醒：生产者在消费者调用 wait 之前就 push 并 notify 了，这时没有线程在等待，通知丢失，之后消费者的不带条件的 wait 永远等不到；带条件的 wait 会先检查队列，已经有数据就不等待，被唤醒后也会重新检查条件">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <text x="148" y="44" text-anchor="end" style="fill:var(--fg);font-size:12px">消费者</text><text x="148" y="104" text-anchor="end" style="fill:var(--fg);font-size:12px">生产者</text><line x1="160" y1="40" x2="680" y2="40" style="stroke:var(--border-2)"/><line x1="160" y1="100" x2="680" y2="100" style="stroke:var(--border-2)"/><text x="160" y="20" text-anchor="start" style="fill:var(--danger);font-size:12px">丢失的唤醒（不带条件的 wait）</text><circle cx="240" cy="100" r="5" style="fill:var(--warn)"/><text x="240" y="124" text-anchor="middle" style="fill:var(--warn);font-size:11px">push + notify</text><text x="240" y="140" text-anchor="middle" style="fill:var(--muted);font-size:10px">此时没人在等，通知丢了</text><rect x="360" y="32" width="300" height="16" rx="3" style="fill:var(--danger);opacity:.35"/><text x="360" y="28" text-anchor="start" style="fill:var(--danger);font-size:11px">wait()：再也等不到通知</text><text x="160" y="180" text-anchor="start" style="fill:var(--accent);font-size:12px">带条件的 wait(lock, [&amp;]{ return !q.empty(); })</text><text x="160" y="198" text-anchor="start" style="fill:var(--muted);font-size:11px">先检查条件，队列里已经有数据就根本不等；被（虚假）唤醒后也会重新检查条件，不满足就继续等</text>
+  </g>
+</svg>
+</figure>
+
 ## 3. std::future 与 std::async
 
 条件变量功能强大，但写起来容易出错。很多时候我们只是想：**在后台算一个结果，算完后拿回来**。C++11 为此提供了更高层的工具。

@@ -240,6 +240,15 @@ v1.size() = 3, v2.size() = 2
 sum = 15
 ```
 
+<figure class="diagram">
+<svg viewBox="0 0 700 170" role="img" aria-label="vector 的圆括号和花括号：v1(3, 5) 调用 (个数, 值) 的构造函数，得到 3 个 5；v2{3, 5} 优先匹配 initializer_list，得到 3 和 5 两个元素">
+  <defs></defs>
+  <g style="font-family:var(--mono);font-size:13px">
+    <rect x="20" y="30" width="220" height="36" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="130.0" y="53.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">std::vector&lt;int&gt; v1(3, 5);</text><rect x="280" y="30" width="50" height="36" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="305.0" y="53.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">5</text><rect x="330" y="30" width="50" height="36" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="355.0" y="53.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">5</text><rect x="380" y="30" width="50" height="36" rx="0" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/><text x="405.0" y="53.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">5</text><text x="440" y="53" text-anchor="start" style="fill:var(--accent);font-size:12px">size = 3：3 个 5</text><rect x="20" y="90" width="220" height="36" rx="4" style="fill:var(--panel-2);stroke:var(--border-2);stroke-width:1.5"/><text x="130.0" y="113.0" text-anchor="middle" style="fill:var(--fg);font-size:12px">std::vector&lt;int&gt; v2{3, 5};</text><rect x="280" y="90" width="50" height="36" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="305.0" y="113.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">3</text><rect x="330" y="90" width="50" height="36" rx="0" style="fill:var(--mark);stroke:var(--warn);stroke-width:1.5"/><text x="355.0" y="113.0" text-anchor="middle" style="fill:var(--fg);font-size:13px">5</text><text x="440" y="113" text-anchor="start" style="fill:var(--warn);font-size:12px">size = 2：元素是 3 和 5</text><text x="20" y="158" text-anchor="start" style="fill:var(--muted);font-size:11px">花括号优先匹配 initializer_list 的构造函数；要「n 个 x」时必须用圆括号</text>
+  </g>
+</svg>
+</figure>
+
 这就是 `std::vector` 最经典的坑：
 
 | 写法 | 结果 |
