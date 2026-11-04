@@ -8,3 +8,7 @@ public/
 _multiconfig.ymldb *.json
 .claude/
 projects/**/build/
+
+# 云盘同步产生的副本，比如「db 2.json」「qt-events 2.md」
+* [0-9]
+* [0-9].*
