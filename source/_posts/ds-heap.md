@@ -9,7 +9,7 @@ tags:
   - 数据结构
   - 堆
   - 优先队列
-order: 4
+order: 5
 description: 堆是用数组存储的完全二叉树，能在 O(log n) 时间内插入元素和取出最大值，是优先队列的标准实现。本文实现上浮、下沉、O(n) 建堆和堆排序，演示中树和数组两种视图同步变化；实测递增数据逐个插入建堆交换了 1795 万次，heapify 只交换了 100 万次，用堆找最大的 10 个数比全部排序快 80 多倍。
 top_group_list: true
 disableNunjucks: true

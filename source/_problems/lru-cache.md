@@ -3,7 +3,7 @@ id: 97
 title: LRU 缓存
 difficulty: medium
 tags: [设计, 哈希表, 链表, 双向链表]
-related: [ds-hash-table, ds-dlist-circular]
+related: [ds-lru, ds-hash-table, ds-dlist-circular]
 leetcode: https://leetcode.cn/problems/lru-cache/
 design:
   class: LRUCache

@@ -3,6 +3,7 @@ id: 98
 title: 实现 Trie（前缀树）
 difficulty: medium
 tags: [设计, 字典树, 哈希表, 字符串]
+related: [ds-trie]
 leetcode: https://leetcode.cn/problems/implement-trie-prefix-tree/
 design:
   class: Trie
