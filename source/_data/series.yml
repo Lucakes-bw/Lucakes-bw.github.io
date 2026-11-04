@@ -45,7 +45,7 @@ network:
 
 linux:
   category: Linux基础
-  desc: 常用命令、开发工具链、文件 IO、进程与线程，Linux 下开发必备。
+  desc: 常用命令、开发工具链、文件 IO、进程与线程、内存管理，Linux 下开发必备。
   lang: Shell
   color: "#89e051"
   chapters:
@@ -53,6 +53,7 @@ linux:
     - 开发工具
     - 文件IO
     - 进程与线程
+    - 内存管理
 
 mysql:
   category: 数据库
