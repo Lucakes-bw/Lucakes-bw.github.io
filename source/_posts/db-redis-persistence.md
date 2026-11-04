@@ -1,7 +1,7 @@
 ---
 title: 持久化：RDB 与 AOF
 date: 2026-11-07 10:40:00
-updated: 2026-11-07 10:40:00
+updated: 2026-11-09 10:40:00
 categories:
   - 数据库
   - Redis
@@ -187,7 +187,7 @@ appendonlydir/
 所以：
 
 - `maxmemory` 和机器内存之间要留出余量，否则 BGSAVE 时可能触发操作系统的 OOM killer；
-- 关闭透明大页（Transparent Huge Pages）：开启时一页是 2 MB，改一个字节也要复制 2 MB，写时复制的内存会暴增。Redis 启动时如果发现透明大页开着，会在日志中警告；
+- 关闭透明大页（Transparent Huge Pages），Redis 启动时如果发现它开着，会在日志中警告。较老的内核上，透明大页的写时复制以 2 MB 为单位，改一个字节也要复制 2 MB；《Linux 基础》专栏的[《fork 与写时复制》](/posts/lx-cow/)实测，内核 6.8 上会先拆分大页、只复制 4 KB，但大页的分配和拆分仍然会带来不可预测的延迟；
 - 写入高峰期避免手动执行 `BGSAVE`、`BGREWRITEAOF`；单机多实例时错开它们的快照时间。
 
 ## 5. 怎么选
