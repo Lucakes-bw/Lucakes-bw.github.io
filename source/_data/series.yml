@@ -40,6 +40,7 @@ network:
     - TCP/IP协议
     - 应用层协议
     - Socket编程
+    - 服务器开发
 
 linux:
   category: Linux基础
