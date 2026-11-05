@@ -33,7 +33,7 @@ data-structure:
 
 network:
   category: 计算机网络
-  desc: 从分层模型到 TCP/IP，再到 Socket 网络编程。
+  desc: 从分层模型到 TCP/IP，再到 Socket 网络编程、服务器开发和网络排障。
   lang: TCP/IP
   color: "#3178c6"
   chapters:
@@ -42,6 +42,7 @@ network:
     - 应用层协议
     - Socket编程
     - 服务器开发
+    - 网络排障
 
 linux:
   category: Linux基础
