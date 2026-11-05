@@ -1,0 +1,21 @@
+// off-CPU 时间：线程让出 CPU 时记下时间，重新运行时累计它等了多久，按调用栈汇总（单位微秒）
+// 用法：bpftrace offcpu.bt 程序名 秒数
+// （容器中看到的进程号和内核中的不同，所以按程序名过滤；要在程序退出前打印，用户态的函数名才解析得出来）
+tracepoint:sched:sched_switch
+/comm == str($1)/
+{
+    @start[tid] = nsecs;
+}
+
+kprobe:finish_task_switch.isra.0
+/@start[tid]/
+{
+    @us[ustack, kstack] = sum((nsecs - @start[tid]) / 1000);
+    delete(@start[tid]);
+}
+
+interval:s:$2
+{
+    clear(@start);
+    exit();
+}
