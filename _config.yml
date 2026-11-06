@@ -104,6 +104,8 @@ category_map:
   播放器: player
   采集与流媒体: streaming
   音视频实战: av-project
+  分布式系统: dist
+  分布式基础: dist-basics
   未分类: uncategorized
 tag_map:
 
