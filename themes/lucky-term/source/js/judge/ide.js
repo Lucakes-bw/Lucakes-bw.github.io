@@ -144,11 +144,34 @@
   function compiler(workerUrl, pkg, hooks = {}) {
     let w = null, ready = false, seq = 0;
     const waiting = {};
+    // 下载卡住的看门狗：网络请求有时会一直挂着既不完成也不报错。
+    // 下载过程中 20 秒没有任何进度就放弃这个 Worker，正在等的编译都按「加载失败」返回，下次重新下载
+    const STALL = 20000;
+    let lastProgress = 0, downloading = false, watchdog = null;
+    function fail(msg) {
+      if (w) w.terminate();
+      w = null;
+      ready = false;
+      downloading = false;
+      clearInterval(watchdog);
+      watchdog = null;
+      Object.keys(waiting).forEach(id => { waiting[id]({ ok: false, stderr: msg }); delete waiting[id]; });
+    }
+    function watch() {
+      if (watchdog) return;
+      watchdog = setInterval(() => {
+        if (ready) { clearInterval(watchdog); watchdog = null; return; }
+        if (downloading && Date.now() - lastProgress > STALL) fail('下载编译器卡住了（20 秒没有进展）');
+      }, 2000);
+    }
     function worker() {
       if (w) return w;
       w = new Worker(workerUrl, { type: 'module' });
+      watch();
       w.onmessage = ({ data }) => {
         if (data.type === 'progress' && data.total) {
+          lastProgress = Date.now();
+          downloading = data.done < data.total;
           if (!ready && hooks.progress) hooks.progress(data.done, data.total);
         } else if (data.type === 'ready') {
           ready = data.ok;
@@ -162,8 +185,7 @@
       };
       w.onerror = e => {
         e.preventDefault();
-        Object.keys(waiting).forEach(id => { waiting[id]({ ok: false, stderr: '编译器加载失败：' + (e.message || '请检查网络') }); delete waiting[id]; });
-        w = null;
+        fail('编译器加载失败：' + (e.message || '请检查网络'));
       };
       return w;
     }
@@ -180,9 +202,9 @@
           // 失败了却没有编译器的诊断信息：多半是编译器没下载完（断网、CDN 出错）。
           // Worker 里会留着失败的状态，扔掉重建，下次运行重新下载
           if (!r.ok && !/error:/.test(r.stderr || '')) {
-            if (w) w.terminate();
-            w = null;
+            if (w) { w.terminate(); w = null; }
             ready = false;
+            downloading = false;
             r.stderr = '编译器加载失败，请检查网络后重试。\n' + (r.stderr || '');
             r.loadError = true;
           }

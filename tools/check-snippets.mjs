@@ -3,6 +3,9 @@
  * 检查文章里的 C/C++ 代码块（「跟练」功能）：
  *   按 snippet-core.js 的规则找出能在浏览器里运行的代码块，用和网页里同一个编译器编译、运行一遍，
  *   编译失败、运行出错、超时的都会列出来。修改代码，或者在代码块前加 <!-- run: off --> 关掉运行按钮。
+ * 能跟练的代码块（不是 run: error）还会检查：
+ *   - 「填空」挖不出空的（太短的程序）只是提示，这种代码不提供填空；想要的话用 <!-- run: blank="行号" --> 指定
+ *   - 连跑两次输出一样；不一样又没被识别成「输出不固定」的，判定会出错，需要补充 snippet-core.js 里 unstable 的规则
  *
  * 用法：node tools/check-snippets.mjs [--list] [--verbose] [文章 slug ...]
  *   --list     只统计哪些代码块能运行、哪些不能（不需要编译器）
@@ -26,27 +29,6 @@ const args = process.argv.slice(2);
 const LIST = args.includes('--list'), VERBOSE = args.includes('--verbose');
 const only = args.filter(a => !a.startsWith('--'));
 
-// 从 Markdown 里取出代码块：{ lang, code, line, opt }
-function extract(md) {
-  const out = [];
-  const lines = md.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const m = /^(\s*)(`{3,}|~{3,})\s*([\w+#-]*)/.exec(lines[i]);
-    if (!m) continue;
-    const [, indent, fence, lang] = m;
-    const start = i;
-    const body = [];
-    for (i++; i < lines.length && !new RegExp(`^\\s*${fence[0]}{${fence.length},}\\s*$`).test(lines[i]); i++) {
-      body.push(lines[i].startsWith(indent) ? lines[i].slice(indent.length) : lines[i]);
-    }
-    let k = start - 1;
-    while (k >= 0 && !lines[k].trim()) k--;
-    const c = k >= 0 && /^\s*<!--([\s\S]*?)-->\s*$/.exec(lines[k]);
-    out.push({ lang, code: body.join('\n'), line: start + 1, opt: S.parseOptions(c ? c[1] : '') });
-  }
-  return out;
-}
-
 const posts = fs.readdirSync(DIR).filter(f => f.endsWith('.md')).sort()
   .filter(f => !only.length || only.includes(f.slice(0, -3)));
 
@@ -54,7 +36,7 @@ const all = [];
 for (const f of posts) {
   const md = fs.readFileSync(path.join(DIR, f), 'utf8');
   const col = (/^categories:\s*\n\s*-\s*(.+)$/m.exec(md) || [, '?'])[1].trim();
-  for (const b of extract(md)) {
+  for (const b of S.extractBlocks(md)) {
     const lang = S.normLang(b.lang);
     if (!lang) continue;
     all.push(Object.assign(b, { file: f, col, info: S.classify(lang, b.code, b.opt) }));
@@ -75,7 +57,8 @@ for (const [k, v] of Object.entries(byCol)) console.log(`${k.padEnd(16)}  ${Stri
 console.log('\n\x1b[1m不能运行的原因\x1b[0m');
 Object.entries(reasons).sort((a, b) => b[1] - a[1]).forEach(([k, v]) => console.log(`  ${String(v).padStart(4)}  ${k}`));
 const runnable = all.filter(b => b.info.runnable);
-console.log(`\n共 ${all.length} 个 C/C++ 代码块，${runnable.length} 个可以在浏览器里运行\n`);
+const practicable = runnable.filter(b => !b.info.error).length;
+console.log(`\n共 ${all.length} 个 C/C++ 代码块，${runnable.length} 个可以在浏览器里运行，其中 ${practicable} 个可以跟练\n`);
 if (LIST) process.exit(0);
 
 let runClang;
@@ -155,8 +138,19 @@ for (const b of runnable) {
     if (r.stdout) console.log(indent(r.stdout.slice(0, 600)));
     continue;
   }
+  // 跟练：填空要有空可挖；输出要稳定，判定才能和原程序比
+  const noFill = S.blanks(b.code, b.opt.blank).length ? '' : ' \x1b[2m（太短，不提供填空）\x1b[0m';
+  if (!S.unstable(b.code)) {
+    const again = await runWasm(c.wasm, b.info.stdin);
+    const cmp = S.compareOutput(again.stdout, r.stdout);
+    if (!cmp.ok) {
+      failed++;
+      console.log(`\x1b[31m✗ 两次运行输出不一样（第 ${cmp.line} 行），但没被识别成「输出不固定」\x1b[0m ${where}\n${indent(cmp.exp + '\n' + cmp.got)}`);
+      continue;
+    }
+  }
   const exit = r.exitCode ? ` \x1b[33m退出码 ${r.exitCode}\x1b[0m` : '';
-  console.log(`\x1b[32m✓\x1b[0m \x1b[2m[${n}/${runnable.length}] ${ms}ms\x1b[0m ${where}${exit}`);
+  console.log(`\x1b[32m✓\x1b[0m \x1b[2m[${n}/${runnable.length}] ${ms}ms\x1b[0m ${where}${exit}${noFill}`);
   if (VERBOSE && r.stdout) console.log(indent(r.stdout.slice(0, 1200)));
 }
 fs.rmSync(tmp, { recursive: true, force: true });

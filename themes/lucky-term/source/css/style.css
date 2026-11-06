@@ -497,6 +497,7 @@ html[data-ui="ios"] .ui-term { display: none; }
 .gh-badge.b3 { background: linear-gradient(135deg, #86efac, #059669); }
 .gh-badge.b4 { background: linear-gradient(135deg, #a5b4fc, #4338ca); }
 .gh-badge.b5 { background: linear-gradient(135deg, #fda4af, #e11d48); }
+.gh-badge.b6 { background: linear-gradient(135deg, #fde68a, #65a30d); }
 .gh-badge.is-locked { background: none; color: var(--muted); box-shadow: none; border: 2px dashed var(--border-2); opacity: .75; font-size: 14px; }
 .gh-badges.is-empty { gap: 6px; }
 .gh-badges.is-empty .gh-badge { width: 34px; height: 34px; font-size: 11px; border-width: 1.5px; }
@@ -607,6 +608,9 @@ html[data-ui="ios"] .ui-term { display: none; }
 @media (min-width: 761px) { .ls-date.is-same { visibility: hidden; } }
 .ls-date, .ls-size, .ls-no { font: 13px/1 var(--mono); color: var(--muted); white-space: nowrap; }
 .ls-no { color: var(--accent); min-width: 2.4em; }
+.ls-practice { margin-left: 10px; font: 400 12px/1 var(--mono); color: var(--muted); white-space: nowrap; }
+.ls-practice.is-some { color: var(--warn); }
+.ls-practice.is-done { color: var(--accent); }
 .ls-col {
   font: 12px/1 var(--mono);
   color: var(--accent);
@@ -893,6 +897,56 @@ html[data-ui="ios"] .ui-term { display: none; }
 .snip-warn { color: var(--warn); margin-bottom: 6px; }
 .snip-warn summary { cursor: pointer; }
 .c-warn { color: var(--warn); }
+/* 跟练的练法切换、判定结果（见 js/judge/snippet.js） */
+.code-badge { font: 12px/1 var(--mono); color: var(--accent); padding: 0 6px; align-self: center; }
+.snip-modes { margin: 8px 10px 0; padding: 8px 0 0; border-top: 1px solid var(--border); }
+.snip-modes[hidden] { display: none; }
+.snip-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.snip-tab {
+  font: 13px/1 var(--mono); padding: 7px 12px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border); background: transparent; color: var(--fg-2);
+}
+.snip-tab:hover { background: var(--panel-2); color: var(--fg); }
+.snip-tab.is-on { background: var(--accent-soft, var(--panel-2)); border-color: var(--accent); color: var(--fg); }
+.snip-tab.is-passed::after { content: ' ✓'; color: var(--accent); }
+.snip-mode-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; padding: 8px 0 0 2px; }
+.snip-tip { flex: 1 1 260px; font: 12px/1.5 var(--mono); color: var(--muted); }
+.snip-tip.is-ok { color: var(--accent); }
+.snip-tip.is-bad { color: var(--warn); }
+.snip-mode-acts { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; }
+.snip-check { margin-left: 6px; }
+.snip-expect { margin-top: 8px; padding: 8px 12px; border: 1px dashed var(--border-2); border-radius: 6px; font: 12px/1.6 var(--mono); }
+.md figure.highlight .snip-expect pre { padding: 4px 0 0; font: 13px/1.6 var(--mono); white-space: pre-wrap; word-break: break-word; max-height: 240px; overflow: auto; }
+.snip-verdict { margin: 0 16px 8px; padding: 10px 12px; border-radius: 6px; font: 13px/1.6 var(--mono); border: 1px solid var(--border); }
+.snip-verdict[hidden] { display: none; }
+.snip-verdict.is-ok { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: var(--accent-soft, var(--panel-2)); }
+.snip-verdict.is-ok b { color: var(--accent); }
+.snip-verdict.is-bad { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
+.snip-verdict.is-bad b { color: var(--danger); }
+.snip-verdict .link-btn { border: 0; background: none; padding: 0 0 0 6px; color: var(--link); cursor: pointer; font: inherit; }
+.snip-diff { display: grid; gap: 4px; margin-top: 6px; }
+.snip-diff div { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
+.snip-diff span { flex: none; width: 7.5em; font-size: 12px; }
+.snip-diff code { white-space: pre-wrap; word-break: break-all; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
+.snip-expect-all summary { cursor: pointer; color: var(--muted); margin-top: 6px; }
+.md figure.highlight .snip-expect-all pre { padding: 4px 0 0; font: 12px/1.6 var(--mono); white-space: pre-wrap; max-height: 200px; overflow: auto; }
+/* 编辑器里的标记（Monaco 的 decoration 类名） */
+.snip-ghost { color: var(--muted) !important; opacity: .55; font-style: normal; }
+.snip-line-bad { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.snip-line-blank { background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.snip-gut-ok, .snip-gut-bad, .snip-gut-blank { margin-left: 3px; width: 3px !important; border-radius: 2px; }
+.snip-gut-ok { background: var(--accent); }
+.snip-gut-bad { background: var(--danger); }
+.snip-gut-blank { background: var(--warn); }
+/* 文末「跟练」汇总 */
+.practice-sum {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap;
+  margin-bottom: 12px; padding: 14px 18px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--panel);
+  font: 14px/1.5 var(--mono);
+}
+.practice-sum b { color: var(--accent); font-weight: 600; }
+.practice-text .ui-term, .practice-text .ui-ios { margin-right: 6px; }
 .md figure.highlight table { display: table; margin: 0; border: 0; width: 100%; font-size: 14px; }
 .md figure.highlight .code-scroll { overflow-x: auto; }
 .md figure.highlight td { border: 0; padding: 0; }
