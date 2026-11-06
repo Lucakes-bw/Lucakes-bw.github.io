@@ -597,7 +597,7 @@ done
 CRF 0 是**无损**编码，解码出来和原始数据一模一样，PSNR 是无穷大，但文件有 41.5 MB，只压缩了 8 倍：这就是空间冗余和时间冗余能带来的全部。从 CRF 0 到 CRF 18，文件一下子缩小到十分之一，PSNR 仍然有 48 dB，人眼看不出区别：这十倍完全来自丢掉「看不出来的东西」。此后 CRF 每增加 6，文件大约减半。截取第 160 帧中蝴蝶的一角（320×240），放大 1.5 倍：
 
 <figure>
-<img src="/img/av/crf-compare.png" alt="不同 CRF 下的画面局部放大对比：CRF 23 和原图几乎一样，CRF 35 草地纹理被抹平，CRF 45 出现明显的方块" width="640">
+<img src="/img/av/crf-compare.jpg" alt="不同 CRF 下的画面局部放大对比：CRF 23 和原图几乎一样，CRF 35 草地纹理被抹平，CRF 45 出现明显的方块" width="640">
 <figcaption>左上：原始；右上：CRF 23；左下：CRF 35；右下：CRF 45。CRF 35 的草地纹理已经被抹平，CRF 45 出现了明显的方块</figcaption>
 </figure>
 
