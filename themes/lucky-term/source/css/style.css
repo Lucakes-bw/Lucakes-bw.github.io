@@ -608,9 +608,6 @@ html[data-ui="ios"] .ui-term { display: none; }
 @media (min-width: 761px) { .ls-date.is-same { visibility: hidden; } }
 .ls-date, .ls-size, .ls-no { font: 13px/1 var(--mono); color: var(--muted); white-space: nowrap; }
 .ls-no { color: var(--accent); min-width: 2.4em; }
-.ls-practice { margin-left: 10px; font: 400 12px/1 var(--mono); color: var(--muted); white-space: nowrap; }
-.ls-practice.is-some { color: var(--warn); }
-.ls-practice.is-done { color: var(--accent); }
 .ls-col {
   font: 12px/1 var(--mono);
   color: var(--accent);

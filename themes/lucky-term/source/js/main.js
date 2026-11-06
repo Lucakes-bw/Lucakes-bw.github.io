@@ -136,17 +136,9 @@
 
   // 跟练记录（js/judge/snippet.js 写入）：{ 页面路径: { 代码哈希: { fill / type / recall: 通过时间 } } }
   const practice = store.get('lt-practice', {});
-  const practiced = url => Object.keys(practice[url] || {}).length;
 
   function renderReadState() {
     $$('[data-read-url]').forEach(el => el.classList.toggle('is-read', readSet.has(el.dataset.readUrl)));
-    $$('[data-practice-total]').forEach(el => {
-      const total = +el.dataset.practiceTotal, done = Math.min(total, practiced(el.dataset.practiceUrl));
-      el.textContent = `✎ ${done}/${total}`;
-      el.title = done ? `跟练通过 ${done} 段代码，共 ${total} 段` : `文中有 ${total} 段代码可以动手练`;
-      el.classList.toggle('is-some', done > 0 && done < total);
-      el.classList.toggle('is-done', done === total);
-    });
 
     const dataEl = $('#series-data');
     if (!dataEl) return;
