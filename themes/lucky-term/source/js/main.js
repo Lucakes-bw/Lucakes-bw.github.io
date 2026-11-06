@@ -134,8 +134,19 @@
     return '[' + '#'.repeat(n) + '-'.repeat(width - n) + ']';
   }
 
+  // 跟练记录（js/judge/snippet.js 写入）：{ 页面路径: { 代码哈希: { fill / type / recall: 通过时间 } } }
+  const practice = store.get('lt-practice', {});
+  const practiced = url => Object.keys(practice[url] || {}).length;
+
   function renderReadState() {
     $$('[data-read-url]').forEach(el => el.classList.toggle('is-read', readSet.has(el.dataset.readUrl)));
+    $$('[data-practice-total]').forEach(el => {
+      const total = +el.dataset.practiceTotal, done = Math.min(total, practiced(el.dataset.practiceUrl));
+      el.textContent = `✎ ${done}/${total}`;
+      el.title = done ? `跟练通过 ${done} 段代码，共 ${total} 段` : `文中有 ${total} 段代码可以动手练`;
+      el.classList.toggle('is-some', done > 0 && done < total);
+      el.classList.toggle('is-done', done === total);
+    });
 
     const dataEl = $('#series-data');
     if (!dataEl) return;
@@ -276,6 +287,15 @@
       const st = pbState[slug], problem = pbBySlug.get(slug);
       if (problem && st && st.status === 'ac' && st.at) events.push({ type: 'ac', at: st.at, problem });
     });
+    const MODE_NAME = { fill: '填空', type: '照着敲', recall: '默写' };
+    Object.keys(practice).forEach(url => {
+      const post = postByUrl.get(url);
+      if (!post) return;
+      Object.values(practice[url] || {}).forEach(r => Object.keys(r || {}).forEach(mode => {
+        if (MODE_NAME[mode] && r[mode]) events.push({ type: 'practice', at: r[mode], post, mode });
+      }));
+    });
+    const practiceCount = events.filter(e => e.type === 'practice').length;
     events.sort((a, b) => b.at - a.at);
     const perDay = new Map();
     events.forEach(e => { const k = dayKey(e.at); perDay.set(k, (perDay.get(k) || 0) + 1); });
@@ -358,7 +378,7 @@
       const b = bounds(range);
       const list = events.filter(e => e.at >= b.from && e.at < addDays(b.end || b.to, 1));
       if (!list.length) {
-        activityEl.innerHTML = `<div class="gh-act-empty">${events.length ? `${esc(b.label)}没有学习记录。` : '还没有学习记录。读完一篇文章（滚到文末或点「标记为已读」），或者在刷题里通过一道题，这里就会出现第一格。'}</div>`;
+        activityEl.innerHTML = `<div class="gh-act-empty">${events.length ? `${esc(b.label)}没有学习记录。` : '还没有学习记录。读完一篇文章（滚到文末或点「标记为已读」），在刷题里通过一道题，或者跟练通过一段代码，这里就会出现第一格。'}</div>`;
         return;
       }
       const months = new Map();
@@ -373,6 +393,7 @@
         const evs = months.get(k);
         const reads = evs.filter(e => e.type === 'read');
         const acs = evs.filter(e => e.type === 'ac');
+        const pcs = evs.filter(e => e.type === 'practice');
         html += `<div class="gh-act-month"><h3><span>${k}</span></h3>`;
         if (reads.length) {
           const bySeries = new Map();
@@ -390,6 +411,16 @@
             <ul class="gh-act-list">${acs.slice(0, 6).map(e => `<li><a href="${esc(e.problem.url)}">${esc(e.problem.id ? e.problem.id + '. ' : '')}${esc(e.problem.title)}</a><span class="gh-date">${fmtDay(e.at)}</span></li>`).join('')}</ul>
           </div></div>`;
         }
+        if (pcs.length) {
+          const byPost = new Map();
+          pcs.forEach(e => { const x = byPost.get(e.post.url) || { post: e.post, at: 0 }; x.at = Math.max(x.at, e.at); byPost.set(e.post.url, x); });
+          const rows = Array.from(byPost.values()).sort((a, b) => b.at - a.at);
+          const by = m => pcs.filter(e => e.mode === m).length;
+          html += `<div class="gh-act-item"><span class="gh-act-icon">${ICON_CODE}</span><div class="gh-act-body">
+            <p class="gh-act-head">跟练通过 ${pcs.length} 次（${Object.keys(MODE_NAME).filter(by).map(m => `${MODE_NAME[m]} ${by(m)}`).join(' · ')}），涉及 ${rows.length} 篇文章</p>
+            <ul class="gh-act-list">${rows.slice(0, 6).map(x => `<li><a href="${esc(x.post.url)}">${esc(x.post.title)}</a><span class="gh-date">${fmtDay(x.at)}</span></li>`).join('')}</ul>
+          </div></div>`;
+        }
         const started = Array.from(firstReadOf).filter(([, at]) => evs.some(e => e.at === at));
         if (started.length) {
           html += `<div class="gh-act-item"><span class="gh-act-icon">${ICON_REPO}</span><div class="gh-act-body">
@@ -405,6 +436,7 @@
 
     const ICON_READ = '<svg viewBox="0 0 16 16" width="16" height="16"><path d="M2 3.2c2-.8 4-.8 6 .6 2-1.4 4-1.4 6-.6v9.6c-2-.8-4-.8-6 .6-2-1.4-4-1.4-6-.6zM8 3.8v9.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
     const ICON_AC = '<svg viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5.3 8.2l1.8 1.8 3.6-3.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const ICON_CODE = '<svg viewBox="0 0 16 16" width="16" height="16"><path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5M9 3l-2 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     const ICON_REPO = '<svg viewBox="0 0 16 16" width="16" height="16"><path d="M3 13V3.2C3 2.5 3.6 2 4.3 2H13v9.5H4.4C3.6 11.5 3 12.1 3 13zm0 0c0 .7.6 1.2 1.4 1.2H13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
 
     /* 成就：都由本机记录算出来 */
@@ -420,7 +452,8 @@
         { text: '7d', name: '七日连学', desc: '连续 7 天都有学习记录', ok: streak >= 7 },
         { text: '★', name: '专栏毕业', desc: '读完一个专栏的全部文章', ok: seriesDone >= 1 },
         { text: '☾', name: '夜猫子', desc: '在 23 点到 5 点之间读完一篇文章', ok: night },
-        { text: 'AC', name: '首次通过', desc: '在刷题里通过第一道题', ok: solved >= 1 }
+        { text: 'AC', name: '首次通过', desc: '在刷题里通过第一道题', ok: solved >= 1 },
+        { text: '✎', name: '动手派', desc: '在文章里跟练通过 10 次（填空、照着敲、默写都算）', ok: practiceCount >= 10 }
       ];
       const got = BADGES.filter(x => x.ok).length;
       $('[data-badges]').innerHTML = BADGES.map((x, i) =>
