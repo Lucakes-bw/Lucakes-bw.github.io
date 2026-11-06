@@ -930,14 +930,33 @@ html[data-ui="ios"] .ui-term { display: none; }
 .snip-diff code { white-space: pre-wrap; word-break: break-all; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
 .snip-expect-all summary { cursor: pointer; color: var(--muted); margin-top: 6px; }
 .md figure.highlight .snip-expect-all pre { padding: 4px 0 0; font: 12px/1.6 var(--mono); white-space: pre-wrap; max-height: 200px; overflow: auto; }
-/* 编辑器里的标记（Monaco 的 decoration 类名） */
-.snip-ghost { color: var(--muted) !important; opacity: .55; font-style: normal; }
-.snip-line-bad { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+/* 填空：编辑器里挖掉的行（Monaco 的 decoration 类名） */
 .snip-line-blank { background: color-mix(in srgb, var(--warn) 14%, transparent); }
-.snip-gut-ok, .snip-gut-bad, .snip-gut-blank { margin-left: 3px; width: 3px !important; border-radius: 2px; }
-.snip-gut-ok { background: var(--accent); }
-.snip-gut-bad { background: var(--danger); }
-.snip-gut-blank { background: var(--warn); }
+.snip-gut-blank { margin-left: 3px; width: 3px !important; border-radius: 2px; background: var(--warn); }
+/* 照着敲：直接在原代码块上敲（见 js/judge/snippet-type.js） */
+.is-typing .code-scroll { position: relative; cursor: text; }
+.is-typing td.code .tc { color: var(--muted) !important; opacity: .6; transition: opacity .08s; }
+.is-typing td.code .tc.typed { color: inherit !important; opacity: 1; }
+.is-typing td.code .tc.cur { position: relative; opacity: 1; }
+.is-typing td.code .tc.cur::before {
+  content: ''; position: absolute; left: -1px; top: .15em; bottom: .15em; width: 2px;
+  background: var(--accent); animation: tc-blink 1s steps(1) infinite;
+}
+.is-typing td.code .tc-nl { display: inline-block; min-width: .6em; }
+.is-typing td.code .tc.bad { color: var(--danger) !important; opacity: 1; background: color-mix(in srgb, var(--danger) 22%, transparent); border-radius: 2px; animation: tc-shake .25s; }
+.is-typing td.code .tc-nl.bad::after { content: '↵'; color: var(--danger); }
+.is-typing.tc-blur td.code .tc.cur::before { animation: none; opacity: .4; }
+.is-typing.tc-blur:not(.tc-done) .code-scroll::after {
+  content: '点击代码开始敲'; position: absolute; left: 50%; top: 14px; transform: translateX(-50%);
+  padding: 5px 12px; border-radius: 999px; background: var(--accent); color: var(--bg);
+  font: 12px/1.4 var(--mono); pointer-events: none; box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+}
+.tc-input {
+  position: absolute; width: 1px; height: 1.4em; padding: 0; border: 0; margin: 0;
+  opacity: 0; resize: none; overflow: hidden; font-size: 16px; caret-color: transparent; pointer-events: none;
+}
+@keyframes tc-blink { 50% { opacity: 0; } }
+@keyframes tc-shake { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
 /* 文末「跟练」汇总 */
 .practice-sum {
   display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap;
