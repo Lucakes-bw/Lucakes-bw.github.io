@@ -125,9 +125,17 @@
   const READ_AT_KEY = 'lt-read-at';   // url → 标记已读的时间戳，用于阅读统计；更早的记录没有时间
   const readSet = new Set(store.get(READ_KEY, []));
   const readAt = store.get(READ_AT_KEY, {});
+  // 页面可能是悬停时提前在后台渲染好的（预渲染），也可能开了好几个标签页：
+  // 内存里的记录可能比 localStorage 旧，改之前先重新读一遍，免得把别处刚记下的已读覆盖掉
+  const reloadRead = () => {
+    readSet.clear();
+    store.get(READ_KEY, []).forEach(u => readSet.add(u));
+    Object.keys(readAt).forEach(k => delete readAt[k]);
+    Object.assign(readAt, store.get(READ_AT_KEY, {}));
+  };
   const saveRead = () => { store.set(READ_KEY, Array.from(readSet)); store.set(READ_AT_KEY, readAt); };
-  const markRead = url => { readSet.add(url); readAt[url] = Date.now(); saveRead(); };
-  const unmarkRead = url => { readSet.delete(url); delete readAt[url]; saveRead(); };
+  const markRead = url => { reloadRead(); readSet.add(url); readAt[url] = Date.now(); saveRead(); };
+  const unmarkRead = url => { reloadRead(); readSet.delete(url); delete readAt[url]; saveRead(); };
 
   function asciiBar(done, total, width) {
     const n = total ? Math.round(done / total * width) : 0;
@@ -244,10 +252,35 @@
       }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+    // 预渲染时读者还没打开这一页：短文章一屏就能看完，不能这时就记成已读
+    if (document.prerendering) document.addEventListener('prerenderingchange', onScroll, { once: true });
+    else onScroll();
   }
 
   renderReadState();
+
+  // 预渲染好的页面被打开时，读者可能刚在上一页读完一篇、换了配色：按最新的本机数据刷新一遍。
+  // 首页的学习记录（热力图、动态）是一次性画的，数据变了就直接重新加载
+  if (document.prerendering) {
+    let readSnapshot = null;
+    try { readSnapshot = localStorage.getItem(READ_KEY); } catch (e) { /* ignore */ }
+    document.addEventListener('prerenderingchange', () => {
+      let latest = null;
+      try { latest = localStorage.getItem(READ_KEY); } catch (e) { /* ignore */ }
+      if (latest !== readSnapshot && $('[data-cal]')) { location.reload(); return; }
+      reloadRead();
+      renderReadState();
+      updateMarkBox();
+      let scheme = null, ui = null;
+      try { scheme = localStorage.getItem('lt-scheme'); ui = localStorage.getItem('lt-ui'); } catch (e) { /* ignore */ }
+      if (scheme && scheme !== savedScheme && schemeById.has(scheme)) { savedScheme = scheme; applyScheme(scheme); }
+      if (ui === 'ios' || ui === 'term') {
+        if (ui === 'ios') html.setAttribute('data-ui', 'ios'); else html.removeAttribute('data-ui');
+        $$('[data-ui-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.uiV === ui)));
+        if (ui !== 'ios' || $('pre, code, .ide, .dsviz')) window.LT.loadMono();
+      }
+    }, { once: true });
+  }
 
   /* ---------- 首页：学习记录（热力图、学习动态、成就） ----------
      一次「学习」= 读完一篇文章，或在刷题里通过一道题；数据都只在本机浏览器里 */
@@ -705,5 +738,65 @@
       const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { io.disconnect(); load(); } }, { rootMargin: '400px' });
       io.observe(gEl);
     } else load();
+  }
+
+  /* ---------- 切页加速：预取 + Service Worker ----------
+     Chrome / Edge 由 layout.ejs 里的 speculationrules 在悬停时预渲染；
+     其他浏览器在这里悬停 65ms（手机上按下）就先把页面取回来。 */
+  const conn = navigator.connection;
+  const saveData = conn && (conn.saveData || /2g/.test(conn.effectiveType || ''));
+  const prefetched = new Set([location.pathname]);
+  const NO_PREFETCH = /\/(search\.json|downloads\/|media\/|img\/)|\.xml$/;
+  function prefetchable(a) {
+    if (!a || !a.href || a.target === '_blank' || a.hasAttribute('download') || a.hasAttribute('data-no-prefetch')) return null;
+    let u;
+    try { u = new URL(a.href, location.href); } catch (e) { return null; }
+    if (u.origin !== location.origin || u.search || NO_PREFETCH.test(u.pathname) || prefetched.has(u.pathname)) return null;
+    return u.pathname;
+  }
+  function prefetch(path) {
+    if (saveData || prefetched.has(path)) return;
+    prefetched.add(path);
+    // 有 Service Worker 时用 fetch：取回来的页面进它的缓存，Safari 也能用上
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      fetch(path, { credentials: 'same-origin', priority: 'low' }).catch(() => prefetched.delete(path));
+    } else {
+      const l = document.createElement('link');
+      l.rel = 'prefetch';
+      l.href = path;
+      document.head.appendChild(l);
+    }
+  }
+  const hasSpecRules = HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules');
+  if (!hasSpecRules && !saveData) {
+    let timer = 0;
+    document.addEventListener('mouseover', e => {
+      const path = prefetchable(e.target.closest && e.target.closest('a'));
+      if (!path) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => prefetch(path), 65);
+    }, { passive: true });
+    document.addEventListener('mouseout', () => clearTimeout(timer), { passive: true });
+    document.addEventListener('touchstart', e => {
+      const path = prefetchable(e.target.closest && e.target.closest('a'));
+      if (path) prefetch(path);
+    }, { passive: true });
+  }
+  // 文章页：读者多半会点「下一篇」，空闲时先取回来
+  const nextLink = prefetchable($('.series-nav .sn-next'));
+  if (nextLink && !document.prerendering) {
+    const idle = window.requestIdleCallback || (fn => setTimeout(fn, 1500));
+    window.addEventListener('load', () => idle(() => prefetch(nextLink)));
+  }
+
+  // 本地 hexo server 下默认不注册，免得改了文件还看到缓存的旧页面；
+  // 要在本地调试 SW 时，在控制台执行 localStorage.setItem('lt-sw-dev', '1')
+  const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  let swDev = false;
+  try { swDev = localStorage.getItem('lt-sw-dev') === '1'; } catch (e) { /* ignore */ }
+  if ('serviceWorker' in navigator && (!isLocal || swDev)) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register(window.LT.root + 'sw.js').catch(() => { /* 不支持或被禁用时照常用网络 */ });
+    });
   }
 })();
