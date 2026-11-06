@@ -26,7 +26,7 @@
       <% c.posts.forEach(function (it) { %>
       <li class="ls-row" data-read-url="<%- url_for(it.post.path) %>">
         <span class="ls-no"><%= it.no %></span>
-        <a class="ls-title" href="<%- url_for(it.post.path) %>"><%= it.post.title %><% const pc = practice_count(it.post); if (pc) { %><span class="ls-practice" data-practice-url="<%- url_for(it.post.path) %>" data-practice-total="<%= pc %>" title="文中有 <%= pc %> 段代码可以动手练">✎ 0/<%= pc %></span><% } %></a>
+        <a class="ls-title" href="<%- url_for(it.post.path) %>"><%= it.post.title %></a>
         <span class="ls-date"><%= date(it.post.date, 'YYYY-MM-DD') %></span>
         <span class="read-mark" title="已读">✓</span>
       </li>
