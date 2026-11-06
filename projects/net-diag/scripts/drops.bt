@@ -1,0 +1,8 @@
+// 统计内核丢弃的包：按丢包原因（数字）和丢弃它的内核函数分组
+// 原因的名字见 /sys/kernel/tracing/events/skb/kfree_skb/format；2 是 NOT_SPECIFIED，不统计
+// 用法：bpftrace scripts/drops.bt，Ctrl-C 结束时打印
+tracepoint:skb:kfree_skb
+/args.reason > 2/
+{
+    @drops[args.reason, ksym(args.location)] = count();
+}
