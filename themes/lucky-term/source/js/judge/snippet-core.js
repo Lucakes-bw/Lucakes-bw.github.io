@@ -18,7 +18,6 @@
  *
  * 跟练（第二期）用到的：
  *   blanks(code, spec)        填空要挖掉的行
- *   typingLines(code)         照着敲要比对的行（去掉注释和空行）；matchPrefix 比对一行敲到了哪里
  *   unstable(code)            输出每次运行都不一样（时间、随机数）：判定时只要求能正常运行
  *   compareOutput(got, exp)   比较输出：忽略行尾空白、末尾空行，地址 0x… 不比
  *   extractBlocks(md)         从 Markdown 里取出代码块和它前面的 <!-- run --> 注释（构建和检查脚本用）
@@ -161,36 +160,6 @@
     return { code: line.replace(/\s+$/, ''), comment: '' };
   }
 
-  // 比较用的规范形式：去掉注释，空白只在两个标识符之间才算数
-  const normLine = line => splitComment(line).code.trim().replace(/\s+/g, ' ').replace(/ ?([^\w ]) ?/g, '$1');
-
-  // 照着敲：需要敲的行（注释行、空行不算）。raw 是去掉行尾注释后的原文，用来显示提示
-  function typingLines(code) {
-    const out = [];
-    let inBlock = false;
-    code.split('\n').forEach((line, i) => {
-      const t = line.trim();
-      if (inBlock) { if (t.includes('*/')) inBlock = false; return; }
-      if (t.startsWith('/*') && !t.includes('*/')) { inBlock = true; return; }
-      const n = normLine(line);
-      if (n) out.push({ line: i, raw: splitComment(line).code.trim(), norm: n });
-    });
-    return out;
-  }
-
-  // typed 是不是 expected 的前缀（空白宽松比较）。是的话返回 expected 里对应到的位置，不是返回 -1
-  function matchPrefix(expected, typed) {
-    const e = expected, t = typed.trim();
-    let i = 0, j = 0;
-    while (j < t.length) {
-      if (/\s/.test(t[j])) { j++; continue; }
-      while (i < e.length && /\s/.test(e[i])) i++;
-      if (i >= e.length || e[i] !== t[j]) return -1;
-      i++; j++;
-    }
-    return i;
-  }
-
   // 「填空」：适合挖掉的行——在函数体里、是一条完整的语句，不是括号、return 0、单纯的输出
   function blankCandidates(code) {
     const lines = code.split('\n');
@@ -284,6 +253,6 @@
 
   return {
     classify, parseOptions, compileArgs, compileFiles, diagnostics, normLang, readsStdin, hash, FILE, ALLOWED,
-    splitComment, normLine, typingLines, matchPrefix, blanks, blankCode, BLANK_MARK, unstable, normOutput, compareOutput, extractBlocks
+    splitComment, blanks, blankCode, BLANK_MARK, unstable, normOutput, compareOutput, extractBlocks
   };
 });

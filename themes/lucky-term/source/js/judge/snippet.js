@@ -4,9 +4,9 @@
  *   edit  打开编辑器，有四种练法：
  *           改一改  原代码随便改着跑
  *           填空    挖掉几行，补上后输出和原程序一致就算通过
- *           照着敲  原代码留在上面，在空编辑器里一行行敲出来；当前行用淡色提示后面的内容，敲错的行标红
+ *           照着敲  直接在变灰的原代码上敲，敲过的恢复高亮（见 snippet-type.js）；敲完就算通过
  *           默写    原代码藏起来，自己写出输出一样的程序
- *         判定都是「输出和原程序一致」：原程序也在浏览器里跑一遍，输出里的地址不比；
+ *         填空、默写的判定是「输出和原程序一致」：原程序也在浏览器里跑一遍，输出里的地址不比；
  *         用到时间、随机数的程序输出不固定，只要求能正常运行。
  * 草稿按代码块和练法保存在本机，文章里的代码更新后作废；通过记录存在 lt-practice（首页动态、专栏页用）。
  * 编译器和做题页共用（ide.js / cpp-worker.js / wasi-worker.js），第一次运行时才下载。
@@ -34,7 +34,7 @@
   const MODES = {
     edit: { name: '改一改', tip: '随便改，改完点 run 看看结果有什么变化' },
     fill: { name: '填空', level: 1, tip: '补全挖掉的几行（行尾注释是提示），输出和原程序一致就算通过' },
-    type: { name: '照着敲', level: 2, tip: '对着上面的代码一行行敲出来，注释可以不敲' },
+    type: { name: '照着敲', level: 2, tip: '点一下代码，在灰色的原文上直接敲：缩进、注释、中文自动跳过，敲错了要改对才能继续' },
     recall: { name: '默写', level: 3, tip: '不看原文，写出输出一样的程序' }
   };
   const LEVEL_NAME = ['', '填空', '照着敲', '默写'];
@@ -69,16 +69,6 @@
     });
     return monacoP;
   }
-  // 照着敲时关掉自动补全括号和补全提示，每个字符都自己敲
-  const TYPING_OFF = {
-    autoClosingBrackets: 'never', autoClosingQuotes: 'never', autoSurround: 'never', autoClosingOvertype: 'never',
-    quickSuggestions: false, suggestOnTriggerCharacters: false, wordBasedSuggestions: 'off', parameterHints: { enabled: false }
-  };
-  const TYPING_ON = {
-    autoClosingBrackets: 'languageDefined', autoClosingQuotes: 'languageDefined', autoSurround: 'languageDefined', autoClosingOvertype: 'auto',
-    quickSuggestions: true, suggestOnTriggerCharacters: true, wordBasedSuggestions: 'currentDocument', parameterHints: { enabled: true }
-  };
-
   // 代码块前一行的 <!-- run: ... --> 注释
   function optionComment(fig) {
     for (let n = fig.previousSibling; n; n = n.previousSibling) {
@@ -109,7 +99,6 @@
     const practicable = !info.error;       // 演示错误的代码只能改一改
     const unstable = S.unstable(original);
     const blankLines = practicable ? S.blanks(original, opt.blank) : [];
-    const typing = S.typingLines(original);
     fig.classList.add('is-runnable');
     const canFill = blankLines.length > 0;  // 太短的程序（比如 hello world）挖不出空，不提供填空
     const snip = { fig, hash, practicable, canFill };
@@ -126,7 +115,36 @@
     let mode = null;                       // 打开编辑器时的练法
     let editor = null, m = null, edBox = null, bar = null, expectEl = null, fallback = null;
     const models = {};
-    let busy = false, panel = null, ghostIds = [], typedOk = 0;
+    let busy = false, panel = null, decoIds = [];
+    const fmtTime = t => `${Math.floor(t / 60000)}:${String(Math.floor(t / 1000) % 60).padStart(2, '0')}`;
+    const typeStats = st => {
+      const min = st.ms / 60000;
+      const parts = [`进度 ${st.total ? Math.floor(st.pos / st.total * 100) : 0}%（${st.pos} / ${st.total} 个字符）`];
+      if (st.keys) parts.push(`正确率 ${Math.round((st.keys - st.errors) / st.keys * 100)}%`);
+      if (min > 0.05) parts.push(`每分钟 ${Math.round(st.pos / min)} 个字符`);
+      return parts.join(' · ');
+    };
+    // 照着敲：直接在原代码块上敲，见 snippet-type.js
+    const typer = window.LTTyper.create({
+      fig,
+      pre: $('td.code pre', fig) || $('pre', fig),
+      load: () => store.json(draftKey('type'), null),
+      save: st => (st && st.pos ? store.set(draftKey('type'), JSON.stringify(st)) : store.del(draftKey('type'))),
+      shortcut: e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); run(); } },
+      onProgress: (st, hint) => {
+        if (st.done) tip(`敲完了 ✓ ${typeStats(st)}`, 'ok');
+        else if (hint) tip(`${hint} · ${typeStats(st)}`, 'bad');
+        else tip(st.pos || st.keys ? typeStats(st) : MODES.type.tip);
+      },
+      onDone: async st => {
+        tip(`敲完了 ✓ ${typeStats(st)}`, 'ok');
+        await run();
+        if (!panel || mode !== 'type') return;
+        const acc = `正确率 ${st.keys ? Math.round((st.keys - st.errors) / st.keys * 100) : 100}%`;
+        const speed = st.ms >= 3000 ? `用时 ${fmtTime(st.ms)} · ${acc} · 每分钟 ${Math.round(st.pos / (st.ms / 60000))} 个字符` : acc;
+        showVerdict(true, `${speed}。下面是这段程序的运行结果`);
+      }
+    });
 
     function showBadge() {
       const lv = levelOf(recordOf(hash));
@@ -142,7 +160,7 @@
 
     // 每种练法的初始代码
     const initial = k => (k === 'fill' ? S.blankCode(original, blankLines) : k === 'type' || k === 'recall' ? '' : original);
-    const code = () => (!mode ? original : editor ? editor.getValue() : fallback ? fallback.value : original);
+    const code = () => (!mode || mode === 'type' ? original : editor ? editor.getValue() : fallback ? fallback.value : original);
 
     /* --- 编译和运行（同样的代码只编译一次） --- */
     const builds = new Map();
@@ -352,7 +370,7 @@
       t.className = 'snip-tip' + (cls ? ' is-' + cls : '');
     }
     function defaultTip() {
-      if (mode === 'type') return updateTyping();
+      if (mode === 'type') { const st = typer.stats(); tip(st.done ? `已经敲完了 ✓ 想再练一遍点 reset` : st.pos ? `接着上次敲 · ${typeStats(st)}` : MODES.type.tip, st.done ? 'ok' : ''); return; }
       let t = MODES[mode].tip;
       if (unstable && mode !== 'edit') t += '。这段程序输出不固定，能正常运行就算通过';
       tip(t);
@@ -408,7 +426,7 @@
     }
 
     function saveDraft() {
-      if (!mode) return;
+      if (!mode || mode === 'type') return;     // 照着敲的进度由 typer 自己存
       const v = code();
       if (v === initial(mode)) store.del(draftKey(mode)); else store.set(draftKey(mode), v);
     }
@@ -429,18 +447,21 @@
         edBox.innerHTML = '<div class="snip-loading c-muted">加载编辑器…</div>';
         scroll.after(edBox);
       }
-      edBox.hidden = false;
       applyMode();
-      if (editor || fallback) return;
+    }
+
+    async function ensureEditor() {
+      if (editor || fallback || ensureEditor.loading) return;
+      ensureEditor.loading = true;
       try {
         const mm = await monaco();
         m = mm;
         edBox.innerHTML = '';
-        editor = mm.editor.create(edBox, Object.assign({ model: modelFor(mode) }, IDE.editorOptions(), { lineNumbersMinChars: 3 }, mode === 'type' ? TYPING_OFF : {}));
+        editor = mm.editor.create(edBox, Object.assign({ model: modelFor(mode === 'type' ? 'edit' : mode) }, IDE.editorOptions(), { lineNumbersMinChars: 3 }));
         editor.addCommand(mm.KeyMod.CtrlCmd | mm.KeyCode.Enter, run);
         editor.addCommand(mm.KeyMod.CtrlCmd | mm.KeyMod.Shift | mm.KeyCode.Enter, check);
         editor.onDidContentSizeChange(fit);
-        editor.onDidChangeCursorPosition(() => { if (mode === 'type') updateTyping(); });
+        if (mode === 'type') return;
         if (mode === 'fill') highlightBlanks();
         fit();
         defaultTip();
@@ -454,7 +475,9 @@
         fallback.rows = Math.min(lines.length + 1, 30);
         fallback.addEventListener('input', saveDraft);
         fallback.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); (e.shiftKey ? check : run)(); } });
-        fallback.focus();
+        if (mode !== 'type') fallback.focus();
+      } finally {
+        ensureEditor.loading = false;
       }
     }
 
@@ -466,7 +489,6 @@
         clearTimeout(timer);
         timer = setTimeout(saveDraft, 400);
         m.editor.setModelMarkers(model, 'snippet', []);
-        if (mode === 'type' && editor && editor.getModel() === model) updateTyping();
       });
       return (models[k] = model);
     }
@@ -482,13 +504,22 @@
       $('[data-expect]', bar).hidden = !(mode === 'fill' || mode === 'recall');
       $('[data-expect]', bar).classList.remove('is-on');
       expectEl.hidden = true;
-      scroll.hidden = mode !== 'type';           // 照着敲时原代码留在上面
+      const typing = mode === 'type';
+      scroll.hidden = !typing;                   // 照着敲直接在原代码块上敲；其他练法用编辑器
+      edBox.hidden = typing;
+      $('[data-check]', bar).hidden = !practice || typing;   // 照着敲敲完就算通过，不用提交
       showBadge();
       if (panel) $('[data-verdict]', panel).hidden = true;
+      if (typing) {
+        typer.start();
+        defaultTip();
+        typer.focus();
+        return;
+      }
+      typer.stop();
       if (editor) {
-        ghostIds = editor.deltaDecorations(ghostIds, []);
+        decoIds = editor.deltaDecorations(decoIds, []);
         editor.setModel(modelFor(mode));
-        editor.updateOptions(mode === 'type' ? TYPING_OFF : TYPING_ON);
         if (mode === 'fill') highlightBlanks();
         fit();
         defaultTip();
@@ -496,7 +527,10 @@
       } else if (fallback) {
         fallback.value = store.get(draftKey(mode)) ?? initial(mode);
         defaultTip();
-      } else defaultTip();
+      } else {
+        defaultTip();
+        ensureEditor();
+      }
     }
     function switchMode(k) {
       if (k === mode) return;
@@ -512,55 +546,7 @@
       for (let i = 1; i <= model.getLineCount(); i++) {
         if (model.getLineContent(i).includes(S.BLANK_MARK)) ds.push({ range: new m.Range(i, 1, i, 1), options: { isWholeLine: true, className: 'snip-line-blank', linesDecorationsClassName: 'snip-gut-blank' } });
       }
-      ghostIds = editor.deltaDecorations(ghostIds, ds);
-    }
-
-    // 照着敲：逐行和原文比对；光标所在行用淡色显示这一行还没敲的部分
-    function updateTyping() {
-      if (!editor || mode !== 'type') return;
-      const model = editor.getModel();
-      const pos = editor.getPosition();
-      const ds = [];
-      let k = 0, ok = 0, bad = 0, ghost = null;
-      const n = model.getLineCount();
-      for (let i = 1; i <= n; i++) {
-        const text = model.getLineContent(i);
-        const norm = S.normLine(text);
-        const exp = typing[k];
-        const atCursor = pos && pos.lineNumber === i;
-        if (atCursor && exp) {
-          const typed = S.splitComment(text).code;
-          const at = S.matchPrefix(exp.raw, typed);
-          if (at >= 0 && norm !== exp.norm) {
-            // 正在敲这一行，前面都对：提示剩下的部分
-            if (pos.column === model.getLineMaxColumn(i)) ghost = { line: i, text: exp.raw.slice(at) };
-            continue;
-          }
-        }
-        if (!norm) continue;
-        if (!exp) {
-          bad++;
-          ds.push({ range: new m.Range(i, 1, i, 1), options: { isWholeLine: true, className: 'snip-line-bad', linesDecorationsClassName: 'snip-gut-bad', hoverMessage: { value: '原文已经敲完了，这一行是多出来的' } } });
-        } else if (norm === exp.norm) {
-          ok++;
-          ds.push({ range: new m.Range(i, 1, i, 1), options: { isWholeLine: true, linesDecorationsClassName: 'snip-gut-ok' } });
-        } else {
-          bad++;
-          ds.push({ range: new m.Range(i, 1, i, 1), options: { isWholeLine: true, className: 'snip-line-bad', linesDecorationsClassName: 'snip-gut-bad', hoverMessage: { value: '原文：`' + exp.raw.replace(/`/g, '\\`') + '`' } } });
-        }
-        k++;
-      }
-      // 光标在空行上：提示下一行原文
-      if (!ghost && pos && typing[k] && !model.getLineContent(pos.lineNumber).trim()) ghost = { line: pos.lineNumber, text: typing[k].raw };
-      if (ghost) {
-        const col = model.getLineMaxColumn(ghost.line);
-        ds.push({ range: new m.Range(ghost.line, col, ghost.line, col), options: { after: { content: ghost.text, inlineClassName: 'snip-ghost' }, showIfCollapsed: true } });
-      }
-      ghostIds = editor.deltaDecorations(ghostIds, ds);
-      typedOk = ok;
-      const total = typing.length;
-      if (ok === total && !bad) tip(`全部 ${total} 行都敲对了 ✓ 点「提交检查」运行一下`, 'ok');
-      else tip(`已敲对 ${ok} / ${total} 行${bad ? `，${bad} 行和原文不一样（鼠标停在红色行上看原文）` : ''}。注释可以不敲`, bad ? 'bad' : '');
+      decoIds = editor.deltaDecorations(decoIds, ds);
     }
 
     const fit = () => {
@@ -575,6 +561,7 @@
       editBtn.textContent = 'edit';
       editBtn.title = '改代码、填空、照着敲、默写';
       fig.classList.remove('is-editing');
+      typer.stop();
       bar.hidden = true;
       edBox.hidden = true;
       scroll.hidden = false;
@@ -582,6 +569,12 @@
       markDraft();
     }
     function reset() {
+      if (mode === 'type') {
+        if (typer.stats().pos && !confirm('照着敲从头开始？')) return;
+        typer.reset();
+        if (panel) $('[data-verdict]', panel).hidden = true;
+        return;
+      }
       if (!confirm(`把「${MODES[mode].name}」恢复成初始代码？${editor ? `（之后可以用 ${MOD}+Z 撤销）` : ''}`)) return;
       const text = initial(mode);
       if (editor) {
