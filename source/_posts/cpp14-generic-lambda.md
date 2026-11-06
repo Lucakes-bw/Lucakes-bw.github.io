@@ -270,6 +270,7 @@ int main()
 
 ### 5.1 移动捕获的 lambda 不能放进 std::function
 
+<!-- run: error -->
 ```cpp
 #include <functional>
 #include <memory>

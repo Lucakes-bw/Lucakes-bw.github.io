@@ -442,6 +442,7 @@ write(1, "1. printf\n3. printf\n", 20)  = 20
 1. 用 `open`、`read`、`write` 实现 `cp 源文件 目标文件`。
 2. 下面的程序输出到终端和输出到文件时，分别会输出什么？
 
+   <!-- run: error -->
    ```c
    #include <stdio.h>
    #include <stdlib.h>

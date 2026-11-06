@@ -281,6 +281,7 @@ evens|doubled : 4 8 12 16
 
 ### 5.1 对临时容器调用算法：ranges::dangling
 
+<!-- run: error -->
 ```cpp
 #include <algorithm>
 #include <vector>
@@ -300,6 +301,7 @@ error: indirection requires pointer operand ('borrowed_iterator_t<std::vector<in
 
 ### 5.2 filter_view 不能 const 遍历
 
+<!-- run: error -->
 ```cpp
 #include <iostream>
 #include <ranges>
@@ -344,6 +346,7 @@ auto evensOf()
 
 C++20 没有提供把视图转换成容器的方法，只能手动遍历再 `push_back`。C++23 增加了 `std::ranges::to`：
 
+<!-- run: flags="-std=c++23" -->
 ```cpp
 #include <iostream>
 #include <ranges>

@@ -91,6 +91,7 @@ export namespace geometry {              // 也可以整个命名空间一起导
 
 ### 2.2 使用模块
 
+<!-- run: off -->
 ```cpp
 // main.cpp：使用模块
 #include <iostream>
@@ -210,6 +211,7 @@ void logInfo(const std::string& msg)
 int logCount() { return counter; }
 ```
 
+<!-- run: off -->
 ```cpp
 import logger;
 #include <string>

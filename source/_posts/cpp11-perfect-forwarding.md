@@ -102,6 +102,7 @@ wrapperGood(2):
 1. 形式**恰好**是 `T&&`（或 `auto&&`）；
 2. `T` 需要**类型推导**。
 
+<!-- run: error -->
 ```cpp
 #include <vector>
 template <typename T> void f1(T&& x);                   // 万能引用
@@ -311,6 +312,7 @@ create<Student>("Carol", 22):
 
 把万能引用用在构造函数上要非常小心：
 
+<!-- run: error -->
 ```cpp
 #include <iostream>
 #include <string>
@@ -377,6 +379,7 @@ void twice(T&& x)
 
 ### 7.1 花括号初始化列表
 
+<!-- run: error -->
 ```cpp
 #include <vector>
 #include <utility>

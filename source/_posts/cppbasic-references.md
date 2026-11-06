@@ -172,6 +172,7 @@ int main()
 
 `greet("Alice")` 中，`"Alice"` 是一个字符串字面量，不是 `std::string`。编译器会创建一个临时的 `std::string` 对象，`const std::string&` 参数绑定到这个临时对象上。但**非 const 引用不能绑定临时对象**：
 
+<!-- run: error -->
 ```cpp
 #include <string>
 void modify(std::string& s);

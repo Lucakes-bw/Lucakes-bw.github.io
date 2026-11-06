@@ -221,6 +221,7 @@ World >= hello: true
 
 **只有 `= default` 的 `<=>` 才会自动生成 `==`；自己实现的 `<=>` 不会**：
 
+<!-- run: error -->
 ```cpp
 #include <compare>
 struct S {

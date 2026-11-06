@@ -157,8 +157,9 @@ decltype(auto) applyImpl(F&& f, Tuple&& t, std::index_sequence<I...>)
     return std::forward<F>(f)(std::get<I>(std::forward<Tuple>(t))...);
 }
 
+// 不能叫 apply：实参是 std::tuple 时，实参依赖查找（ADL）会把 std::apply 也找出来，调用有歧义
 template <typename F, typename Tuple>
-decltype(auto) apply(F&& f, Tuple&& t)
+decltype(auto) myApply(F&& f, Tuple&& t)
 {
     constexpr std::size_t N = std::tuple_size<std::decay_t<Tuple>>::value;
     return applyImpl(std::forward<F>(f), std::forward<Tuple>(t), std::make_index_sequence<N>{});
@@ -182,7 +183,7 @@ int describe(const std::string& name, int age, double score)
 int main()
 {
     auto student = std::make_tuple(std::string("Alice"), 20, 92.5);
-    int age = apply(describe, student);
+    int age = myApply(describe, student);
     std::cout << "返回值 " << age << '\n';
     printTuple(student, std::make_index_sequence<3>{});
 
@@ -200,9 +201,9 @@ Alice，20 岁，成绩 92.5
 Alice, 20, 92.5
 ```
 
-理解 `apply` 的关键：
+理解 `myApply` 的关键：
 
-1. `apply` 用 `std::make_index_sequence<3>{}` 创建了一个 `index_sequence<0, 1, 2>` 类型的空对象，传给 `applyImpl`。
+1. `myApply` 用 `std::make_index_sequence<3>{}` 创建了一个 `index_sequence<0, 1, 2>` 类型的空对象，传给 `applyImpl`。
 2. `applyImpl` 的最后一个参数类型是 `std::index_sequence<I...>`，编译器据此推导出参数包 `I` 是 `0, 1, 2`。这个参数本身没有名字，也不会被使用，**它的唯一作用就是让编译器推导出 `I...`**。
 3. `std::get<I>(t)...` 展开成 `std::get<0>(t), std::get<1>(t), std::get<2>(t)`，正好作为 `describe` 的三个参数。
 
