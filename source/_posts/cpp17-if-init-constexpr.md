@@ -112,6 +112,7 @@ banana: 不存在
 
 写一个把各种值转换成字符串的函数模板：数值用 `std::to_string`，字符串原样返回。直观的写法是：
 
+<!-- run: error -->
 ```cpp
 #include <string>
 #include <type_traits>
@@ -215,6 +216,7 @@ int main()
 
 ### 3.1 不写 else，后面的代码照样会被实例化
 
+<!-- run: error -->
 ```cpp
 #include <type_traits>
 template <typename T>

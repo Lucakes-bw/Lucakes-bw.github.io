@@ -442,6 +442,7 @@ return static_cast<double>(total) / scores.size();
 
 下面的程序遍历一个链表，但是忘了在到达末尾时停下来：
 
+<!-- run: error -->
 ```cpp
 #include <iostream>
 #include <string>

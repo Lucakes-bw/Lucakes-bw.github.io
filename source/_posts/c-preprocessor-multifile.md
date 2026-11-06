@@ -98,6 +98,7 @@ gcc -std=c11 -E macro.c | grep -E 'printf\("SQUARE|int m = '
 
 ## 3. 条件编译和 assert
 
+<!-- run: error -->
 ```c
 #include <assert.h>
 #include <stdio.h>

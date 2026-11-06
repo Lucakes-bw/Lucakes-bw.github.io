@@ -288,6 +288,7 @@ GDB 在 `balance` 从 100 变成 0 的那一刻停了下来。它显示的是**�
 
 程序没有崩溃，而是卡住了：
 
+<!-- run: error -->
 ```c
 // hang.c
 #include <stdio.h>

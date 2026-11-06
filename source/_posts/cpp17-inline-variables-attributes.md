@@ -96,6 +96,7 @@ C++11 引入了 `[[属性]]` 语法，C++14 增加了 `[[deprecated]]`。C++17 �
 
 ### 2.1 [[nodiscard]]：返回值不能被忽略
 
+<!-- run: off -->
 ```cpp
 #include <string>
 

@@ -204,6 +204,7 @@ constp.c:6:12: error: read-only variable is not assignable
 
 **`NULL`** 是一个特殊的指针值（通常就是地址 0），表示「不指向任何东西」。函数经常用返回 `NULL` 表示「没有找到」或者「失败」：
 
+<!-- run: error -->
 ```c
 #include <stdio.h>
 

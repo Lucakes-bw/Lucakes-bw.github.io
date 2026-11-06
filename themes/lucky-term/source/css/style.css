@@ -836,6 +836,63 @@ html[data-ui="ios"] .ui-term { display: none; }
 }
 .code-copy:hover { color: var(--fg); background: var(--panel-2); border-color: var(--border); }
 .code-copy.is-done { color: var(--accent); }
+/* 代码块跟练：run / edit 按钮、编辑器和输出面板（见 js/judge/snippet.js） */
+.code-acts { margin-left: auto; display: inline-flex; gap: 2px; }
+.code-btn {
+  font: 12px/1 var(--mono);
+  padding: 5px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.code-btn:hover:not(:disabled) { color: var(--fg); background: var(--panel-2); border-color: var(--border); }
+.code-btn:disabled { opacity: .5; cursor: default; }
+.code-btn[data-snip-run] { color: var(--accent); }
+.code-btn.has-draft::after { content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 5px; border-radius: 50%; background: var(--warn); vertical-align: 1px; }
+.code-btn.is-on { color: var(--fg); border-color: var(--border); }
+.md figure.highlight.is-editing { border-color: var(--accent); }
+.snip-editor { margin-top: 8px; border-top: 1px solid var(--border); }
+.snip-loading { padding: 16px; font: 13px var(--mono); }
+.snip-fallback {
+  display: block; width: 100%; box-sizing: border-box; min-height: 160px; margin: 0; padding: 12px 16px;
+  border: 0; outline: 0; resize: vertical; background: var(--panel); color: var(--fg);
+  font: 14px/1.6 var(--mono); tab-size: 4;
+}
+.snip-panel { border-top: 1px dashed var(--border-2); background: var(--panel); font: 13px/1.6 var(--mono); }
+.snip-bar { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 16px; min-height: 34px; box-sizing: border-box; }
+.snip-status { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); min-width: 0; }
+.snip-status.is-ok { color: var(--accent); }
+.snip-status.is-bad { color: var(--danger); }
+.snip-tools { margin-left: auto; display: inline-flex; gap: 2px; flex: none; }
+.snip-spin, .snip-status .spinner {
+  width: 12px; height: 12px; border-radius: 50%; flex: none;
+  border: 2px solid var(--border-2); border-top-color: var(--accent);
+  animation: snip-spin .8s linear infinite;
+}
+@keyframes snip-spin { to { transform: rotate(360deg); } }
+.snip-stdin { display: block; padding: 0 16px 8px; }
+.snip-stdin[hidden], .snip-editor[hidden], .md figure.highlight [hidden] { display: none; }
+.snip-stdin span { display: block; font-size: 12px; margin-bottom: 4px; }
+.snip-stdin textarea {
+  display: block; width: 100%; box-sizing: border-box; padding: 6px 10px; resize: vertical;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--code-bg); color: var(--fg);
+  font: 13px/1.6 var(--mono);
+}
+.snip-stdin textarea:focus { outline: none; border-color: var(--accent); }
+.md figure.highlight pre.snip-out {
+  margin: 0; padding: 4px 16px 14px; max-height: 360px; overflow: auto;
+  background: none; border: 0; border-radius: 0;
+  font: 13px/1.6 var(--mono); color: var(--fg); white-space: pre-wrap; word-break: break-word;
+}
+.md figure.highlight pre.snip-out:empty { display: none; }
+.md figure.highlight pre.snip-out.is-empty { color: var(--muted); }
+.snip-err { color: var(--danger); }
+.snip-warn { color: var(--warn); margin-bottom: 6px; }
+.snip-warn summary { cursor: pointer; }
+.c-warn { color: var(--warn); }
 .md figure.highlight table { display: table; margin: 0; border: 0; width: 100%; font-size: 14px; }
 .md figure.highlight .code-scroll { overflow-x: auto; }
 .md figure.highlight td { border: 0; padding: 0; }

@@ -87,6 +87,7 @@ public:
 
 C++98 中想让一个类不能拷贝，只能把拷贝构造函数声明为 `private` 且不实现。C++11 可以直接把它**删除**：
 
+<!-- run: error -->
 ```cpp
 #include <iostream>
 

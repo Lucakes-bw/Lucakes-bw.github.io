@@ -102,6 +102,7 @@ v.push_back(Buffer(1000000));         // 这个临时对象也马上就要销毁
 
 C++98 只有一种引用 `T&`，C++11 把它叫做**左值引用**，并新增了**右值引用** `T&&`，**专门用来绑定右值**。
 
+<!-- run: error -->
 ```cpp
 #include <string>
 std::string make() { return "tmp"; }

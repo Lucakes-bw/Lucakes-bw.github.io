@@ -115,6 +115,7 @@ std::string loadName() { return "lucky-server"; }
 std::string appName = loadName();              // 动态初始化：在 main 之前的某个时刻运行
 ```
 
+<!-- run: off -->
 ```cpp
 // logger.cpp
 #include <cstdio>

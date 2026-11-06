@@ -39,6 +39,7 @@ C++20 是继 C++11 之后**变化最大**的一个版本，其中有四个重量
 
 `std::list` 的迭代器不支持随机访问，不能用 `std::sort` 排序。看看用错时会发生什么：
 
+<!-- run: error -->
 ```cpp
 #include <algorithm>
 #include <list>

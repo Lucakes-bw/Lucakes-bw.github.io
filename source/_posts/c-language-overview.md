@@ -244,6 +244,7 @@ ld: symbol(s) not found for architecture arm64
 
 3. 下面的程序有两处错误，编译器会报告什么？
 
+   <!-- run: error -->
    ```c
    #include <stdio.h>
    int main(void)

@@ -421,6 +421,7 @@ Unmerged paths:
 
 **冲突**（conflict）不是错误，只是 Git 需要人来做决定。打开文件：
 
+<!-- run: error -->
 ```c
 // 简易计算器
 #include <stdio.h>

@@ -218,6 +218,7 @@ decltype(b) 是 const int: true
 
 ## 6. 常见错误与限制
 
+<!-- run: error -->
 ```cpp
 #include <tuple>
 std::tuple<int, int, int> get3() { return {1, 2, 3}; }
