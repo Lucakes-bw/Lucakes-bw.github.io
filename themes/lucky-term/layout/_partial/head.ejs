@@ -56,20 +56,22 @@
       root.setAttribute('data-scheme', id);
       root.setAttribute('data-theme', mode[id] || 'light');
       if (ui === 'ios') root.setAttribute('data-ui', 'ios');
-      // 等宽字体：终端风格整页都用；iOS 风格只有代码用，由 main.js 发现页面里有代码时再加载
+      // 等宽字体的 @font-face 在 style.css 里，用到才下载。
+      // 终端风格整页都用，提前 preload 省掉「CSS 解析完才发现要字体」的那段等待；
+      // iOS 风格只有代码用，由 main.js 发现页面里有代码时再调用
       window.LT.loadMono = function () {
         if (window.LT.monoLoaded) return;
         window.LT.monoLoaded = true;
-        ['400', '700'].forEach(function (w) {
-          var l = document.createElement('link');
-          l.rel = 'stylesheet';
-          l.href = 'https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.1.0/' + w + '.css';
-          document.head.appendChild(l);
-        });
+        var l = document.createElement('link');
+        l.rel = 'preload';
+        l.as = 'font';
+        l.type = 'font/woff2';
+        l.crossOrigin = 'anonymous';
+        l.href = <%- JSON.stringify(url_for('/fonts/jetbrains-mono-latin-400-normal.woff2')) %>;
+        document.head.appendChild(l);
       };
       if (ui !== 'ios') window.LT.loadMono();
     })();
   </script>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="<%- asset_url('/css/style.css') %>">
 </head>

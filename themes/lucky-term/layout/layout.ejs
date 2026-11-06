@@ -10,8 +10,34 @@
   <%- partial('_partial/footer') %>
   <%- partial('_partial/search') %>
   <script src="<%- asset_url('/js/main.js') %>"></script>
+  <%# 切页加速：鼠标悬停（手机上是按下）站内链接时，Chrome / Edge 提前在后台渲染目标页，点下去几乎立刻出现。
+      不支持的浏览器由 main.js 里的悬停预取兜底。站外链接、下载文件、新窗口打开的链接不预渲染。 %>
+  <script type="speculationrules">
+  {
+    "prerender": [{
+      "where": { "and": [
+        { "href_matches": "<%- config.root %>*" },
+        { "not": { "href_matches": ["<%- config.root %>search.json", "<%- config.root %>*.xml", "<%- config.root %>downloads/*", "<%- config.root %>media/*", "<%- config.root %>img/*", "<%- config.root %>*\\?*"] } },
+        { "not": { "selector_matches": "[target=_blank], [download], [data-no-prefetch]" } }
+      ] },
+      "eagerness": "moderate"
+    }]
+  }
+  </script>
   <% if (theme.busuanzi) { %>
-  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  <%# 预渲染的页面读者不一定会打开：等真正显示出来再去计数，避免把访问量算多 %>
+  <script>
+    (function () {
+      function load() {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+        document.body.appendChild(s);
+      }
+      if (document.prerendering) document.addEventListener('prerenderingchange', load, { once: true });
+      else load();
+    })();
+  </script>
   <% } %>
 </body>
 </html>
