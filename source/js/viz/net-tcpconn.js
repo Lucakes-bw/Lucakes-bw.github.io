@@ -10,7 +10,11 @@
       var y = TOP + i * ROW, cur = i === last;
       boxes.push({ id: 'c' + i, x: LX, y: y, w: BW, h: BH, text: r.c, hl: cur && r.chg !== 's' ? 'new' : null });
       boxes.push({ id: 's' + i, x: RX, y: y, w: BW, h: BH, text: r.s, hl: cur && r.chg !== 'c' ? 'new' : null });
-      if (r.dir) arrows.push({ from: r.dir === 'cs' ? 'c' + i : 's' + i, to: r.dir === 'cs' ? 's' + i : 'c' + i, label: r.seg, hl: cur ? 'cur' : null });
+      if (r.dir) {
+        var tag = /^seq=/.test(r.seg) ? '数据' : r.seg.split(' ')[0];
+        arrows.push({ from: r.dir === 'cs' ? 'c' + i : 's' + i, to: r.dir === 'cs' ? 's' + i : 'c' + i, label: r.seg, hl: cur ? 'cur' : null,
+          pkt: cur ? tag : null, pktHl: /RST/.test(tag) ? 'warn' : r.dir === 'sc' ? 'alt' : null });
+      }
     });
     return { kind: 'free', boxes: boxes, arrows: arrows, vars: x.vars,
       texts: [{ id: 'hc', x: LX, y: 30, text: '客户端 10.0.0.1', cls: 'muted' }, { id: 'hs', x: RX, y: 30, text: '服务器 10.0.0.2:8000', cls: 'muted' }] };

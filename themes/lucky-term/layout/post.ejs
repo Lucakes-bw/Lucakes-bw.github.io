@@ -67,6 +67,9 @@
   <%- partial('_partial/comments') %>
 </article>
 
+<% if (page.content && page.content.indexOf('class="pktview"') >= 0) { %>
+<script src="<%- asset_url('/js/pktview.js') %>"></script>
+<% } %>
 <% if (page.viz) { %>
 <script src="<%- asset_url('/js/dsviz.js') %>"></script>
 <% [].concat(page.viz).forEach(function (v) { %><script src="<%- url_for('/js/viz/' + v + '.js') %>"></script>

@@ -1,7 +1,7 @@
 ---
 title: DNS
 date: 2026-10-24 16:00:00
-updated: 2026-10-24 16:00:00
+updated: 2026-11-07 10:00:00
 categories:
   - 计算机网络
   - 应用层协议
@@ -12,7 +12,7 @@ order: 1
 description: 访问一个网站之前，要先把域名换成 IP 地址，这就是 DNS 的工作。本文用 dig 查询 example.com，看懂回答中的每一部分；用 dig +trace 从根服务器开始一步步查到答案，四次查询分别耗时 65、36、218、66 毫秒；查询 A、AAAA、NS、MX、TXT、CNAME 等记录；抓包看到一次查询只有 94 字节的 UDP 请求和 114 字节的回答；在 /etc/hosts 中加一行，curl 就去连接一个不存在的地址了。配有递归解析和缓存的逐步演示。
 top_group_list: true
 disableNunjucks: true
-viz: [net-dns]
+viz: [net-dns, net-pkts]
 ---
 
 > **本文目标**：理解 DNS 的作用和域名的层次结构；理解递归查询和迭代查询，以及缓存和 TTL；会用 dig 查询各种记录、追踪解析过程；知道 `/etc/hosts` 和 `/etc/resolv.conf` 的作用；能用抓包看懂一次 DNS 查询。
@@ -199,6 +199,10 @@ Domain Name System (response)
 ```
 
 `Authoritative: Server is not an authority`：这个回答来自解析器的缓存，不是权威服务器给的。0x9c3f 就是十进制的 39999。
+
+下面是另一次抓到的回答（加了 `+noedns`，没有 OPT 记录，所以短一些），可以逐字节拆开。重点看两处：**问题部分**中 `example.com` 被拆成「7 example 3 com 0」，每个标签前面是它的长度；**回答部分**的名字只有 2 个字节 `c0 0c`，这是一个压缩指针，指向报文中第 12 个字节处已经出现过的 `example.com`。
+
+<div class="pktview" data-pkt="dns-answer" data-paste></div>
 
 为什么用 UDP？一问一答，用 TCP 还要先花一个往返时间握手；丢了，客户端过一会儿重新问就是了（第 2.1 篇）。回答超过 UDP 的大小限制时（上面 EDNS 的 `udp: 1232` 是客户端能接收的最大字节数），服务器会在回答中设置 `Truncated` 标志，客户端改用 TCP 重新查询。
 

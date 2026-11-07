@@ -1325,6 +1325,92 @@ html.is-focus .site-main { padding-top: 40px; }
 .dsviz .dv-ptr.is-warn path { stroke: var(--danger); }
 .dsviz .dv-box line.dv-nul { stroke: var(--muted); stroke-width: 1.5; }
 .dsviz .dv-column.is-ok text, .dsviz .dv-column.is-dim text { fill: var(--fg); }
+/* 网络演示中沿连线飞行的数据包 */
+.dsviz .dv-pkt rect { fill: var(--accent); stroke: none; }
+.dsviz .dv-pkt text { fill: var(--bg); font-size: 11px; font-weight: 700; }
+.dsviz .dv-pkt.is-alt rect { fill: var(--link); }
+.dsviz .dv-pkt.is-warn rect { fill: var(--danger); }
+
+/* ---------- 专栏页的推荐卡片 ---------- */
+.series-note { margin: 0 0 1.4em; }
+.rec-card { border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; background: var(--panel); padding: 12px 16px; }
+.rec-card p { margin: .4em 0; }
+.rec-tag { display: inline-block; font: 12px var(--mono); color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 0 8px; }
+.rec-title { font-weight: 700; font-size: 1.05em; }
+.rec-by { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 6px; }
+.rec-tip { color: var(--fg-2); font-size: .94em; }
+
+/* ---------- pktview：逐字节拆开一个数据包 ---------- */
+.md .pktview {
+  margin: 0 0 1.6em; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); font: 13px/1.5 var(--mono); container-type: inline-size;
+  --L-eth: var(--muted); --L-ip: var(--link); --L-tcp: var(--accent); --L-udp: var(--accent); --L-icmp: var(--accent);
+  --L-dns: var(--warn); --L-http: var(--warn); --L-tls: var(--hl-keyword); --L-data: var(--fg-2); --L-pad: var(--border-2);
+}
+.pktview .pv-L-eth { --c: var(--L-eth); } .pktview .pv-L-ip { --c: var(--L-ip); }
+.pktview .pv-L-tcp, .pktview .pv-L-udp, .pktview .pv-L-icmp { --c: var(--L-tcp); }
+.pktview .pv-L-dns, .pktview .pv-L-http { --c: var(--L-dns); } .pktview .pv-L-tls { --c: var(--L-tls); }
+.pktview .pv-L-data { --c: var(--L-data); } .pktview .pv-L-pad { --c: var(--L-pad); }
+.pv-head { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--panel-2); border-radius: 8px 8px 0 0; }
+.pv-title { color: var(--fg); font-weight: 700; }
+.pv-title::before { content: "⇄ "; color: var(--accent); }
+.pv-size { color: var(--muted); white-space: nowrap; }
+.pv-legend { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.pv-chip { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border: 1px solid var(--border); border-radius: 999px; background: none; color: var(--fg); font: inherit; cursor: pointer; }
+.pv-chip:hover { border-color: var(--c); }
+.pv-chip-n { color: var(--muted); font-size: 11px; }
+.pv-dot { width: 9px; height: 9px; border-radius: 2px; background: var(--c); flex: none; }
+.pv-body { display: grid; grid-template-columns: auto minmax(0, 1fr); }
+.pv-dump { padding: 8px 10px; border-right: 1px solid var(--border); max-height: 340px; overflow: auto; white-space: pre; font-size: 12.5px; }
+.pv-row { display: flex; gap: 12px; line-height: 1.7; }
+.pv-off { color: var(--muted); user-select: none; }
+.pv-hex { display: inline-flex; }
+.pv-b, .pv-a { cursor: pointer; border-radius: 2px; }
+.pv-b { padding: 0 2px; margin-right: 1px; color: color-mix(in srgb, var(--c) 72%, var(--fg)); background: color-mix(in srgb, var(--c) 10%, transparent); }
+.pv-b:nth-child(8) { margin-right: 7px; }
+.pv-a { color: color-mix(in srgb, var(--c) 60%, var(--muted)); }
+.pv-empty { background: none; cursor: default; }
+.pv-b.is-hover, .pv-a.is-hover { background: color-mix(in srgb, var(--c) 30%, transparent); color: var(--fg); }
+.pv-b.is-sel, .pv-a.is-sel { background: var(--c); color: var(--bg); }
+.pv-tree { max-height: 340px; overflow: auto; padding: 4px 0; }
+/* 覆盖文章中 details 的卡片样式 */
+.md .pktview details { border: 0; border-radius: 0; background: none; margin: 0; box-shadow: none; }
+.md .pktview details > :not(summary) { margin: 0; }
+.md .pktview details[open] > summary { border-bottom: 0; border-radius: 0; }
+.md .pktview details > summary::before { content: "▸"; color: var(--muted); font-weight: 400; transition: transform .15s; }
+.md .pktview .pv-layer > summary { display: flex; align-items: center; gap: 8px; padding: 4px 10px; cursor: pointer; list-style: none; color: var(--fg); font-weight: 700; background: none; }
+.md .pktview .pv-layer > summary:hover { background: var(--fill); }
+.pv-lsize { color: var(--muted); font-weight: 400; font-size: 12px; }
+.pv-f { display: flex; gap: 10px; padding: 1px 10px; cursor: pointer; border-left: 3px solid transparent; }
+.pv-f.pv-kid .pv-fn { color: var(--muted); }
+.pv-fn { flex: none; min-width: 7.5em; color: var(--fg-2); }
+.pv-fv { color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-f.is-hover { background: var(--fill); }
+.pv-f.is-sel { background: color-mix(in srgb, var(--c) 16%, transparent); border-left-color: var(--c); }
+.pv-info { padding: 8px 12px; border-top: 1px solid var(--border); min-height: 4.4em; }
+.pv-info-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.pv-info-n { color: var(--c); font-weight: 700; }
+.pv-info-v { color: var(--fg); word-break: break-all; }
+.pv-info-o { color: var(--muted); font-size: 12px; }
+.pv-info-d { margin-top: 4px; color: var(--fg-2); font-family: var(--sans); line-height: 1.65; }
+.pv-hint { color: var(--muted); }
+.md .pktview .pv-paste { border-top: 1px solid var(--border); padding: 6px 12px 10px; }
+.md .pktview .pv-paste > summary { cursor: pointer; color: var(--accent); padding: 0; font-weight: 400; background: none; }
+.md .pktview .pv-paste > summary::before { margin-right: 6px; }
+.pv-paste p { margin: 6px 0; color: var(--muted); font-family: var(--sans); font-size: 13px; }
+.pv-paste textarea { width: 100%; box-sizing: border-box; background: var(--code-bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font: 12px/1.5 var(--mono); resize: vertical; }
+.pv-paste-row { display: flex; gap: 6px; margin-top: 6px; }
+/* 组件本身不够宽时（正文栏窄、手机），十六进制和字段上下排列 */
+@container (max-width: 780px) {
+  .pv-body { grid-template-columns: 1fr; }
+  .pv-dump { border-right: 0; border-bottom: 1px solid var(--border); max-height: 240px; }
+  .pv-tree { max-height: 280px; }
+}
+@container (max-width: 470px) {
+  .pv-dump { font-size: 10.5px; padding: 6px; }
+  .pv-row { gap: 6px; }
+  .pv-asc { display: none; }
+}
 
 /* ==========================================================
    iOS 风格（data-ui="ios"，由 iOS Light / iOS Dark 方案打开）

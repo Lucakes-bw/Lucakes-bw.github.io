@@ -1,7 +1,7 @@
 ---
 title: HTTPS 与 TLS
 date: 2026-10-24 16:10:00
-updated: 2026-10-24 16:10:00
+updated: 2026-11-07 10:00:00
 categories:
   - 计算机网络
   - 应用层协议
@@ -13,6 +13,7 @@ order: 3
 description: HTTP 是明文的，途中的任何人都能看到、修改你的数据。HTTPS 在 TCP 和 HTTP 之间加了一层 TLS，提供加密、完整性和身份验证。本文抓包对比 HTTP 和 HTTPS：前者能直接看到网页的内容，后者只剩下 Application Data；用 openssl s_client 查看 example.com 的 TLS 1.3 连接和由 4 张证书组成的证书链；测得 TLS 握手多花了约 0.077 秒（一个往返）；最后自己签发一张证书，依次复现「自签名证书」「名字不符」两种验证失败。
 top_group_list: true
 disableNunjucks: true
+viz: [net-tls, net-pkts]
 ---
 
 > **本文目标**：理解 HTTP 明文传输的风险；理解 TLS 提供的三种保护；理解对称加密、非对称加密和密钥交换在 TLS 中各自的作用；理解证书和证书链怎样证明「对方就是它声称的那个网站」；能读懂 TLS 握手的过程；会用 openssl 和 curl 排查证书问题。
@@ -197,7 +198,12 @@ DNS 0.067056  TCP 连接 0.132025  TLS 完成 0.209615  首字节 0.285634  总�
 DNS 0.067190  TCP 连接 0.131668  TLS 完成 0.209585  首字节 0.282877  总计 0.282983
 ```
 
-TLS 握手用了约 0.077 秒（从 TCP 连接完成到 TLS 完成），正好是一个往返时间。和上一篇的 HTTP 相比，第一个请求多了约 0.08 秒。持久连接在 HTTPS 中更加重要：TLS 握手只需要在建立连接时做一次。
+TLS 握手用了约 0.077 秒（从 TCP 连接完成到 TLS 完成），正好是一个往返时间。
+
+为什么 TLS 1.3 一个往返就够，TLS 1.2 却要两个？逐步对比两种握手：关键在于客户端什么时候发出自己的密钥交换公开值。
+
+<div class="dsviz" data-viz="tls-hs"></div>
+和上一篇的 HTTP 相比，第一个请求多了约 0.08 秒。持久连接在 HTTPS 中更加重要：TLS 握手只需要在建立连接时做一次。
 
 ### 5.1 仍然能看到什么
 
@@ -215,6 +221,11 @@ example.com	h2,http/1.1
 - **ALPN**：客户端表示支持 HTTP/2（`h2`）和 HTTP/1.1，服务器在 Server Hello 中选择一个。这次 curl 实际使用的是 HTTP/2，下一篇详细讲。
 
 此外，IP 地址、数据的大小和时间也都是可见的。
+
+把这个 Client Hello 整个拆开看。它有 517 字节，大部分是扩展。在右边点开「扩展」，再点 `server_name（SNI）`：左边高亮的 11 个字节，在 ASCII 栏中就是明文的 `example.com`；`key_share` 中是 32 字节的 x25519 公开值；最后的 `padding` 是为了把 Client Hello 凑到 512 字节以上，绕开某些中间设备的 bug。
+
+<div class="pktview" data-pkt="tls-client-hello"></div>
+
 
 ## 6. 证书验证失败
 

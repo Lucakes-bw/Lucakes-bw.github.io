@@ -37,7 +37,8 @@
 
 - **代码跟练**：能独立运行的 C/C++ 示例代码块带 `▶ run` 和 `edit` 按钮，用 WASM 版 Clang 在浏览器里编译运行。四种练法：改一改、填空、照着敲、默写，练习记录显示在代码块、文末和首页学习动态
 - **刷题**：题库带在线编辑器和判题，每道题关联到对应的专栏文章
-- **数据结构演示**：文章中可以嵌入逐步执行的动画演示，当前代码行同步高亮
+- **数据结构演示**：文章中可以嵌入逐步执行的动画演示，当前代码行同步高亮；网络专栏的演示中，数据包会沿着连线飞过去
+- **逐字节拆包**：网络专栏中嵌入真实抓到的数据包，浏览器里逐层解析（以太网、IPv4、TCP/UDP、DNS、HTTP、TLS），十六进制和字段双向高亮，读者还能粘贴自己用 tcpdump 抓的包
 
 > 已读和练习记录都保存在读者自己浏览器的 localStorage 中，不会上传；换浏览器或清除数据后会重置。
 
@@ -91,6 +92,8 @@ npx hexo new post my-article-slug
 | `description` | 文章摘要 |
 | `top_group_list` | `true` 时出现在首页侧栏 `★ starred/` |
 | `viz` | 用到的演示脚本（`source/js/viz/*.js`），正文中写 `<div class="dsviz" data-viz="名字"></div>` |
+
+**逐字节拆包**：front-matter 的 `viz` 中加上 `net-pkts`，正文写 `<div class="pktview" data-pkt="名字"></div>`（加 `data-paste` 可以让读者粘贴自己的包）。包来自 `projects/net-pkts/` 下的真实抓包，在 `export.py` 中挑选后运行 `python3 projects/net-pkts/export.py` 生成 `source/js/viz/net-pkts.js`。
 
 - **新增章节**：在 `series.yml` 里加章节名，并在 `_config.yml` 的 `category_map` 中加英文路径
 - **新增专栏**：在 `series.yml` 里加一项，新建 `source/column/<key>/index.md`（`type: series`、`series: <key>`），并在 `category_map` 中加英文路径
@@ -154,6 +157,7 @@ node tools/check-problems.mjs           # 检查题目格式、C++ 模板能编�
 | `ds-metro` | 数据结构 · 实战项目「地铁换乘查询」（起始代码 + 各里程碑参考实现） |
 | `net-server/tinynet` | 计算机网络 · 服务器开发 |
 | `net-diag` | 计算机网络 · 网络排障 |
+| `net-pkts` | 计算机网络 · 文章中逐字节拆开的真实抓包（DNS、HTTP、TLS） |
 | `lx-memory`、`lx-perf`、`lx-container` | Linux 基础 · 内存管理、性能分析、容器原理 |
 | `redis-lab`、`lsm-kv` | 数据库 · Redis、存储引擎 |
 | `qt-chat` | 客户端开发 · 综合实战 QtChat |

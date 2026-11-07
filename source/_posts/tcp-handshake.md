@@ -1,7 +1,7 @@
 ---
 title: TCP 连接管理
 date: 2026-10-20 10:00:00
-updated: 2026-10-24 15:25:00
+updated: 2026-11-07 10:00:00
 categories:
   - 计算机网络
   - TCP/IP协议
@@ -12,7 +12,7 @@ order: 2
 description: TCP 通信之前要建立连接，结束后要关闭连接。本文在实验网络中抓下一个完整的 TCP 连接，看懂三次握手中的序号、确认号和选项；实测挥手只用了 3 个报文而不是 4 个；用 ss 观察 FIN_WAIT_2、CLOSE_WAIT、TIME_WAIT 等状态，TIME_WAIT 持续 60 秒；服务器丢弃 SYN 时，客户端重发了 10 次、135 秒后才放弃；还有两种 RST：连接没有监听的端口，以及没读数据就关闭。配有连接建立与关闭的逐步演示。
 top_group_list: true
 disableNunjucks: true
-viz: [net-tcpconn]
+viz: [net-tcpconn, net-pkts]
 ---
 
 > **本文目标**：能读懂 TCP 头部；理解三次握手的过程，以及序号、确认号的含义；理解连接的关闭过程和半关闭；认识 TCP 连接的各个状态，会用 `ss` 查看；理解 TIME_WAIT 的作用；了解 SYN 的重发和 RST。
@@ -94,6 +94,14 @@ SYN 和 SYN+ACK 中协商了几个选项：
 | `wscale 7` | **窗口扩大因子**：窗口字段只有 16 位，最大 65535；实际的窗口 = 窗口字段 × 2⁷。所以后面的 `win 502` 实际是 502 × 128 = 64256 字节（第 2.4 篇） |
 
 这些选项只能在 SYN 中协商，连接建立后就不能更改了。
+
+逐字节看一个真实的 SYN（curl 访问 example.com 时发出的第一个包）。TCP 头部在这里是 40 字节：固定的 20 字节，加上 20 字节的选项。点开「选项」，四个选项各占几个字节、`NOP` 为什么夹在中间，一目了然；也留意「确认号」：SYN 没有设置 ACK 标志，这个字段就是 0。
+
+<div class="pktview" data-pkt="tcp-syn"></div>
+
+再看服务器回复的 SYN+ACK：确认号正好是上面的序号 + 1，标志位多了 ACK，TTL 是 63（中间经过了一个路由器）。
+
+<div class="pktview" data-pkt="tcp-synack"></div>
 
 ## 4. 关闭连接
 
