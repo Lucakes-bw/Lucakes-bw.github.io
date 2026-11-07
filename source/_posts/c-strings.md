@@ -289,6 +289,7 @@ Tom 的成绩是 92 分（92.0%）
 
 《输入与输出》中提到，`scanf("%s")` 遇到空格就停止，而且容易溢出。读取一整行应该用 **`fgets`**：
 
+<!-- run: stdin="hello world\nthis line is definitely too long\nok\n" -->
 ```c
 #include <stdio.h>
 #include <string.h>

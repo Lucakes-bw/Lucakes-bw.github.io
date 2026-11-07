@@ -74,7 +74,9 @@
     return out;
   }
 
-  const readsStdin = code => /\b(cin|scanf|getchar|fgets|getline|gets|getc|fread|fscanf\s*\(\s*stdin)\b/.test(strip(code));
+  // 读不读标准输入：cin、scanf、getchar、gets；fgets / getline / getc 等要看是不是从 stdin 读
+  // （getline(in, s) 从字符串流读、sscanf 从字符串读，都不算）
+  const readsStdin = code => /\bcin\b|\b(scanf|getchar|gets)\s*\(|\b(fgets|fread|getc|fgetc|fscanf|getline|getdelim|vscanf)\s*\([^;]*\bstdin\b/.test(strip(code));
 
   // 解析 <!-- run: ... --> 里的选项
   function parseOptions(text) {
