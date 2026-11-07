@@ -182,16 +182,20 @@
     // 继续阅读：按路线顺序找到第一篇没读过的文章
     const resume = $('[data-resume]');
     if (resume && readSet.size) {
+      const a = $('a', resume);
+      let found = false;
       for (const s of series) {
         const next = s.posts.find(p => !readSet.has(p.url));
         if (next) {
-          const a = $('a', resume);
           a.href = next.url;
           a.textContent = `${s.name} · ${next.title}`;
-          resume.hidden = false;
+          found = true;
           break;
         }
       }
+      // 全部读完也显示这一行：位置已经占好了，空着反而像出错
+      if (!found) { a.removeAttribute('href'); a.textContent = '✓ 所有专栏都读完了'; a.classList.add('c-accent'); }
+      resume.hidden = false;
     }
   }
 

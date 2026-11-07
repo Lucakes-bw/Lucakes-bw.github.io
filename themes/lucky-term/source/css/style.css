@@ -539,6 +539,9 @@ html[data-ui="ios"] .ui-term { display: none; }
 .gh-readme-list li::marker { color: var(--muted); }
 .gh-resume { margin: 14px 0 0; padding-top: 14px; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted); }
 .gh-resume a { font-weight: 600; margin-left: 6px; }
+/* 占位：脚本还没填好时先留出这一行的高度（has-read 由 head 里的脚本加） */
+html.has-read .gh-resume[hidden] { display: block; visibility: hidden; }
+.gh-resume { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .gh-sec { margin-top: 28px; }
 .gh-sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
@@ -665,6 +668,8 @@ html[data-ui="ios"] .ui-term { display: none; }
 .next-list li + li { border-top: 1px dashed var(--border); }
 .next-series { font: 12px/1.4 var(--mono); }
 .next-list a { color: var(--fg); }
+/* 标题固定一行：脚本把它换成真正的下一篇时，长短不同也不会把侧栏撑高 */
+.next-list li > a, .next-list li > span:not(.next-series) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .next-list a:not([href]) { color: var(--accent); }
 .tag-cloud sup { color: var(--muted); margin-left: 2px; font-size: 10px; }
 .tag-cloud-lg a { font-size: 15px; padding: 9px 12px; }

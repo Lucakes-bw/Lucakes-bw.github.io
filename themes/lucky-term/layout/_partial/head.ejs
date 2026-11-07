@@ -56,6 +56,8 @@
       root.setAttribute('data-scheme', id);
       root.setAttribute('data-theme', mode[id] || 'light');
       if (ui === 'ios') root.setAttribute('data-ui', 'ios');
+      // 有阅读记录时首页会显示「继续阅读」：首屏前先占好这一行，脚本填内容时下面不往下跳
+      try { if (JSON.parse(localStorage.getItem('lt-read') || '[]').length) root.classList.add('has-read'); } catch (e) {}
       // 等宽字体的 @font-face 在 style.css 里，用到才下载。
       // 终端风格整页都用，提前 preload 省掉「CSS 解析完才发现要字体」的那段等待；
       // iOS 风格只有代码用，由 main.js 发现页面里有代码时再调用
