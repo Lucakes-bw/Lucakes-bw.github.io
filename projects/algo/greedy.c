@@ -8,12 +8,22 @@ typedef struct {
     int start, end;                         // 左闭右开 [start, end)
 } Interval;
 
-static int byEnd(const void* a, const void* b) { return ((const Interval*)a)->end - ((const Interval*)b)->end; }
-static int byStart(const void* a, const void* b) { return ((const Interval*)a)->start - ((const Interval*)b)->start; }
+// 主关键字相同时再比较另一端，排序结果和 qsort 的实现无关（不同的 C 库结果一样）
+static int byEnd(const void* a, const void* b)
+{
+    const Interval *x = a, *y = b;
+    return x->end != y->end ? x->end - y->end : x->start - y->start;
+}
+static int byStart(const void* a, const void* b)
+{
+    const Interval *x = a, *y = b;
+    return x->start != y->start ? x->start - y->start : x->end - y->end;
+}
 static int byLength(const void* a, const void* b)
 {
     const Interval *x = a, *y = b;
-    return (x->end - x->start) - (y->end - y->start);
+    int lx = x->end - x->start, ly = y->end - y->start;
+    return lx != ly ? lx - ly : x->start - y->start;
 }
 
 // 按某种顺序排好以后，能放就放

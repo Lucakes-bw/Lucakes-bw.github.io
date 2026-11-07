@@ -14,6 +14,7 @@ description: 树是一种分层的数据结构，二叉树是其中最重要的�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-tree]
+notebook: true
 ---
 
 > **本文目标**：掌握树和二叉树的基本术语；了解二叉树的性质和存储方式；会实现前序、中序、后序和层序遍历；理解递归遍历时调用栈的变化，会用显式的栈改写成非递归；会由前序和中序序列还原二叉树。
@@ -128,6 +129,14 @@ void postorder(const TreeNode* root)
 
 对 `ABD##E##CF###` 这棵树：
 
+```c
+const char* s = "ABD##E##CF###";
+TreeNode* root = buildPreorder(&s);
+printf("前序: "); preorder(root); printf("\n");
+printf("中序: "); inorder(root); printf("\n");
+printf("后序: "); postorder(root); printf("\n");
+```
+
 ```
 前序: A B D E C F 
 中序: D B E A F C 
@@ -168,6 +177,16 @@ void freeTree(TreeNode* root)
 
 这些都是后序的思路：先求出左右子树的结果，再合并成自己的结果。`freeTree` 必须是后序的，如果先 `free(root)`，再访问 `root->left` 就是释放后使用。
 
+对上面的树（D、E、F 是叶子）：
+
+```c
+printf("高度 %d，叶子 %d 个\n", height(root), countLeaves(root));
+```
+
+```
+高度 3，叶子 3 个
+```
+
 ## 4. 层序遍历
 
 **层序遍历**一层一层地访问：先访问第 1 层（根），再从左到右访问第 2 层，然后第 3 层……它需要一个**队列**：访问一个节点时，把它的孩子放到队尾，排在同一层的其他节点后面。
@@ -191,6 +210,10 @@ void levelOrder(TreeNode* root)
 （这里为了简洁用了一个固定大小的数组作为队列，实际中应该用《队列》中的循环队列。）
 
 <div class="dsviz" data-viz="tree-level"></div>
+
+```c
+printf("层序: "); levelOrder(root); printf("\n");
+```
 
 ```
 层序: A B C D E F 
@@ -224,6 +247,10 @@ void inorderIterative(TreeNode* root)
 
 <div class="dsviz" data-viz="tree-inorder-iter"></div>
 
+```c
+printf("中序（非递归）: "); inorderIterative(root); printf("\n");
+```
+
 ```
 中序（非递归）: D B E A F C 
 ```
@@ -249,6 +276,13 @@ TreeNode* rebuild(const char* pre, const char* in, int n)
     root->right = rebuild(pre + 1 + k, in + k + 1, n - 1 - k);
     return root;
 }
+```
+
+```c
+TreeNode* copy = rebuild("ABDECF", "DBEAFC", 6);
+printf("由前序 ABDECF 和中序 DBEAFC 还原，后序: "); postorder(copy); printf("\n");
+freeTree(copy);
+freeTree(root);
 ```
 
 ```

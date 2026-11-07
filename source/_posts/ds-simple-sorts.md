@@ -13,6 +13,7 @@ description: 冒泡、选择、插入是最基础的三种排序，都是 O(n²)
 top_group_list: true
 disableNunjucks: true
 viz: [ds-sort-simple]
+notebook: true
 ---
 
 > **本文目标**：掌握冒泡排序、选择排序、插入排序；理解排序的稳定性；会分析它们在不同输入下的比较次数和移动次数；知道插入排序在基本有序时的优势。
@@ -91,6 +92,32 @@ void insertionSort(int* a, int n)
 }
 ```
 
+测试一下，三种排序各排一遍同一个数组：
+
+<!-- run: hidden -->
+```c
+void printArray(const char* name, const int* a, int n)
+{
+    printf("%s:", name);
+    for (int i = 0; i < n; ++i) printf(" %d", a[i]);
+    printf("\n");
+}
+```
+
+```c
+int orig[] = {5, 2, 8, 1, 9, 3, 7, 4, 6};
+int a[9];
+memcpy(a, orig, sizeof a); bubbleSort(a, 9);    printArray("冒泡", a, 9);
+memcpy(a, orig, sizeof a); selectionSort(a, 9); printArray("选择", a, 9);
+memcpy(a, orig, sizeof a); insertionSort(a, 9); printArray("插入", a, 9);
+```
+
+```
+冒泡: 1 2 3 4 5 6 7 8 9
+选择: 1 2 3 4 5 6 7 8 9
+插入: 1 2 3 4 5 6 7 8 9
+```
+
 在演示中分别运行三种排序，对比它们的比较次数和交换（移动）次数。绿色的柱子是已经确定位置的部分：冒泡排序从右往左确定，选择排序从左往右确定，插入排序则是左边的部分「相对有序」，后面的元素还可能插进来。也可以输入自己的数组，比如已经有序的 `1 2 3 4 5 6 7 8` 或者逆序的 `8 7 6 5 4 3 2 1`：
 
 <div class="dsviz" data-viz="simple-sorts"></div>
@@ -108,6 +135,50 @@ Student s1[] = {{"Amy", 90}, {"Bob", 85}, {"Cat", 90}, {"Dan", 85}, {"Eve", 70}}
 ```
 
 按分数分别用插入排序和选择排序排序（代码和上面相同，只是比较的是 `score`）：
+
+<!-- run: hidden -->
+```c
+void insertionSortByScore(Student* a, int n)
+{
+    for (int i = 1; i < n; ++i) {
+        Student key = a[i];
+        int j = i - 1;
+        while (j >= 0 && a[j].score > key.score) {
+            a[j + 1] = a[j];
+            --j;
+        }
+        a[j + 1] = key;
+    }
+}
+
+void selectionSortByScore(Student* a, int n)
+{
+    for (int i = 0; i < n - 1; ++i) {
+        int min = i;
+        for (int j = i + 1; j < n; ++j) {
+            if (a[j].score < a[min].score) min = j;
+        }
+        if (min != i) { Student t = a[i]; a[i] = a[min]; a[min] = t; }
+    }
+}
+
+void printStudents(const char* title, const Student* a, int n)
+{
+    printf("%s:", title);
+    for (int i = 0; i < n; ++i) printf(" %s%d", a[i].name, a[i].score);
+    printf("\n");
+}
+```
+
+```c
+Student s2[5], s3[5];
+memcpy(s2, s1, sizeof s1);
+memcpy(s3, s1, sizeof s1);
+insertionSortByScore(s2, 5);
+selectionSortByScore(s3, 5);
+printStudents("插入排序（稳定）", s2, 5);
+printStudents("选择排序（不稳定）", s3, 5);
+```
 
 ```
 插入排序（稳定）: Eve70 Bob85 Dan85 Amy90 Cat90

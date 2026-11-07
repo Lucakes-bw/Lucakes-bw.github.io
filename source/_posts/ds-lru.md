@@ -15,6 +15,7 @@ top_group_list: true
 description: 缓存满了，该扔掉哪一个？LRU 的回答是「最久没用过的那个」。只用哈希表，找不到最久没用的；只用链表，查找是 O(n)。把两者组合起来，get 和 put 都是 O(1)。本文实现 LRU 缓存，和暴力实现对拍；再用 1000 万次符合齐夫分布的访问比较 LRU、FIFO 和随机淘汰的命中率，最后看一个让 LRU 命中率变成 0 的访问模式。
 disableNunjucks: true
 viz: [ds-extra]
+notebook: true
 ---
 
 > **本文目标**：理解 LRU 淘汰策略；会用哈希表加双向链表实现 O(1) 的 get 和 put；知道 LRU 在什么情况下效果好、在什么情况下很差。
@@ -83,6 +84,37 @@ typedef struct {
     Entry** buckets;
     int nbuckets;
 } LRUCache;
+```
+
+<!-- run: hidden -->
+```c
+static unsigned hashInt(int key) { return (unsigned)key * 2654435761u; }
+
+static void lruInit(LRUCache* c, int capacity)
+{
+    c->capacity = capacity;
+    c->size = 0;
+    c->head.next = &c->tail;
+    c->tail.prev = &c->head;
+    c->nbuckets = 1;
+    while (c->nbuckets < capacity * 2) c->nbuckets <<= 1;   // 容量固定，桶数一次分配好，不需要扩容
+    c->buckets = calloc((size_t)c->nbuckets, sizeof(Entry*));
+    if (!c->buckets) exit(1);
+}
+
+static Entry* hfind(LRUCache* c, int key)
+{
+    for (Entry* e = c->buckets[hashInt(key) & (unsigned)(c->nbuckets - 1)]; e; e = e->hnext)
+        if (e->key == key) return e;
+    return NULL;
+}
+
+static void hremove(LRUCache* c, Entry* target)
+{
+    Entry** link = &c->buckets[hashInt(target->key) & (unsigned)(c->nbuckets - 1)];
+    while (*link != target) link = &(*link)->hnext;
+    *link = target->hnext;
+}
 ```
 
 一个 `Entry` 同时在两个结构中：用 `prev`/`next` 挂在双向链表上，用 `hnext` 挂在哈希表的桶中（链地址法，见《哈希表》）。
@@ -157,9 +189,122 @@ static void lruPut(LRUCache* c, int key, int value)
 
 <div class="dsviz" data-viz="lru"></div>
 
+测试一下，重复第 1 节的例子：
+
+<!-- run: hidden -->
+```c
+static void lruFree(LRUCache* c)
+{
+    for (Entry* e = c->head.next; e != &c->tail;) {
+        Entry* n = e->next;
+        free(e);
+        e = n;
+    }
+    free(c->buckets);
+}
+
+static void lruPrint(const LRUCache* c)     // 从最近用过的到最久没用的
+{
+    printf("[");
+    for (Entry* e = c->head.next; e != &c->tail; e = e->next) printf(e == c->head.next ? "%d" : " %d", e->key);
+    printf("]\n");
+}
+```
+
+```c
+LRUCache c;
+lruInit(&c, 3);
+int v;
+lruPut(&c, 1, 10), lruPrint(&c);
+lruPut(&c, 2, 20), lruPrint(&c);
+lruPut(&c, 3, 30), lruPrint(&c);
+printf("get(1) %s，", lruGet(&c, 1, &v) ? "命中" : "未命中"), lruPrint(&c);
+printf("put(4)：满了，淘汰最久没用的 2，"), lruPut(&c, 4, 40), lruPrint(&c);
+printf("get(2) %s\n", lruGet(&c, 2, &v) ? "命中" : "未命中");
+lruFree(&c);
+```
+
+```
+[1]
+[2 1]
+[3 2 1]
+get(1) 命中，[1 3 2]
+put(4)：满了，淘汰最久没用的 2，[4 1 3]
+get(2) 未命中
+```
+
 ### 3.4 对拍
 
 再写一个简单但一定正确的版本：数组存所有的项，每次访问记一个递增的时间戳，淘汰时扫描整个数组找时间戳最小的。随机生成操作序列，两个版本同时执行，比较每次 get 的结果：
+
+<!-- run: hidden -->
+```c
+typedef struct {
+    int key[64], value[64], stamp[64], n, cap, clock;
+} Brute;
+
+static int bfind(Brute* b, int key)
+{
+    for (int i = 0; i < b->n; ++i)
+        if (b->key[i] == key) return i;
+    return -1;
+}
+static bool bruteGet(Brute* b, int key, int* value)
+{
+    int i = bfind(b, key);
+    if (i < 0) return false;
+    b->stamp[i] = ++b->clock;
+    *value = b->value[i];
+    return true;
+}
+static void brutePut(Brute* b, int key, int value)
+{
+    int i = bfind(b, key);
+    if (i < 0) {
+        if (b->n < b->cap) {
+            i = b->n++;
+        } else {
+            i = 0;
+            for (int k = 1; k < b->n; ++k)
+                if (b->stamp[k] < b->stamp[i]) i = k;   // 时间戳最小的就是最久没用的
+        }
+        b->key[i] = key;
+    }
+    b->value[i] = value;
+    b->stamp[i] = ++b->clock;
+}
+
+static unsigned long long g_rand = 88172645463325252ULL;   // 固定种子的随机数（xorshift），每次运行结果相同
+static int randInt(int lo, int hi)
+{
+    g_rand ^= g_rand << 13;
+    g_rand ^= g_rand >> 7;
+    g_rand ^= g_rand << 17;
+    return lo + (int)(g_rand % (unsigned long long)(hi - lo + 1));
+}
+```
+
+```c
+int same = 1;
+for (int t = 0; t < 200; ++t) {
+    int cap = randInt(1, 16);
+    LRUCache x;
+    lruInit(&x, cap);
+    Brute b = {.cap = cap};
+    for (int step = 0; step < 2000; ++step) {
+        int key = randInt(0, 30), val = randInt(0, 1000), v1 = -1, v2 = -1;
+        if (randInt(0, 1)) {
+            lruPut(&x, key, val);
+            brutePut(&b, key, val);
+        } else {
+            bool h1 = lruGet(&x, key, &v1), h2 = bruteGet(&b, key, &v2);
+            if (h1 != h2 || (h1 && v1 != v2)) same = 0;
+        }
+    }
+    lruFree(&x);
+}
+printf("随机 200 组、每组 2000 次操作，和暴力实现的结果%s\n", same ? "一致" : "不一致");
+```
 
 ```
 随机 200 组、每组 2000 次操作，和暴力实现的结果一致
