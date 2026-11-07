@@ -15,6 +15,20 @@
       · Theme lucky-term
       <% if (theme.github) { %>· <a href="<%- theme.github %>" target="_blank" rel="noopener">GitHub</a><% } %>
       · <a href="<%- url_for('/atom.xml') %>">RSS 订阅</a>
+      · <a href="#" data-backup-open>学习记录备份</a>
     </div>
   </div>
 </footer>
+<%# 学习记录备份：逻辑在 js/backup.js，第一次打开时由 main.js 加载 %>
+<dialog class="backup-dialog" id="backup-dialog" data-src="<%- asset_url('/js/backup.js') %>" aria-labelledby="backup-title">
+  <form method="dialog" class="bk-close-row"><button class="bk-x" aria-label="关闭">×</button></form>
+  <h2 id="backup-title"><span class="ui-term"><span class="c-accent">$</span> tar czf progress.json ~/.lucky</span><span class="ui-ios">学习记录备份</span></h2>
+  <p class="bk-desc">已读、做题、跟练的记录和草稿都只存在这个浏览器里。导出成文件，换浏览器或设备后再导入；导入是合并，不会覆盖本机已有的记录。</p>
+  <p class="bk-stats"><span class="c-muted">本机：</span><span data-bk-stats>…</span></p>
+  <div class="bk-actions">
+    <button type="button" class="btn btn-solid" data-bk-export>导出到文件</button>
+    <button type="button" class="btn" data-bk-import>从文件导入…</button>
+    <input type="file" accept=".json,application/json" data-bk-file hidden>
+  </div>
+  <p class="bk-msg" data-bk-msg role="status" hidden></p>
+</dialog>

@@ -805,6 +805,34 @@
     window.addEventListener('load', () => idle(() => prefetch(nextLink)));
   }
 
+  /* ---------- 学习记录备份（导出 / 导入，逻辑在 js/backup.js，第一次打开时才加载） ---------- */
+  const backupDialog = $('#backup-dialog');
+  if (backupDialog && backupDialog.showModal) {
+    let loading = null;
+    const loadBackup = () => loading || (loading = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = backupDialog.dataset.src;
+      s.onload = () => { window.LTBackup.init(backupDialog); resolve(); };
+      s.onerror = () => { loading = null; reject(); };
+      document.head.appendChild(s);
+    }));
+    document.addEventListener('click', e => {
+      const link = e.target.closest && e.target.closest('[data-backup-open]');
+      if (!link) return;
+      e.preventDefault();
+      // 先打开对话框，脚本到了再填上本机统计（统计那一栏先显示「…」）
+      if (!backupDialog.open) backupDialog.showModal();
+      loadBackup().then(() => backupDialog.dispatchEvent(new Event('lt-backup-open')), () => {
+        const m = $('[data-bk-msg]', backupDialog);
+        m.hidden = false; m.dataset.kind = 'err'; m.textContent = '加载失败，请检查网络后重试';
+      });
+    });
+    backupDialog.addEventListener('click', e => { if (e.target === backupDialog) backupDialog.close(); });   // 点遮罩关闭
+    backupDialog.addEventListener('close', () => { if (backupDialog.dataset.changed) location.reload(); });
+  } else {
+    $$('[data-backup-open]').forEach(a => { a.hidden = true; });   // 不支持 <dialog> 的老浏览器
+  }
+
   // 本地 hexo server 下默认不注册，免得改了文件还看到缓存的旧页面；
   // 要在本地调试 SW 时，在控制台执行 localStorage.setItem('lt-sw-dev', '1')
   const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
