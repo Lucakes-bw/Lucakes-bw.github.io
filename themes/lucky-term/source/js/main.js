@@ -805,6 +805,75 @@
     window.addEventListener('load', () => idle(() => prefetch(nextLink)));
   }
 
+  /* ---------- 术语卡片（scripts/glossary.js 给正文里的术语包上 .gl，解释在 #glossary-data） ----------
+     鼠标悬停 / 键盘聚焦时显示，移到卡片上不消失（好点「详细讲解」）；触屏上点一下显示，点别处收起 */
+  const glData = $('#glossary-data');
+  if (glData) {
+    let terms = {};
+    try { terms = JSON.parse(glData.textContent); } catch (e) { /* ignore */ }
+    let card = null, current = null, hideTimer = 0;
+    const ensureCard = () => {
+      if (card) return card;
+      card = document.createElement('div');
+      card.className = 'gl-card';
+      card.setAttribute('role', 'tooltip');
+      card.id = 'gl-card';
+      card.hidden = true;
+      card.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+      card.addEventListener('mouseleave', () => hideSoon());
+      document.body.appendChild(card);
+      return card;
+    };
+    const place = el => {
+      const r = el.getBoundingClientRect(), c = card.getBoundingClientRect();
+      const gap = 8, vw = document.documentElement.clientWidth;
+      let left = Math.min(Math.max(16, r.left + r.width / 2 - c.width / 2), vw - c.width - 16);
+      let top = r.bottom + gap;
+      const below = top + c.height <= window.innerHeight - 8 || r.top - gap - c.height < 8;
+      if (!below) top = r.top - gap - c.height;
+      card.classList.toggle('is-above', !below);
+      card.style.left = left + scrollX + 'px';
+      card.style.top = top + scrollY + 'px';
+      card.style.setProperty('--arrow', Math.min(Math.max(14, r.left + r.width / 2 - left), c.width - 14) + 'px');
+    };
+    const show = el => {
+      const t = terms[el.dataset.gl];
+      if (!t) return;
+      clearTimeout(hideTimer);
+      ensureCard();
+      if (current !== el) {
+        if (current) current.removeAttribute('aria-describedby');
+        current = el;
+        card.innerHTML = `<div class="gl-head"><b>${esc(t.term)}</b>${t.en ? `<span class="gl-en">${esc(t.en)}</span>` : ''}</div>` +
+          `<p class="gl-desc">${esc(t.desc)}</p>` +
+          (t.url ? `<a class="gl-more" href="${esc(t.url)}">详细讲解：${esc(t.title)} →</a>` : '');
+      }
+      el.setAttribute('aria-describedby', 'gl-card');
+      card.hidden = false;
+      place(el);
+    };
+    const hide = () => {
+      clearTimeout(hideTimer);
+      if (card) card.hidden = true;
+      if (current) current.removeAttribute('aria-describedby');
+      current = null;
+    };
+    const hideSoon = () => { clearTimeout(hideTimer); hideTimer = setTimeout(hide, 180); };
+    const glOf = e => e.target.closest && e.target.closest('.gl[data-gl]');
+    const canHover = matchMedia('(hover: hover)').matches;
+    document.addEventListener('mouseover', e => { const el = glOf(e); if (el && canHover) show(el); });
+    document.addEventListener('mouseout', e => { const el = glOf(e); if (el && canHover && !el.contains(e.relatedTarget)) hideSoon(); });
+    document.addEventListener('focusin', e => { const el = glOf(e); if (el) show(el); });
+    document.addEventListener('focusout', e => { if (glOf(e) && !(card && card.contains(e.relatedTarget))) hideSoon(); });
+    document.addEventListener('click', e => {
+      const el = glOf(e);
+      if (el) { if (current === el && !card.hidden && !canHover) hide(); else show(el); return; }
+      if (card && !card.hidden && !card.contains(e.target)) hide();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && card && !card.hidden) { const el = current; hide(); if (el) el.focus(); } });
+    window.addEventListener('resize', () => { if (current && card && !card.hidden) place(current); }, { passive: true });
+  }
+
   /* ---------- 学习记录备份（导出 / 导入，逻辑在 js/backup.js，第一次打开时才加载） ---------- */
   const backupDialog = $('#backup-dialog');
   if (backupDialog && backupDialog.showModal) {

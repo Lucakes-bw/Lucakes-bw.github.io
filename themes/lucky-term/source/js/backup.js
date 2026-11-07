@@ -3,7 +3,8 @@
  * 由 main.js 在第一次打开「学习记录备份」对话框（layout/_partial/footer.ejs）时加载。
  *
  * 导出哪些键（都是 lt- 开头）：
- *   记录  lt-read（已读的文章）、lt-read-at（标记已读的时间）、lt-pb-state（做题状态）、lt-practice（跟练通过记录）
+ *   记录  lt-read（已读的文章）、lt-read-at（标记已读的时间）、lt-pb-state（做题状态）、lt-practice（跟练通过记录）、
+ *         lt-review（每次通过的时间，复习页用）
  *   草稿  lt-pb-code:<题>:<语言>、lt-pb-cases:<题>（做题页的代码和自定义用例）、lt-snip:<页面>:<代码哈希>[:<练法>]（代码块草稿）
  *   偏好  lt-scheme、lt-ui、lt-pb-lang、lt-pb-layout
  *   lt-sw-dev、lt-focus、lt-pb-filter 这类调试开关和临时界面状态不导出。
@@ -12,6 +13,7 @@
  *   已读        取并集；已读时间两边都有时留更早的
  *   做题状态    通过 > 尝试过；都通过时留更早的通过时间，都只是尝试过时留更晚的
  *   跟练记录    按 页面 → 代码块 → 练法 合并，同一项留更早的通过时间
+ *   复习记录    每项的通过时间取并集（最多留最近 20 次），小节标题本机没有才用备份里的
  *   草稿、偏好  本机没有才导入；本机已有的不动，免得盖掉正在写的代码
  *
  * 文件格式：{ app: 'lucky-blog', version: 1, exportedAt: 时间戳, data: { 键: localStorage 里的原始字符串 } }
@@ -21,7 +23,7 @@
 
   const APP = 'lucky-blog';
   const VERSION = 1;
-  const RECORD_KEYS = ['lt-read', 'lt-read-at', 'lt-pb-state', 'lt-practice'];
+  const RECORD_KEYS = ['lt-read', 'lt-read-at', 'lt-pb-state', 'lt-practice', 'lt-review'];
   const PREF_KEYS = ['lt-scheme', 'lt-ui', 'lt-pb-lang', 'lt-pb-layout'];
   const DRAFT_PREFIXES = ['lt-pb-code:', 'lt-pb-cases:', 'lt-snip:'];
   const MAX_BYTES = 8 * 1024 * 1024;
@@ -96,6 +98,19 @@
     return out;
   }
 
+  function mergeReview(a, b) {
+    const out = parse(JSON.stringify(isObj(a) ? a : {}), {});
+    if (!isObj(b)) return out;
+    Object.keys(b).forEach(id => {
+      if (!isObj(b[id])) return;
+      const e = out[id] = isObj(out[id]) ? out[id] : {};
+      const ts = new Set([].concat(Array.isArray(e.p) ? e.p : [], Array.isArray(b[id].p) ? b[id].p : []).filter(t => typeof t === 'number'));
+      e.p = Array.from(ts).sort((x, y) => x - y).slice(-20);
+      if (!e.t && typeof b[id].t === 'string') e.t = b[id].t;
+    });
+    return out;
+  }
+
   // 统计一份数据里有多少条记录，用来显示「本机有…」和导入前后的变化
   function stats(local) {
     const read = parse(local['lt-read'], []);
@@ -124,6 +139,7 @@
     if ('lt-read-at' in incoming) put('lt-read-at', mergeReadAt(L('lt-read-at'), I('lt-read-at')));
     if ('lt-pb-state' in incoming) put('lt-pb-state', mergePbState(L('lt-pb-state'), I('lt-pb-state')));
     if ('lt-practice' in incoming) put('lt-practice', mergePractice(L('lt-practice'), I('lt-practice')));
+    if ('lt-review' in incoming) put('lt-review', mergeReview(L('lt-review'), I('lt-review')));
 
     Object.keys(incoming).forEach(k => {
       if (!isDraftKey(k) && !PREF_KEYS.includes(k)) return;

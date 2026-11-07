@@ -126,7 +126,7 @@
           </div>
         </div>
       </div>
-      <h2 class="gh-act-title">学习动态</h2>
+      <div class="gh-act-head"><h2 class="gh-act-title">学习动态</h2><a class="gh-review" href="<%- url_for('/review/') %>" data-review-badge hidden></a></div>
       <div class="gh-activity" data-activity></div>
     </section>
 
@@ -139,6 +139,7 @@
 </div>
 <script type="application/json" id="posts-data"><%- posts_json() %></script>
 <script type="application/json" id="problems-data"><%- problems_json() %></script>
+<script defer src="<%- asset_url('/js/review.js') %>"></script>
 
 <% } else { %>
 <div class="wrap">

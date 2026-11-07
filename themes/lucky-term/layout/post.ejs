@@ -28,6 +28,7 @@
 
   <div class="post-body">
     <div class="post-content md" id="post-content"><%- page.content %></div>
+    <% const gl = glossary_json(page.content); if (gl) { %><script type="application/json" id="glossary-data"><%- gl %></script><% } %>
     <% if (tocHtml) { %>
     <aside class="toc" id="toc">
       <div class="toc-title"><span class="ui-term"><span class="c-accent">$</span> grep '^#' <%= page.slug %>.md</span><span class="ui-ios">目录</span></div>
