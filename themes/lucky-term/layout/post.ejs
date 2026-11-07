@@ -51,6 +51,40 @@
       <button type="button" class="btn btn-solid" data-mark-btn>标记为已读</button>
     </div>
 
+    <% const pbs = problems_for_post(page); if (pbs.length) { %>
+    <%# 练一练：用题库里的题巩固本文的知识点；✓ / ○ 来自本机的做题记录（和题库页同一份 lt-pb-state） %>
+    <section class="post-problems" aria-label="练一练">
+      <div class="pp-head">
+        <span class="pp-title-row"><span class="ui-term"><span class="c-accent">$</span> ls problems/</span><span class="ui-ios">练一练</span><span class="c-muted pp-sub">用这 <%= pbs.length %> 道题巩固本文的内容，在浏览器里直接写代码、提交</span></span>
+        <span class="pp-count c-muted" data-pp-count hidden></span>
+      </div>
+      <ul class="pp-list">
+        <% pbs.forEach(function (p, i) { %><li<%- i >= 6 ? ' class="pp-more" hidden' : '' %>><a href="<%- url_for('problems/' + p.slug + '/') %>" data-pp="<%= p.slug %>"><span class="pp-state" aria-hidden="true"></span><span class="pp-no"><%= String(p.id).padStart(3, '0') %></span><span class="pp-name"><%= p.title %></span><span class="pp-diff pp-<%= p.difficulty %>"><%= difficulty_name(p.difficulty) %></span></a></li>
+        <% }) %>
+      </ul>
+      <% if (pbs.length > 6) { %><button type="button" class="pp-toggle" data-pp-toggle>展开其余 <%= pbs.length - 6 %> 道 ↓</button><% } %>
+    </section>
+    <script>
+      (function () {
+        var st = {};
+        try { st = JSON.parse(localStorage.getItem('lt-pb-state')) || {}; } catch (e) {}
+        var links = document.querySelectorAll('[data-pp]'), ac = 0;
+        Array.prototype.forEach.call(links, function (a) {
+          var s = st[a.getAttribute('data-pp')], mark = a.querySelector('.pp-state');
+          if (s && s.status === 'ac') { ac++; a.classList.add('is-ac'); mark.textContent = '✓'; a.title = '已通过'; }
+          else if (s) { a.classList.add('is-tried'); mark.textContent = '○'; a.title = '尝试过，还没通过'; }
+        });
+        var c = document.querySelector('[data-pp-count]');
+        if (c && ac) { c.hidden = false; c.textContent = '已通过 ' + ac + ' / ' + links.length; }
+        var t = document.querySelector('[data-pp-toggle]');
+        if (t) t.addEventListener('click', function () {
+          Array.prototype.forEach.call(document.querySelectorAll('.pp-more'), function (li) { li.hidden = false; });
+          t.remove();
+        });
+      })();
+    </script>
+    <% } %>
+
     <% if (so) { %>
     <nav class="series-nav">
       <% if (so.prev) { %>

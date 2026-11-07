@@ -1117,6 +1117,28 @@ html[data-ui="ios"] .snip-step, html[data-ui="ios"] .snip-level-no, html[data-ui
 
 /* 文末 */
 .post-end { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+/* 文末「练一练」：本文相关的题目（见 layout/post.ejs、scripts/problems.js 的 problems_for_post） */
+.post-problems { border: 1px solid var(--border); border-radius: 10px; background: var(--panel); padding: 14px 18px 8px; }
+.pp-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 14px; flex-wrap: wrap; font: 14px/1.5 var(--mono); }
+.pp-title-row { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.pp-sub { font: 13px/1.5 var(--sans); }
+.pp-count { font-size: 13px; }
+.pp-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.pp-list li { margin: 0; border-top: 1px dashed var(--border); }
+.pp-list li:first-child { border-top: 0; }
+.pp-list a { display: flex; align-items: center; gap: 10px; padding: 9px 2px; color: var(--fg); text-decoration: none; font: 14px/1.4 var(--sans); }
+.pp-list a:hover .pp-name { color: var(--accent); }
+.pp-state { width: 1em; flex: none; text-align: center; color: var(--muted); font-family: var(--mono); }
+.pp-list a.is-ac .pp-state { color: var(--accent); }
+.pp-no { flex: none; font: 12px var(--mono); color: var(--muted); }
+.pp-name { flex: 1; min-width: 0; }
+.pp-diff { flex: none; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+.pp-easy { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.pp-medium { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.pp-hard { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+html[data-ui="ios"] .pp-head { font-family: var(--sans); font-weight: 600; }
+.pp-list li[hidden] { display: none; }
+.pp-toggle { display: block; width: 100%; margin: 2px 0 4px; padding: 8px 0; border: 0; border-top: 1px dashed var(--border); background: none; color: var(--link); font: 13px var(--sans); cursor: pointer; text-align: left; }
 .post-head, .post-end, .comments { max-width: calc(100% - 260px); }
 .mark-read {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
