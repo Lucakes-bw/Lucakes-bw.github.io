@@ -997,6 +997,51 @@ html[data-ui="ios"] .ui-term { display: none; }
 .snip-diff code { white-space: pre-wrap; word-break: break-all; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
 .snip-expect-all summary { cursor: pointer; color: var(--muted); margin-top: 6px; }
 .md figure.highlight .snip-expect-all pre { padding: 4px 0 0; font: 12px/1.6 var(--mono); white-space: pre-wrap; max-height: 200px; overflow: auto; }
+/* 闯关卡片（见 js/judge/snippet.js）
+   .snip-strip  代码下方的一条：阅读时是入口，练习时是操作栏，通过后变成通过条
+   .snip-level  练习时代码上方的关卡头 */
+.snip-strip {
+  display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap;
+  padding: 8px 10px 8px 12px; border-top: 1px solid var(--border); background: var(--panel);
+  font: 12px/1.4 var(--mono); color: var(--muted);
+}
+.snip-strip:empty { display: none; }
+.snip-strip-info { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
+.snip-strip-tools { display: inline-flex; flex-wrap: wrap; gap: 2px; margin-right: auto; }
+.snip-dots { display: inline-flex; gap: 4px; }
+.snip-dot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--border-2); box-sizing: border-box; }
+.snip-dot.is-on { background: var(--accent); border-color: var(--accent); }
+.snip-strip .code-btn.is-primary-run { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+.snip-strip .code-btn.is-primary-run:hover:not(:disabled) { color: var(--bg); background: var(--accent); filter: brightness(1.07); }
+.snip-strip.is-pass { background: var(--accent-soft); border-top-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.snip-pass-text { display: inline-flex; flex-direction: column; gap: 2px; margin-right: auto; min-width: 0; font: 13px/1.5 var(--sans); color: var(--fg-2); }
+.snip-pass-text b { color: var(--accent); font-weight: 600; }
+.snip-pass-text span { font-size: 12px; }
+.md figure.highlight.is-editing .code-acts { display: none; }
+.snip-level { margin: 6px 10px 0; padding: 4px 4px 10px; border-bottom: 1px solid var(--border); }
+.snip-level-top { display: flex; align-items: center; gap: 8px; }
+.snip-steps { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-width: 0; flex: 1; }
+.snip-level-no { font: 12px var(--mono); color: var(--muted); margin-right: 6px; }
+.snip-step {
+  font: 12px/1 var(--mono); padding: 6px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: transparent; color: var(--fg-2);
+}
+span.snip-step { cursor: default; }
+.snip-step:hover { background: var(--panel-2); color: var(--fg); }
+.snip-step.is-on { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); }
+.snip-step.is-passed:not(.is-on) { color: var(--accent); }
+.snip-step-sep { color: var(--muted); font: 12px var(--mono); }
+.snip-level-title { margin: 10px 2px 2px; font: 600 15px/1.4 var(--sans); color: var(--fg); }
+.snip-level .snip-tip { display: block; padding: 0 2px; font: 13px/1.6 var(--sans); }
+.snip-level .snip-tip.is-stats { font: 13px/1.6 var(--mono); color: var(--accent); }
+.snip-level .snip-tip.is-stats.is-bad { color: var(--warn); }
+.snip-level .snip-expect { margin: 8px 2px 0; }
+html[data-ui="ios"] .snip-step, html[data-ui="ios"] .snip-level-no, html[data-ui="ios"] .snip-strip { font-family: var(--sans); }
+@media (max-width: 560px) {
+  .snip-level-no { display: none; }               /* 关卡步骤里已经看得出是第几关 */
+  .snip-strip-info { margin-left: 0; }
+  .snip-strip [data-act="go"] { margin-left: auto; }
+}
 /* 填空：编辑器里挖掉的行（Monaco 的 decoration 类名） */
 .snip-line-blank { background: color-mix(in srgb, var(--warn) 14%, transparent); }
 .snip-gut-blank { margin-left: 3px; width: 3px !important; border-radius: 2px; background: var(--warn); }
