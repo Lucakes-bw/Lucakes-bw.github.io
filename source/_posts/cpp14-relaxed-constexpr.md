@@ -52,6 +52,7 @@ C++14 取消了这些限制。`constexpr` 函数中可以使用：
 
 ### 1.1 在编译期生成查找表
 
+<!-- run: stdin="91" -->
 ```cpp
 #include <iostream>
 

@@ -181,6 +181,7 @@
 
     // 代码下方那一条：阅读 / 练习 / 刚通过 三种样子
     function renderStrip() {
+      syncStdin();                         // 切换练法、退出后要运行的代码变了
       strip.classList.toggle('is-pass', !!passedMode);
       if (!mode) {
         const nx = nextLevel(), done = LEVELS.length && !nx;
@@ -296,19 +297,35 @@
             <button type="button" class="code-btn" data-close title="关闭输出">×</button>
           </span>
         </div>
-        <label class="snip-stdin" hidden><span class="c-muted">标准输入（程序读到的内容，改完再点 run）</span><textarea rows="2" spellcheck="false" autocomplete="off" id="snip-stdin-${id}"></textarea></label>
+        <label class="snip-stdin" hidden><span class="c-muted">标准输入：程序用 scanf / getchar / cin 读到的内容，要在运行前填好（改完再点 ▶ 运行）</span><textarea rows="2" spellcheck="false" autocomplete="off" id="snip-stdin-${id}"></textarea></label>
         <div class="snip-verdict" data-verdict hidden></div>
         <pre class="snip-out" data-out></pre>`;
       fig.insertBefore(panel, strip);
       const ta = $('textarea', panel);
       ta.value = info.stdin;
       const toggle = $('[data-stdin-toggle]', panel);
-      const showStdin = on => { $('.snip-stdin', panel).hidden = !on; toggle.setAttribute('aria-expanded', String(on)); toggle.classList.toggle('is-on', on); };
       toggle.addEventListener('click', () => { const on = $('.snip-stdin', panel).hidden; showStdin(on); if (on) ta.focus(); });
       ta.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); run(); } });
       $('[data-close]', panel).addEventListener('click', () => { panel.remove(); panel = null; });
-      if (info.readsStdin) showStdin(true);
+      syncStdin();
+      if (readsNow()) showStdin(true);
       return panel;
+    }
+    function showStdin(on) {
+      if (!panel) return;
+      const toggle = $('[data-stdin-toggle]', panel);
+      $('.snip-stdin', panel).hidden = !on;
+      toggle.setAttribute('aria-expanded', String(on));
+      toggle.classList.toggle('is-on', on);
+    }
+    // 现在要运行的代码读不读输入（改一改里可能刚加上或删掉了 scanf）。
+    // 不读输入的程序不显示 stdin：填了也没用，对新手只会添乱
+    const readsNow = () => S.readsStdin(cell ? program(code(), cell.index) : code());
+    function syncStdin() {
+      if (!panel) return;
+      const r = readsNow();
+      $('[data-stdin-toggle]', panel).hidden = !r;
+      if (!r) showStdin(false);
     }
     const api = {
       status(text, cls) {
@@ -317,11 +334,15 @@
         st.innerHTML = (cls === 'busy' ? '<span class="snip-spin" aria-hidden="true"></span>' : '') + text;
       }
     };
-    // 要读输入、作者又没给 stdin 的程序：第一次运行前先打开输入框
+    // 要读输入、输入框又是空的：第一次运行前先打开输入框，提示填好再运行（打开过以后空着也照样运行）
     function needStdin() {
-      if (panel || !info.readsStdin || info.stdin) return false;
+      if (!readsNow()) { syncStdin(); return false; }
+      const fresh = !panel;
       ensurePanel();
-      api.status(`这段程序会从键盘读取输入：在下面填好，再点 run（${MOD}+Enter）`);
+      syncStdin();
+      if (stdinValue().trim() || (!fresh && !$('.snip-stdin', panel).hidden)) return false;
+      showStdin(true);
+      api.status(`这段程序会读取输入（scanf 等）：先在下面填好，再点 ▶ 运行（${MOD}+Enter）`);
       $('textarea', panel).focus();
       return true;
     }
@@ -556,7 +577,7 @@
       if (!expectEl.hidden) { expectEl.hidden = true; btn.classList.remove('is-on'); return; }
       btn.classList.add('is-on');
       expectEl.hidden = false;
-      if (info.readsStdin && !stdinValue()) { expectEl.innerHTML = '<span class="c-muted">这段程序要读输入：先在输出面板的 stdin 里填好输入。</span>'; ensurePanel(); $('.snip-stdin', panel).hidden = false; return; }
+      if (readsNow() && !stdinValue()) { expectEl.innerHTML = '<span class="c-muted">这段程序要读输入：先在输出面板的 stdin 里填好输入。</span>'; ensurePanel(); $('.snip-stdin', panel).hidden = false; return; }
       expectEl.innerHTML = `<span class="c-muted"><span class="snip-spin" aria-hidden="true"></span> 运行原程序…</span>`;
       active = { status: t => { expectEl.innerHTML = `<span class="c-muted">${t}</span>`; } };
       const r = await expectedOutput(stdinValue());
@@ -612,7 +633,7 @@
         fallback = $('textarea', edBox);
         fallback.value = store.get(draftKey(mode)) ?? initial(mode);
         fallback.rows = Math.min(lines.length + 1, 30);
-        fallback.addEventListener('input', saveDraft);
+        fallback.addEventListener('input', () => { saveDraft(); syncStdin(); });
         fallback.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); (e.shiftKey ? check : run)(); } });
         if (mode !== 'type') fallback.focus();
       } finally {
@@ -626,7 +647,7 @@
       let timer;
       model.onDidChangeContent(() => {
         clearTimeout(timer);
-        timer = setTimeout(saveDraft, 400);
+        timer = setTimeout(() => { saveDraft(); syncStdin(); }, 400);
         m.editor.setModelMarkers(model, 'snippet', []);
       });
       return (models[k] = model);

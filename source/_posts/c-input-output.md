@@ -144,6 +144,7 @@ mismatch.c:8:28: warning: more '%' conversions than data arguments [-Wformat-ins
 
 `scanf` 按照格式字符串从键盘（标准输入）读取数据，存放到变量中：
 
+<!-- run: stdin="18 1.75" -->
 ```c
 #include <stdio.h>
 
@@ -360,6 +361,7 @@ scanf("%7s", name);             // 最多读 7 个字符，留一个位置给 '\
 
 `getchar()` 从输入读取**一个字符**，`putchar(c)` 输出一个字符。下面的程序把输入的小写字母转换为大写，并统计字符数和行数：
 
+<!-- run: stdin="hello, world\nC is fun\n" -->
 ```c
 #include <stdio.h>
 

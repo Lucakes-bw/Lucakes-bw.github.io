@@ -33,6 +33,7 @@ disableNunjucks: true
 
 ## 2. consteval：只能在编译期执行
 
+<!-- run: stdin="7" -->
 ```cpp
 #include <iostream>
 

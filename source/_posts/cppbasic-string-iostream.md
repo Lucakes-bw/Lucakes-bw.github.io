@@ -117,6 +117,7 @@ a < b: true，a == "apple": true
 
 `>>` 遇到空格就停止，要读取一整行（比如带空格的姓名），需要用 **`std::getline(std::cin, s)`**。但是两者混用时：
 
+<!-- run: stdin="18\nTom Smith\n" -->
 ```cpp
 #include <iostream>
 #include <string>
@@ -194,6 +195,7 @@ y = -1
 
 正确的处理方式：**检查每次读取是否成功**；失败时先 `clear()` 清除错误状态，再 `ignore` 丢弃错误的输入：
 
+<!-- run: stdin="abc\n12x\n" -->
 ```cpp
 #include <iostream>
 #include <limits>

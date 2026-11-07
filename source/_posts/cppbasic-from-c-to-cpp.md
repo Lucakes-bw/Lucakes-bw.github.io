@@ -32,6 +32,7 @@ C++ 最初的名字叫「带类的 C」（C with Classes），它几乎完全兼
 
 ## 2. 第一个 C++ 程序
 
+<!-- run: stdin="Alice 20" -->
 ```cpp
 #include <iostream>
 #include <string>

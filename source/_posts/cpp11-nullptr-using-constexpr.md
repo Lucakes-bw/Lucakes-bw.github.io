@@ -199,6 +199,7 @@ note: read of non-const variable 'n' is not allowed in a constant expression
 
 `constexpr` 还能修饰函数，表示**这个函数可以在编译期计算**：
 
+<!-- run: stdin="7" -->
 ```cpp
 #include <array>
 #include <iostream>
