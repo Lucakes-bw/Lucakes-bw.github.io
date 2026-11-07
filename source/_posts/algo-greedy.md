@@ -9,9 +9,10 @@ tags:
   - 算法
   - 贪心
 order: 5
-description: 贪心是每一步都做当前看起来最好的选择，从不回头。它写起来最简单，也最容易错。本文用活动选择问题比较三种看起来都合理的贪心：最早开始、最短、最早结束。随机 10000 组数据和暴力枚举对比，前两种分别错了 5472 组和 637 组，只有最早结束一组都没错；然后用交换论证说明它为什么是对的，再看跳跃游戏和零钱兑换中贪心的对与错。
+description: 贪心是每一步都做当前看起来最好的选择，从不回头。它写起来最简单，也最容易错。本文用活动选择问题比较三种看起来都合理的贪心：最早开始、最短、最早结束。随机 10000 组数据和暴力枚举对比，前两种分别错了 4751 组和 586 组，只有最早结束一组都没错；然后用交换论证说明它为什么是对的，再看跳跃游戏和零钱兑换中贪心的对与错。
 disableNunjucks: true
 viz: [ds-algo]
+notebook: true
 ---
 
 > **本文目标**：理解贪心算法的思路，以及它和动态规划的区别；会用反例否定一个贪心策略；会用「交换论证」证明一个贪心策略是对的；会用暴力枚举在小数据上检验贪心。
@@ -52,6 +53,63 @@ viz: [ds-algo]
 - **最早开始**：活动 [0, 10)、[1, 3)、[4, 6)、[7, 9)。最早开始的是 [0, 10)，选了它，其他三个都和它冲突，只能安排 1 个；而选后面三个可以安排 3 个；
 - **最短**：活动 [0, 5)、[4, 7)、[6, 11)。最短的是 [4, 7)，选了它，另外两个都和它冲突，只能安排 1 个；而 [0, 5) 和 [6, 11) 可以同时安排。
 
+把三种策略写成同一个函数：按某种顺序排好以后，和已经选的都不重叠就选：
+
+<!-- run: hidden -->
+```c
+typedef struct {
+    int start, end;                         // 左闭右开 [start, end)
+} Interval;
+
+// 主关键字相同时再比较另一端，排序结果和 qsort 的实现无关（不同的 C 库结果一样）
+static int byEnd(const void* a, const void* b)
+{
+    const Interval *x = a, *y = b;
+    return x->end != y->end ? x->end - y->end : x->start - y->start;
+}
+static int byStart(const void* a, const void* b)
+{
+    const Interval *x = a, *y = b;
+    return x->start != y->start ? x->start - y->start : x->end - y->end;
+}
+static int byLength(const void* a, const void* b)
+{
+    const Interval *x = a, *y = b;
+    int lx = x->end - x->start, ly = y->end - y->start;
+    return lx != ly ? lx - ly : x->start - y->start;
+}
+
+// 按某种顺序排好以后，能放就放
+static int greedy(Interval* iv, int n, int (*cmp)(const void*, const void*), bool print)
+{
+    Interval tmp[32];
+    memcpy(tmp, iv, sizeof(Interval) * (size_t)n);
+    qsort(tmp, (size_t)n, sizeof(Interval), cmp);
+    int count = 0;
+    Interval picked[32];
+    for (int i = 0; i < n; ++i) {
+        bool ok = true;
+        for (int k = 0; k < count; ++k)     // 和已经选的都不重叠才选
+            if (tmp[i].start < picked[k].end && picked[k].start < tmp[i].end) ok = false;
+        if (ok) picked[count++] = tmp[i];
+    }
+    if (print) {
+        for (int k = 0; k < count; ++k) printf("[%d,%d) ", picked[k].start, picked[k].end);
+        printf("共 %d 个\n", count);
+    }
+    return count;
+}
+```
+
+```c
+Interval ex1[] = {{0, 10}, {1, 3}, {4, 6}, {7, 9}};          // 最早开始：选了 [0,10)
+Interval ex2[] = {{0, 5}, {4, 7}, {6, 11}};                   // 最短：选了 [4,7)
+printf("最早开始，例一："); greedy(ex1, 4, byStart, true);
+printf("最早结束，例一："); greedy(ex1, 4, byEnd, true);
+printf("最短，例二："); greedy(ex2, 3, byLength, true);
+printf("最早结束，例二："); greedy(ex2, 3, byEnd, true);
+```
+
 ```
 最早开始，例一：[0,10) 共 1 个
 最早结束，例一：[1,3) [4,6) [7,9) 共 3 个
@@ -63,8 +121,51 @@ viz: [ds-algo]
 
 找不到反例，不代表策略是对的，可能只是没想到。一个很实用的办法是**在小数据上和暴力枚举对比**：随机生成 10000 组数据，每组 12 个活动，暴力枚举所有 2¹² 个子集，求出真正的最大值，再看三种贪心各错了几组：
 
+<!-- run: hidden -->
+```c
+static int brute(const Interval* iv, int n)  // 枚举所有子集
+{
+    int best = 0;
+    for (int mask = 0; mask < (1 << n); ++mask) {
+        int cnt = __builtin_popcount((unsigned)mask);
+        if (cnt <= best) continue;
+        bool ok = true;
+        for (int i = 0; i < n && ok; ++i)
+            for (int j = i + 1; j < n && ok; ++j)
+                if ((mask >> i & 1) && (mask >> j & 1) && iv[i].start < iv[j].end && iv[j].start < iv[i].end) ok = false;
+        if (ok) best = cnt;
+    }
+    return best;
+}
+
+static unsigned long long g_rand = 88172645463325252ULL;   // 固定种子的随机数（xorshift），每次运行结果相同
+static int randInt(int lo, int hi)
+{
+    g_rand ^= g_rand << 13;
+    g_rand ^= g_rand >> 7;
+    g_rand ^= g_rand << 17;
+    return lo + (int)(g_rand % (unsigned long long)(hi - lo + 1));
+}
 ```
-最早开始：错 5472 组；最短：错 637 组；最早结束：错 0 组
+
+```c
+int wrongStart = 0, wrongLength = 0, wrongEnd = 0;
+for (int t = 0; t < 10000; ++t) {
+    Interval iv[12];
+    for (int i = 0; i < 12; ++i) {
+        iv[i].start = randInt(0, 40);
+        iv[i].end = iv[i].start + randInt(1, 15);
+    }
+    int best = brute(iv, 12);
+    if (greedy(iv, 12, byStart, false) != best) ++wrongStart;
+    if (greedy(iv, 12, byLength, false) != best) ++wrongLength;
+    if (greedy(iv, 12, byEnd, false) != best) ++wrongEnd;
+}
+printf("最早开始：错 %d 组；最短：错 %d 组；最早结束：错 %d 组\n", wrongStart, wrongLength, wrongEnd);
+```
+
+```
+最早开始：错 4751 组；最短：错 586 组；最早结束：错 0 组
 ```
 
 「最短」的反例并不容易想到，但在随机数据中，它错了 6%；「最早结束」一组都没错。这说明它很可能是对的，但还不是证明。
@@ -101,6 +202,16 @@ static int earliestEnd(Interval* iv, int n)
 }
 ```
 
+用 2.1 节的两个例子试一下：
+
+```c
+printf("例一 %d 个，例二 %d 个\n", earliestEnd(ex1, 4), earliestEnd(ex2, 3));
+```
+
+```
+例一 3 个，例二 2 个
+```
+
 ## 3. 跳跃游戏
 
 > 数组 nums 中，nums[i] 表示在位置 i 最多能往前跳几步。从位置 0 出发，能不能到达最后一个位置？
@@ -119,6 +230,17 @@ static bool canJump(const int* nums, int n)
     }
     return true;
 }
+```
+
+```c
+int j1[] = {2, 3, 1, 1, 4}, j2[] = {3, 2, 1, 0, 4};
+printf("[2,3,1,1,4]：%s\n", canJump(j1, 5) ? "能" : "不能");
+printf("[3,2,1,0,4]：%s\n", canJump(j2, 5) ? "能" : "不能");
+```
+
+```
+[2,3,1,1,4]：能
+[3,2,1,0,4]：不能
 ```
 
 为什么对？能到达的位置一定是从 0 开始连续的一段（能到达 farthest，就能到达它前面的所有位置，因为途中每一步都可以少跳一点）。所以只需要记住这一段的右端点。O(n) 时间，O(1) 空间。

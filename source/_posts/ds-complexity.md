@@ -14,6 +14,7 @@ description: 判断一个算法好不好，不能只看在自己电脑上跑了�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-complexity]
+notebook: true
 ---
 
 > **本文目标**：理解为什么用「操作次数随规模增长的趋势」来衡量算法；会用大 O 表示法分析简单代码的时间复杂度；记住常见复杂度的增长速度；分清最好、最坏、平均情况；会分析空间复杂度。
@@ -47,6 +48,17 @@ int hasDupQuadratic(const int* a, int n)
             if (a[i] == a[j]) return 1;
     return 0;
 }
+```
+
+先试一下：
+
+```c
+int d1[] = {3, 1, 4, 1, 5}, d2[] = {2, 7, 1, 8};
+printf("{3, 1, 4, 1, 5} 有重复：%d，{2, 7, 1, 8} 有重复：%d\n", hasDupQuadratic(d1, 5), hasDupQuadratic(d2, 4));
+```
+
+```
+{3, 1, 4, 1, 5} 有重复：1，{2, 7, 1, 8} 有重复：0
 ```
 
 没有重复元素时（最坏情况），比较 `a[i] == a[j]` 执行了多少次？i = 0 时比较 n-1 次，i = 1 时比较 n-2 次……一共是
@@ -121,6 +133,18 @@ for (int i = 0; i < n; ++i)
 
 用第 1 节的两种方法查重，再加上顺序查找和二分查找，统计每种方法的比较次数，并测量查重所用的时间（`-O2` 编译，最坏情况：要查找的数不存在，数组中没有重复的元素）：
 
+<!-- run: hidden -->
+```c
+static long long cmps;                           // 比较次数，下面的格子里定义
+
+static int cmpInt(const void* x, const void* y)  // qsort 用的比较函数，也计数
+{
+    ++cmps;
+    int a = *(const int*)x, b = *(const int*)y;
+    return (a > b) - (a < b);
+}
+```
+
 ```c
 static long long cmps = 0;                       // 比较次数
 
@@ -168,6 +192,28 @@ int hasDupSort(int* a, int n)                    // O(n log n)
 - n 每扩大 10 倍：二分查找只多比较 3～4 次；顺序查找多 10 倍；两两比较多 **100 倍**。这正是 O(log n)、O(n)、O(n²) 的含义。
 - n = 1000 时，两两比较只用了 0.5 毫秒，完全感觉不到慢。**复杂度的差距在数据量小的时候看不出来**，这正是它危险的地方：测试时一切正常，上线后数据一多，程序就卡死了。按照 O(n²) 推算，n = 100 万时两两比较需要大约 100 秒，而排序后查重只需要 0.1 秒左右。
 
+在浏览器里试一下查找的次数（数组是 0 到 n-1，查找不存在的 -1）。排序后查重的比较次数取决于 `qsort` 的实现，这里只看结果：
+
+```c
+int sizes[] = {1000, 10000, 100000};
+for (int k = 0; k < 3; ++k) {
+    int n = sizes[k];
+    int* a = malloc(n * sizeof(int));
+    for (int i = 0; i < n; ++i) a[i] = i;
+    cmps = 0; binarySearch(a, n, -1); long long bin = cmps;
+    cmps = 0; linearSearch(a, n, -1); long long lin = cmps;
+    printf("n = %6d：二分查找 %2lld 次，顺序查找 %6lld 次，排序后查重：%s\n", n, bin, lin,
+           hasDupSort(a, n) ? "有重复" : "没有重复");
+    free(a);
+}
+```
+
+```
+n =   1000：二分查找  9 次，顺序查找   1000 次，排序后查重：没有重复
+n =  10000：二分查找 13 次，顺序查找  10000 次，排序后查重：没有重复
+n = 100000：二分查找 16 次，顺序查找 100000 次，排序后查重：没有重复
+```
+
 ### 3.2 二分查找为什么这么快
 
 下面的演示中，数组有 16 个有序的数。分别用两种方法查找同一个数，观察比较的次数和每一步排除了哪些元素（变暗的格子）：
@@ -211,6 +257,17 @@ int* copyReversed(const int* a, int n)
 
 // O(n) 空间：递归深度为 n，每一层占一个栈帧
 long long sumTo(int n) { return n == 0 ? 0 : n + sumTo(n - 1); }
+```
+
+```c
+int e[] = {1, 2, 3, 4, 5};
+int* r = copyReversed(e, 5);
+printf("sum = %lld，反转后 %d %d %d %d %d，sumTo(100) = %lld\n", sum(e, 5), r[0], r[1], r[2], r[3], r[4], sumTo(100));
+free(r);
+```
+
+```
+sum = 15，反转后 5 4 3 2 1，sumTo(100) = 5050
 ```
 
 注意最后一个例子：它没有申请任何数组，但**递归的每一层都占用一个栈帧**，递归深度是 n，所以空间复杂度是 O(n)。《函数》中，`sumTo(10000000)` 就因为递归太深导致了栈溢出。

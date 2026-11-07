@@ -14,6 +14,7 @@ description: 快速排序和归并排序都用分治的思想把排序降到 O(n
 top_group_list: true
 disableNunjucks: true
 viz: [ds-sort-fast]
+notebook: true
 ---
 
 > **本文目标**：理解分治思想；掌握快速排序的划分过程，理解它的最坏情况和改进方法；掌握归并排序和合并过程；能比较两者的优缺点。
@@ -34,6 +35,18 @@ O(n²) 的排序，问题在于每次比较只能带来很少的信息。**分�
 ### 2.1 划分
 
 快速排序的核心是**划分**（partition）：选一个元素作为**基准**（pivot），重新排列区间，使得基准左边的都比它小，右边的都不比它小。划分之后，**基准就在它最终的位置上了**。下面是最容易理解的 Lomuto 划分，以区间最后一个元素为基准：
+
+<!-- run: hidden -->
+```c
+static void swap(int* a, int* b) { int t = *a; *a = *b; *b = t; }
+
+static void printArray(const char* name, const int* a, int n)
+{
+    printf("%s:", name);
+    for (int i = 0; i < n; ++i) printf(" %d", a[i]);
+    printf("\n");
+}
+```
 
 ```c
 static int partitionLomuto(int* a, int lo, int hi)
@@ -60,6 +73,18 @@ void quickSortNaive(int* a, int lo, int hi)
 
 <div class="dsviz" data-viz="quicksort"></div>
 
+测试一下：
+
+```c
+int a[] = {5, 2, 8, 1, 9, 3, 7, 4, 6};
+quickSortNaive(a, 0, 8);
+printArray("朴素快排", a, 9);
+```
+
+```
+朴素快排: 1 2 3 4 5 6 7 8 9
+```
+
 ### 2.2 最坏情况
 
 演示中对随机的 8 个数只比较了 16 次，递归深度 5；而对有序的 8 个数，比较了 28 次（= 8 × 7 / 2），递归深度 8。原因是：以最后一个元素为基准，对于已经有序的数组，基准**每次都是最大的**，划分之后左边有 n - 1 个元素，右边一个都没有。每次只减少一个元素，递归深度是 n，比较次数是 n(n-1)/2，**退化成了 O(n²)**。
@@ -77,6 +102,21 @@ n 每翻一倍，时间变成 4 倍，递归深度始终等于 n。处理 20 万
 已经有序或基本有序的数据在实际中非常常见，所以朴素的快速排序不能直接使用。
 
 ### 2.3 改进
+
+<!-- run: hidden -->
+```c
+static void insertionSort(int* a, int lo, int hi)  // 上一篇的插入排序，改为对区间 [lo, hi] 排序
+{
+    for (int i = lo + 1; i <= hi; ++i) {
+        int key = a[i], j = i - 1;
+        while (j >= lo && a[j] > key) {
+            a[j + 1] = a[j];
+            --j;
+        }
+        a[j + 1] = key;
+    }
+}
+```
 
 ```c
 static int medianOfThree(int* a, int lo, int hi)
@@ -119,6 +159,52 @@ void quickSort(int* a, int lo, int hi)
 2. **Hoare 划分**：两个指针从两端向中间扫描，左边遇到不小于基准的停下，右边遇到不大于基准的停下，交换。它的交换次数比 Lomuto 少；更重要的是，遇到**大量重复的元素**时，Lomuto 划分会把它们全部分到一边，退化成 O(n²)，而 Hoare 划分会把相等的元素平均地分到两边。
 3. **小区间用插入排序**：区间小于 16 个元素时，递归的开销比排序本身还大，上一篇讲过，插入排序在小数据上最快。
 4. **只对较短的一半递归**：较长的一半用循环处理。这样递归深度最多是 log n，不会栈溢出。
+
+测试一下，对随机、有序、全部相同的 10 万个数各排一次，检查结果：
+
+<!-- run: hidden -->
+```c
+static unsigned long long g_rand = 88172645463325252ULL;   // 固定种子的随机数（xorshift），每次运行结果相同
+static int randInt(int lo, int hi)
+{
+    g_rand ^= g_rand << 13;
+    g_rand ^= g_rand >> 7;
+    g_rand ^= g_rand << 17;
+    return lo + (int)(g_rand % (unsigned long long)(hi - lo + 1));
+}
+
+static int isSorted(const int* a, int n)
+{
+    for (int i = 1; i < n; ++i)
+        if (a[i - 1] > a[i]) return 0;
+    return 1;
+}
+
+// 生成 n 个数：kind 0 随机，1 有序，2 全部相同
+static int* makeData(int n, int kind)
+{
+    int* a = malloc(n * sizeof(int));
+    if (a == NULL) exit(1);
+    for (int i = 0; i < n; ++i) a[i] = kind == 0 ? randInt(0, 1000000) : kind == 1 ? i : 7;
+    return a;
+}
+```
+
+```c
+const char* kinds[] = {"随机", "有序", "全部相同"};
+for (int k = 0; k < 3; ++k) {
+    int* d = makeData(100000, k);
+    quickSort(d, 0, 100000 - 1);
+    printf("改进快排，%s数据：%s\n", kinds[k], isSorted(d, 100000) ? "排好了" : "没排好");
+    free(d);
+}
+```
+
+```
+改进快排，随机数据：排好了
+改进快排，有序数据：排好了
+改进快排，全部相同数据：排好了
+```
 
 ### 2.4 实测
 
@@ -190,6 +276,27 @@ void mergeSort(int* a, int n)
 - **稳定**：合并时相等的元素取左边的（`<=`），保持原来的顺序；
 - 需要 **O(n) 的额外空间**存放 `tmp`，这是它的主要缺点；
 - 合并是顺序访问内存的，适合处理**链表**（不需要额外空间）和**外部排序**（数据太大，放不进内存，要分块排序后在磁盘上合并）。
+
+测试一下：
+
+```c
+int b[] = {5, 2, 8, 1, 9, 3, 7, 4, 6};
+mergeSort(b, 9);
+printArray("归并排序", b, 9);
+for (int k = 0; k < 3; ++k) {
+    int* d = makeData(100000, k);
+    mergeSort(d, 100000);
+    printf("归并排序，%s数据：%s\n", kinds[k], isSorted(d, 100000) ? "排好了" : "没排好");
+    free(d);
+}
+```
+
+```
+归并排序: 1 2 3 4 5 6 7 8 9
+归并排序，随机数据：排好了
+归并排序，有序数据：排好了
+归并排序，全部相同数据：排好了
+```
 
 C++ 的 `std::stable_sort` 和 Python 的 `sorted`（Timsort）都基于归并排序。
 

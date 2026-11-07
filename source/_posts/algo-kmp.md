@@ -13,6 +13,7 @@ order: 7
 description: 在一个字符串中找另一个字符串，最直接的方法是每个起点都从头比较一遍。在 1000 万个 a 中找「999 个 a 加一个 b」，朴素算法比较了将近 100 亿次、用了 2.2 秒；KMP 只比较了 2000 万次、6 毫秒。秘密在于失配时文本的指针不回退，模式根据 next 数组跳到合适的位置继续比较。本文讲清楚 next 数组的含义和构造方法。
 disableNunjucks: true
 viz: [ds-algo]
+notebook: true
 ---
 
 > **本文目标**：知道朴素字符串匹配的最坏情况；理解 KMP 的核心思想：利用已经匹配的部分，失配时文本的指针不回退；理解 next 数组的含义，会构造它；知道 KMP 的复杂度为什么是 O(n + m)。
@@ -125,6 +126,42 @@ len 是 pat[0..i-1] 的最长相等前后缀的长度。处理 pat[i] 时：
 - 否则，退而求其次：在长度为 len 的那个前缀内部，再找它的最长相等前后缀（next[len-1]），看能不能延长……直到 len 为 0。
 
 这和匹配的代码几乎一模一样，只是「文本」换成了模式自己。
+
+测试一下，算出 3.1 节那几个模式的 next 数组，再用两种方法找一次：
+
+<!-- run: hidden -->
+```c
+static void printNext(const char* pat)
+{
+    int m = (int)strlen(pat), next[64];
+    buildNext(pat, m, next);
+    printf("%-10s next = [", pat);
+    for (int i = 0; i < m; ++i) printf(i ? " %d" : "%d", next[i]);
+    printf("]\n");
+}
+```
+
+```c
+printNext("ababaca");
+printNext("aabaaab");
+printNext("abcdabd");
+printNext("aaaa");
+
+const char* text = "BBC ABCDAB ABCDABCDABDE";
+const char* pat = "ABCDABD";
+int next[64];
+buildNext(pat, 7, next);
+printf("\"%s\" 中找 \"%s\"：朴素 %d，KMP %d\n", text, pat,
+       naiveSearch(text, (int)strlen(text), pat, 7), kmpSearch(text, (int)strlen(text), pat, 7, next));
+```
+
+```
+ababaca    next = [0 0 1 2 3 0 1]
+aabaaab    next = [0 1 0 1 2 2 3]
+abcdabd    next = [0 0 0 0 1 2 0]
+aaaa       next = [0 1 2 3]
+"BBC ABCDAB ABCDABCDABDE" 中找 "ABCDABD"：朴素 15，KMP 15
+```
 
 <figure class="diagram">
 <svg viewBox="0 0 700 200" role="img" aria-label="next 数组的含义：模式 ABCDABD 的前 6 个字符 ABCDAB 中，最长相等的真前缀和真后缀是 AB，长度 2，所以 next[5] = 2；在第 6 个字符失配时，模式右移 4 格，让开头的 AB 对准结尾的 AB，从 C 继续比较">

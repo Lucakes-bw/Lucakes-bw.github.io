@@ -13,6 +13,7 @@ description: 基于比较的排序不可能快于 O(n log n)，但如果知道�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-sort-linear]
+notebook: true
 ---
 
 > **本文目标**：理解比较排序的下界；会实现计数排序和基数排序，知道它们的适用条件；能根据实测数据和场景选择合适的排序算法。
@@ -52,6 +53,20 @@ void countingSort(int* a, int n, int k)
 3. **放置**：**从后往前**扫描输入，每个元素放到 `--count[a[i]]` 的位置。从后往前是为了让值相同的元素保持原来的顺序，即**稳定**。
 
 如果只是排序整数，第 3 步可以直接按 count 输出 v 个 v；但上面的写法也能用于排序带有其他数据的记录（比如按年龄排序学生），这时稳定性就很重要了。
+
+测试一下，值都在 0 到 9 之间（k = 10）：
+
+```c
+int a[] = {4, 1, 3, 4, 2, 0, 9, 1, 3, 4};
+countingSort(a, 10, 10);
+printf("计数排序:");
+for (int i = 0; i < 10; ++i) printf(" %d", a[i]);
+printf("\n");
+```
+
+```
+计数排序: 0 1 1 2 3 3 4 4 4 9
+```
 
 <div class="dsviz" data-viz="counting-sort"></div>
 
@@ -93,6 +108,14 @@ void radixSort(unsigned* a, int n)
 ```
 
 按十位排序时，十位相同的 720 和 329（都是 2），由于稳定性，保持了按个位排好的顺序。最后按百位排完，前面几位的顺序都被保留了下来。实测程序对这组数的结果：
+
+```c
+unsigned b[] = {329, 457, 657, 839, 436, 720, 355};
+radixSort(b, 7);
+printf("基数排序:");
+for (int i = 0; i < 7; ++i) printf(" %u", b[i]);
+printf("\n");
+```
 
 ```
 基数排序: 329 355 436 457 657 720 839

@@ -14,6 +14,7 @@ top_group_list: true
 description: 输入法的联想、搜索框的自动补全，要回答的问题是「以这个前缀开头的词有哪些」。Trie 把字符串拆成字符，共同的前缀只存一次，查找的时间只和字符串的长度有关。本文实现 Trie，用系统词典的 21 万个单词实测：查找比二分查找快 7 倍多，但要占 143 MB，而单词本身只有 2 MB；再换一种节点的写法，内存降到 16 MB，查找慢了不到 3 倍。
 disableNunjucks: true
 viz: [ds-extra]
+notebook: true
 ---
 
 > **本文目标**：理解 Trie 的结构；会实现插入、查找、前缀计数和按前缀列出单词；知道 Trie 的时间优势和空间代价，以及几种节省空间的节点写法。
@@ -55,6 +56,16 @@ typedef struct TrieNode {
     int pass;                               // 经过这个节点的单词数：以这个前缀开头的单词有几个
     bool end;                               // 有没有单词在这里结束
 } TrieNode;
+```
+
+<!-- run: hidden -->
+```c
+static TrieNode* newTrieNode(void)          // 新节点：孩子全空，pass = 0，end = false
+{
+    TrieNode* n = calloc(1, sizeof(TrieNode));
+    if (n == NULL) exit(1);
+    return n;
+}
 ```
 
 找某个字符对应的孩子，直接用 `child[c - 'a']`，O(1)。`pass` 记录有多少个单词经过这个节点，用来快速回答「以这个前缀开头的单词有几个」。
@@ -105,6 +116,18 @@ static int countPrefix(TrieNode* root, const char* prefix)
 
 注意 `contains("i")` 要返回 false：路径存在（i 是 in 的前缀），但没有单词在那里结束。
 
+测试一下，插入 tea、ten、to、inn、in、a，再插入一次 tea：
+
+```c
+TrieNode* root = newTrieNode();
+const char* small[] = {"tea", "ten", "to", "inn", "in", "a", "tea"};
+for (int i = 0; i < 7; ++i) trieInsert(root, small[i]);
+printf("以 te 开头：%d 个；以 t 开头：%d 个；以 x 开头：%d 个\n", countPrefix(root, "te"), countPrefix(root, "t"),
+       countPrefix(root, "x"));
+printf("contains(in)=%d contains(i)=%d contains(tea)=%d\n", trieContains(root, "in"), trieContains(root, "i"),
+       trieContains(root, "tea"));
+```
+
 ```
 以 te 开头：2 个；以 t 开头：3 个；以 x 开头：0 个
 contains(in)=1 contains(i)=0 contains(tea)=1
@@ -135,6 +158,22 @@ static int listWords(TrieNode* x, char* buf, int len, int limit)
 ```
 
 `buf` 中保存着从根到当前节点的路径，也就是当前的前缀。这就是自动补全的基本原理。
+
+用上面的小例子试试，列出以 t 开头的单词和全部单词：
+
+```c
+char buf[64] = "t";
+printf("以 t 开头：");
+listWords(walk(root, "t"), buf, 1, 10);
+printf("\n全部：");
+listWords(root, buf, 0, 10);
+printf("\n");
+```
+
+```
+以 t 开头：tea ten to
+全部：a in inn tea ten to
+```
 
 ## 3. 用真实的词典测一测
 

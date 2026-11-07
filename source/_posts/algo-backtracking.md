@@ -13,6 +13,7 @@ order: 1
 description: 前面的章节讲的是「数据怎么存」，这一章讲「问题怎么解」。第一种方法是回溯：把所有可能的选择画成一棵树，深度优先地走一遍，走不通就退回来换一条路。本文用同一个模板写出全排列、子集和 N 皇后，实测剪枝的效果：8 皇后不剪枝要访问 1917 万个结点，剪枝以后只要 2057 个。
 disableNunjucks: true
 viz: [ds-algo]
+notebook: true
 ---
 
 > **本文目标**：会写递归函数，知道终止条件和递归调用各自的作用；理解回溯的模板：做选择、递归、撤销选择；会用回溯解决排列、子集、N 皇后这类「枚举所有方案」的问题；理解剪枝为什么能把指数级的搜索变快很多。
@@ -61,6 +62,7 @@ viz: [ds-algo]
 
 每条从根到叶子的路径就是一个排列。**回溯就是深度优先地遍历这棵树**：沿着一条路往下走，走到叶子就记下一个答案，然后退回上一层，换一个选择继续走。
 
+<!-- run: skip -->
 ```c
 static int perm[16];
 static bool used[16];
@@ -79,6 +81,38 @@ static void permute(int n, int depth)
         used[x] = false;                    // 撤销选择
     }
 }
+```
+
+<!-- run: hidden -->
+```c
+static int perm[16];
+static bool used[16];
+static long long permCount;                 // 一共得到了几个排列
+static bool printPerm = true;               // 要不要把排列输出出来
+
+static void permute(int n, int depth)       // 和上面相同，补上了输出和计数
+{
+    if (depth == n) {
+        ++permCount;
+        if (printPerm) {
+            for (int i = 0; i < n; ++i) printf("%d", perm[i]);
+            printf(" ");
+        }
+        return;
+    }
+    for (int x = 1; x <= n; ++x) {
+        if (used[x]) continue;
+        used[x] = true;
+        perm[depth] = x;
+        permute(n, depth + 1);
+        used[x] = false;
+    }
+}
+```
+
+```c
+permute(3, 0);
+printf("\n");
 ```
 
 ```
@@ -101,6 +135,16 @@ static void permute(int n, int depth)
 
 n 个数的排列有 n! 个，回溯要把它们一个个列出来，时间至少是 O(n·n!)：
 
+```c
+printPerm = false;
+int ns[] = {1, 5, 8, 10};
+for (int k = 0; k < 4; ++k) {
+    permCount = 0;
+    permute(ns[k], 0);
+    printf("n=%d：%lld 个排列\n", ns[k], permCount);
+}
+```
+
 ```
 n=1：1 个排列
 n=5：120 个排列
@@ -114,6 +158,7 @@ n=10：3628800 个排列
 
 列出 {1, 2, 3} 的所有子集。和排列的区别是：选出来的数没有顺序，{1, 2} 和 {2, 1} 是同一个子集。避免重复的方法是**只往后选**：选了 `a[i]` 以后，下一个只能从 `a[i+1]` 开始选。
 
+<!-- run: skip -->
 ```c
 static void subsets(const int* a, int n, int start, int k)
 {
@@ -123,6 +168,28 @@ static void subsets(const int* a, int n, int start, int k)
         subsets(a, n, i + 1, k + 1);
     }
 }
+```
+
+<!-- run: hidden -->
+```c
+static int chosen[16];
+
+static void subsets(const int* a, int n, int start, int k)   // 和上面相同，补上了输出
+{
+    printf("{");
+    for (int i = 0; i < k; ++i) printf(i ? ",%d" : "%d", chosen[i]);
+    printf("} ");
+    for (int i = start; i < n; ++i) {
+        chosen[k] = a[i];
+        subsets(a, n, i + 1, k + 1);
+    }
+}
+```
+
+```c
+int a[] = {1, 2, 3};
+subsets(a, 3, 0, 0);
+printf("\n");
 ```
 
 ```
@@ -141,6 +208,21 @@ static void subsets(const int* a, int n, int start, int k)
 
 最直接的写法：每一行任选一列，n 行都放好以后，再检查有没有互相攻击：
 
+<!-- run: hidden -->
+```c
+static int queenCol[32];                    // queenCol[r]：第 r 行的皇后在第几列
+
+static bool validAll(int n)                 // n 个皇后都放好了，检查有没有互相攻击
+{
+    for (int r1 = 0; r1 < n; ++r1)
+        for (int r2 = r1 + 1; r2 < n; ++r2) {
+            int c1 = queenCol[r1], c2 = queenCol[r2];
+            if (c1 == c2 || abs(c1 - c2) == r2 - r1) return false;
+        }
+    return true;
+}
+```
+
 ```c
 static long long queensNoPrune(int n, int row)
 {
@@ -155,6 +237,16 @@ static long long queensNoPrune(int n, int row)
 ```
 
 这棵树每个结点有 n 个孩子，一共有 nⁿ 个叶子。8 皇后有 8⁸ ≈ 1677 万种放法要检查。
+
+先用小的 n 试一下：
+
+```c
+printf("不剪枝：4 皇后 %lld 个解，6 皇后 %lld 个解\n", queensNoPrune(4, 0), queensNoPrune(6, 0));
+```
+
+```
+不剪枝：4 皇后 2 个解，6 皇后 4 个解
+```
 
 ### 3.2 剪枝：一冲突就不往下走
 
@@ -186,6 +278,16 @@ static long long queensPrune(int n, int row)
 
 <div class="dsviz" data-viz="algo-queens"></div>
 
+剪枝以后，8 皇后也很快：
+
+```c
+printf("剪枝：4 皇后 %lld 个解，6 皇后 %lld 个解，8 皇后 %lld 个解\n", queensPrune(4, 0), queensPrune(6, 0), queensPrune(8, 0));
+```
+
+```
+剪枝：4 皇后 2 个解，6 皇后 4 个解，8 皇后 92 个解
+```
+
 ### 3.3 再快一点：用数组记录占用情况
 
 `safe` 每次要遍历前面所有的行，O(n)。可以用三个布尔数组记录哪些列、哪些斜线已经被占用了：同一条主对角线上 `row - col` 相同，同一条副对角线上 `row + col` 相同：
@@ -208,6 +310,25 @@ static long long queensFast(int n, int row)
 ```
 
 `row - c` 可能是负数，加上 n 变成合法的下标。
+
+和剪枝的写法对比一下解的个数：
+
+```c
+int sizes[] = {4, 6, 8, 10, 12};
+for (int k = 0; k < 5; ++k) {
+    int n = sizes[k];
+    long long s1 = queensPrune(n, 0), s2 = queensFast(n, 0);
+    printf("n=%2d：%6lld 个解%s\n", n, s2, s1 == s2 ? "，两种写法一致" : "，两种写法不一致");
+}
+```
+
+```
+n= 4：     2 个解，两种写法一致
+n= 6：     4 个解，两种写法一致
+n= 8：    92 个解，两种写法一致
+n=10：   724 个解，两种写法一致
+n=12： 14200 个解，两种写法一致
+```
 
 ### 3.4 实测
 

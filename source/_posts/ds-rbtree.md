@@ -15,6 +15,7 @@ top_group_list: true
 description: C++ 的 std::map、Java 的 TreeMap、Linux 内核的进程调度，用的都是红黑树而不是 AVL 树。它的平衡条件更宽松：最长的路径不超过最短的两倍。本文讲清楚五条性质为什么能保证高度是 O(log n)，实现插入时的三种情况和删除时的四种情况，用 20 万次随机操作检查性质；再和 AVL 树实测比较：有序插入 100 万个数时红黑树高 37、AVL 树高 20，随机插入时两者一样高，红黑树的旋转少了 17%。
 disableNunjucks: true
 viz: [ds-extra]
+notebook: true
 ---
 
 > **本文目标**：理解红黑树的五条性质，以及它们为什么保证了高度不超过 2log₂(n+1)；会实现插入后的修复（三种情况）；了解删除后的修复（四种情况）；知道红黑树和 AVL 树各自的优缺点。
@@ -73,6 +74,20 @@ static RBNode nilNode = {0, BLACK, NULL, NULL, NULL};
 #define NIL (&nilNode)
 ```
 
+<!-- run: hidden -->
+```c
+typedef struct {
+    RBNode* root;
+    long long rotations;                // 旋转次数，用来和 AVL 树比较
+} RBTree;
+
+static void rbInit(RBTree* t)
+{
+    t->root = NIL;
+    t->rotations = 0;
+}
+```
+
 和 AVL 树的递归写法不同，红黑树的修复要从下往上走，并且要看父亲、祖父、叔叔，所以每个节点存一个 `parent` 指针。
 
 所有的空指针都换成一个公共的**哨兵节点** NIL，它是黑色的（性质 3）。这样代码中访问 `x->left->color` 时不用先判断是不是空指针。
@@ -94,6 +109,24 @@ static void leftRotate(RBTree* t, RBNode* x)
     else x->parent->right = y;
     y->left = x;
     x->parent = y;
+    ++t->rotations;                     // 统计旋转次数
+}
+```
+
+<!-- run: hidden -->
+```c
+static void rightRotate(RBTree* t, RBNode* y)   // 右旋：和左旋对称
+{
+    RBNode* x = y->left;
+    y->left = x->right;
+    if (x->right != NIL) x->right->parent = y;
+    x->parent = y->parent;
+    if (y->parent == NIL) t->root = x;
+    else if (y == y->parent->right) y->parent->right = x;
+    else y->parent->left = x;
+    x->right = y;
+    y->parent = x;
+    ++t->rotations;
 }
 ```
 
@@ -129,6 +162,7 @@ static void leftRotate(RBTree* t, RBNode* x)
 </svg>
 </figure>
 
+<!-- run: skip -->
 ```c
 static void insertFixup(RBTree* t, RBNode* z)
 {
@@ -158,6 +192,69 @@ static void insertFixup(RBTree* t, RBNode* z)
 }
 ```
 
+<!-- run: hidden -->
+```c
+static void insertFixup(RBTree* t, RBNode* z)   // 补全了对称的分支
+{
+    while (z->parent->color == RED) {
+        RBNode* g = z->parent->parent;
+        if (z->parent == g->left) {
+            RBNode* uncle = g->right;
+            if (uncle->color == RED) {
+                z->parent->color = BLACK;
+                uncle->color = BLACK;
+                g->color = RED;
+                z = g;
+            } else {
+                if (z == z->parent->right) {
+                    z = z->parent;
+                    leftRotate(t, z);
+                }
+                z->parent->color = BLACK;
+                g->color = RED;
+                rightRotate(t, g);
+            }
+        } else {                                        // 对称：父亲是右孩子
+            RBNode* uncle = g->left;
+            if (uncle->color == RED) {
+                z->parent->color = BLACK;
+                uncle->color = BLACK;
+                g->color = RED;
+                z = g;
+            } else {
+                if (z == z->parent->left) {
+                    z = z->parent;
+                    rightRotate(t, z);
+                }
+                z->parent->color = BLACK;
+                g->color = RED;
+                leftRotate(t, g);
+            }
+        }
+    }
+    t->root->color = BLACK;
+}
+
+static bool rbInsert(RBTree* t, int key)        // 按二叉搜索树插入一个红色节点，再修复
+{
+    RBNode *parent = NIL, *cur = t->root;
+    while (cur != NIL) {
+        parent = cur;
+        if (key < cur->key) cur = cur->left;
+        else if (key > cur->key) cur = cur->right;
+        else return false;                              // 已经存在
+    }
+    RBNode* z = malloc(sizeof(RBNode));
+    if (z == NULL) exit(1);
+    *z = (RBNode){key, RED, NIL, NIL, parent};
+    if (parent == NIL) t->root = z;
+    else if (key < parent->key) parent->left = z;
+    else parent->right = z;
+    insertFixup(t, z);
+    return true;
+}
+```
+
 情况 1 只变色、不旋转，可能沿路径上移 O(log n) 次；情况 2、3 最多旋转两次，然后就结束了。所以**插入最多旋转 2 次**。最后一行把根涂黑：情况 1 可能一直上移到根，把根涂成了红色，涂回黑色只是让所有路径的黑色节点数同时加一，不破坏任何性质。
 
 下面的演示可以逐个插入，观察每种情况。红色边框的节点是红色的。试试有序插入 1 到 10：
@@ -165,6 +262,49 @@ static void insertFixup(RBTree* t, RBNode* z)
 <div class="dsviz" data-viz="rb-insert"></div>
 
 有序插入 1 到 10 以后的树（横着打印，右子树在上面）：
+
+<!-- run: hidden -->
+```c
+static void printTree(const RBNode* n, int depth)   // 横着打印：右子树在上
+{
+    if (n == NIL) return;
+    printTree(n->right, depth + 1);
+    printf("%*s%d%s\n", depth * 6, "", n->key, n->color == RED ? "(红)" : "(黑)");
+    printTree(n->left, depth + 1);
+}
+
+static int rbHeight(const RBNode* n)
+{
+    if (n == NIL) return 0;
+    int l = rbHeight(n->left), r = rbHeight(n->right);
+    return 1 + (l > r ? l : r);
+}
+
+static int blackHeight(const RBNode* n)        // 沿最左边的路径数黑色节点（不算 n 自己，算 NIL）
+{
+    int bh = 0;
+    for (n = n->left; ; n = n->left) {
+        bh += n->color == BLACK;
+        if (n == NIL) return bh;
+    }
+}
+
+static void rbFreeAll(RBNode* n)
+{
+    if (n == NIL) return;
+    rbFreeAll(n->left);
+    rbFreeAll(n->right);
+    free(n);
+}
+```
+
+```c
+RBTree t;
+rbInit(&t);
+for (int k = 1; k <= 10; ++k) rbInsert(&t, k);
+printTree(t.root, 0);
+printf("黑高 %d，高度 %d，旋转 %lld 次\n", blackHeight(t.root), rbHeight(t.root), t.rotations);
+```
 
 ```
                         10(红)
@@ -215,7 +355,151 @@ static int checkRB(const RBNode* n, int lo, int hi, int* count)
 }
 ```
 
-同时和一个布尔数组对比每个 key 是否存在。结果：
+同时和一个布尔数组对比每个 key 是否存在。删除的代码比较长，放在下面折叠的辅助代码里（和示例程序相同）：
+
+<!-- run: hidden -->
+```c
+static RBNode* rbFind(const RBTree* t, int key)
+{
+    RBNode* cur = t->root;
+    while (cur != NIL && cur->key != key) cur = key < cur->key ? cur->left : cur->right;
+    return cur;
+}
+
+// 用 v 替换 u 在树中的位置
+static void transplant(RBTree* t, RBNode* u, RBNode* v)
+{
+    if (u->parent == NIL) t->root = v;
+    else if (u == u->parent->left) u->parent->left = v;
+    else u->parent->right = v;
+    v->parent = u->parent;                              // v 可能是 NIL，哨兵的 parent 也要设置
+}
+
+// 删除后修复：x 多背了一层「黑色」
+static void deleteFixup(RBTree* t, RBNode* x)
+{
+    while (x != t->root && x->color == BLACK) {
+        if (x == x->parent->left) {
+            RBNode* w = x->parent->right;               // 兄弟
+            if (w->color == RED) {                      // 情况 1：兄弟是红色，转成兄弟是黑色
+                w->color = BLACK;
+                x->parent->color = RED;
+                leftRotate(t, x->parent);
+                w = x->parent->right;
+            }
+            if (w->left->color == BLACK && w->right->color == BLACK) {   // 情况 2：兄弟的两个孩子都是黑色
+                w->color = RED;
+                x = x->parent;                          // 多出的黑色上移
+            } else {
+                if (w->right->color == BLACK) {         // 情况 3：兄弟的右孩子是黑色，转成情况 4
+                    w->left->color = BLACK;
+                    w->color = RED;
+                    rightRotate(t, w);
+                    w = x->parent->right;
+                }
+                w->color = x->parent->color;            // 情况 4：兄弟的右孩子是红色，旋转后结束
+                x->parent->color = BLACK;
+                w->right->color = BLACK;
+                leftRotate(t, x->parent);
+                x = t->root;
+            }
+        } else {                                        // 对称
+            RBNode* w = x->parent->left;
+            if (w->color == RED) {
+                w->color = BLACK;
+                x->parent->color = RED;
+                rightRotate(t, x->parent);
+                w = x->parent->left;
+            }
+            if (w->right->color == BLACK && w->left->color == BLACK) {
+                w->color = RED;
+                x = x->parent;
+            } else {
+                if (w->left->color == BLACK) {
+                    w->right->color = BLACK;
+                    w->color = RED;
+                    leftRotate(t, w);
+                    w = x->parent->left;
+                }
+                w->color = x->parent->color;
+                x->parent->color = BLACK;
+                w->left->color = BLACK;
+                rightRotate(t, x->parent);
+                x = t->root;
+            }
+        }
+    }
+    x->color = BLACK;
+}
+
+static bool rbDelete(RBTree* t, int key)
+{
+    RBNode* z = rbFind(t, key);
+    if (z == NIL) return false;
+    RBNode *y = z, *x;
+    Color yOriginal = y->color;
+    if (z->left == NIL) {
+        x = z->right;
+        transplant(t, z, z->right);
+    } else if (z->right == NIL) {
+        x = z->left;
+        transplant(t, z, z->left);
+    } else {                                            // 两个孩子：用后继 y 代替 z
+        y = z->right;
+        while (y->left != NIL) y = y->left;
+        yOriginal = y->color;
+        x = y->right;
+        if (y->parent == z) {
+            x->parent = y;
+        } else {
+            transplant(t, y, y->right);
+            y->right = z->right;
+            y->right->parent = y;
+        }
+        transplant(t, z, y);
+        y->left = z->left;
+        y->left->parent = y;
+        y->color = z->color;
+    }
+    free(z);
+    if (yOriginal == BLACK) deleteFixup(t, x);          // 删掉（或移走）的是黑色节点，黑高被破坏了
+    return true;
+}
+
+static unsigned long long g_rand = 88172645463325252ULL;   // 固定种子的随机数（xorshift），每次运行结果相同
+static int randInt(int lo, int hi)
+{
+    g_rand ^= g_rand << 13;
+    g_rand ^= g_rand >> 7;
+    g_rand ^= g_rand << 17;
+    return lo + (int)(g_rand % (unsigned long long)(hi - lo + 1));
+}
+```
+
+```c
+rbFreeAll(t.root);
+rbInit(&t);
+bool present[2000] = {false};
+int size = 0, ok = 1;
+for (int step = 0; step < 200000 && ok; ++step) {
+    int k = randInt(1, 1999);
+    if (randInt(0, 1)) {
+        if (rbInsert(&t, k)) ++size;
+        present[k] = true;
+    } else {
+        if (rbDelete(&t, k)) --size;
+        present[k] = false;
+    }
+    if (step % 1000 == 0) {
+        int count = 0;
+        if (checkRB(t.root, 0, 2000, &count) < 0 || count != size) ok = 0;
+        for (int x = 1; x < 2000; ++x)
+            if ((rbFind(&t, x) != NIL) != present[x]) ok = 0;
+    }
+}
+printf("随机插入、删除 20 万次，每 1000 次检查一遍五条性质和全部元素：%s\n", ok ? "通过" : "失败");
+rbFreeAll(t.root);
+```
 
 ```
 随机插入、删除 20 万次，每 1000 次检查一遍五条性质和全部元素：通过

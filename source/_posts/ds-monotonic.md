@@ -13,6 +13,7 @@ order: 3
 description: 当栈或队列中的元素保持单调的顺序时，可以把一些 O(n²) 的问题降到 O(n)。本文用单调栈求「右边第一个更大的元素」，用单调队列求滑动窗口最大值，两个过程都可以逐步演示；实测 10 万个数据时，单调栈比暴力解法快了 1 万倍。
 disableNunjucks: true
 viz: [ds-mono]
+notebook: true
 ---
 
 > **本文目标**：理解单调栈和单调队列的思想；会用单调栈求下一个更大（更小）的元素；会用双端队列实现单调队列，求滑动窗口的最大值；会用均摊分析说明它们为什么是 O(n)。
@@ -68,6 +69,23 @@ void nextGreater(const int* a, int n, int* ans)
 ```
 
 为什么只需要比较栈顶？因为栈中的值**从栈底到栈顶是递减的**：每次入栈之前，比新元素小的都已经被弹出了，所以栈中留下的都比新元素大。这种栈叫**单调栈**。新元素来了，只要栈顶不比它小，下面的就更不会比它小，可以停止比较。
+
+测试一下，用第 1 节的气温，和暴力解法对比：
+
+```c
+int temp[] = {73, 74, 75, 71, 69, 72, 76, 73};
+int ans[8], ans2[8];
+nextGreater(temp, 8, ans);
+nextGreaterBrute(temp, 8, ans2);
+printf("答案:");
+for (int i = 0; i < 8; ++i) printf(i ? "%4d" : "%3d", ans[i]);
+printf("\n和暴力解法%s\n", memcmp(ans, ans2, sizeof ans) == 0 ? "一致" : "不一致");
+```
+
+```
+答案:  1   2   6   5   5   6  -1  -1
+和暴力解法一致
+```
 
 在演示中逐步观察栈的变化，也可以输入自己的数组：
 
@@ -149,6 +167,21 @@ void windowMax(const int* a, int n, int k, int* out)
 <div class="dsviz" data-viz="window-max"></div>
 
 队列中存放的是**下标**而不是值，因为要靠下标判断元素是否已经滑出了窗口。
+
+测试一下第 3 节的例子，k = 3：
+
+```c
+int a[] = {1, 3, -1, -3, 5, 3, 6, 7};
+int out[6];
+windowMax(a, 8, 3, out);
+printf("每个窗口的最大值:");
+for (int i = 0; i < 6; ++i) printf(" %d", out[i]);
+printf("\n");
+```
+
+```
+每个窗口的最大值: 3 3 5 5 6 7
+```
 
 ### 4.1 复杂度和实测
 

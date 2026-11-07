@@ -13,6 +13,7 @@ description: 链表用指针把分散在内存各处的节点串起来，插入�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-linked-list]
+notebook: true
 ---
 
 > **本文目标**：理解链表的存储方式和它与顺序表的区别；理解头结点的作用；会实现单链表的插入、删除、查找、遍历和释放；掌握反转链表；会用快慢指针找中间节点、判断环。
@@ -138,6 +139,30 @@ void listFree(List* list)
 
 `for (Node* p = first; p != NULL; p = p->next)` 是遍历链表的标准写法。链表**不能随机访问**：要访问第 i 个元素，只能从头开始走 i 步，所以按下标访问和按值查找都是 O(n)。
 
+测试一下插入和删除：
+
+```c
+List list;
+if (!listInit(&list)) return 1;
+for (int i = 0; i < 5; ++i) insertAt(&list, list.size, (i + 1) * 10);
+print(&list);
+insertAt(&list, 0, 5);
+insertAt(&list, 3, 25);
+printf("插入 5 和 25 之后: "); print(&list);
+printf("insertAt(100, ...) 返回 %d\n", insertAt(&list, 100, 1));
+removeValue(&list, 30);
+printf("删除 30 之后:     "); print(&list);
+printf("removeValue(99) 返回 %d\n", removeValue(&list, 99));
+```
+
+```
+[5] 10 20 30 40 50
+插入 5 和 25 之后: [7] 5 10 20 25 30 40 50
+insertAt(100, ...) 返回 0
+删除 30 之后:     [6] 5 10 20 25 40 50
+removeValue(99) 返回 0
+```
+
 ## 5. 反转链表
 
 反转链表是最经典的链表题目。思路是：从前往后遍历，把每个节点的 `next` 改为指向它的前一个节点。
@@ -163,6 +188,20 @@ void reverse(List* list)
 
 每一轮循环做四件事：用 `next` 记住后继（因为下一步就要改掉 `cur->next`）；把 `cur->next` 指向 `prev`；`prev` 和 `cur` 各前进一步。每个节点只处理一次，时间 O(n)，只用了三个指针，额外空间 O(1)。
 
+接着上面的链表：
+
+```c
+reverse(&list);
+printf("反转之后: "); print(&list);
+reverse(&list);
+printf("再反转:   "); print(&list);
+```
+
+```
+反转之后: [6] 50 40 25 20 10 5
+再反转:   [6] 5 10 20 25 40 50
+```
+
 ## 6. 快慢指针
 
 ### 6.1 找中间节点
@@ -185,6 +224,19 @@ Node* middle(const List* list)
 <div class="dsviz" data-viz="ll-middle"></div>
 
 元素个数是偶数时，这个写法返回的是中间两个中的**后一个**，比如 6 个元素时返回第 4 个。
+
+```c
+printf("中间节点: %d\n", middle(&list)->value);
+insertAt(&list, list.size, 60);
+printf("加上 60 以后: "); print(&list);
+printf("中间节点: %d\n", middle(&list)->value);
+```
+
+```
+中间节点: 25
+加上 60 以后: [7] 5 10 20 25 40 50 60
+中间节点: 25
+```
 
 ### 6.2 判断链表是否有环
 
@@ -209,6 +261,23 @@ int hasCycle(const List* list)
 <div class="dsviz" data-viz="ll-cycle"></div>
 
 这个方法只需要 O(1) 的额外空间，叫作 Floyd 判圈算法。
+
+测试一下，同样让最后一个节点指回第 3 个节点：
+
+```c
+printf("有环吗？%s\n", hasCycle(&list) ? "有" : "没有");
+Node* last = list.head->next;
+while (last->next != NULL) last = last->next;
+last->next = list.head->next->next->next;       // 最后一个节点指回第 3 个
+printf("制造环之后有环吗？%s\n", hasCycle(&list) ? "有" : "没有");
+last->next = NULL;                              // 拆掉环，才能正确释放
+listFree(&list);
+```
+
+```
+有环吗？没有
+制造环之后有环吗？有
+```
 
 ## 7. 完整测试
 
