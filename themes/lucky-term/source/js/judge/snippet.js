@@ -664,6 +664,10 @@
 
     if (cell) cell.hasPanel = () => !!panel;
     runBtn.addEventListener('click', () => run());
+    // 鼠标移到 run 上、或者用键盘选中它，就先在后台下载编译器：点下去时已经下了一截
+    const warm = () => cc.preload();
+    runBtn.addEventListener('pointerenter', warm, { once: true });
+    runBtn.addEventListener('focus', warm, { once: true });
     editBtn.addEventListener('click', () => (mode ? close() : open('edit')));
     snip.open = k => { fig.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (!mode) open(k); else switchMode(k); };
   }
