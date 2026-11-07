@@ -72,7 +72,12 @@
     const menu = $('[data-scheme-menu]', picker);
     const list = $('.scheme-list', menu);
     const items = $$('.scheme-item', menu);
+    const moreBtn = $('[data-scheme-more]', menu);
     let cur = -1;
+    // 不常用的配色收在「更多配色」里；方向键只在看得见的几项之间移动
+    const visible = () => items.filter(li => !(list.classList.contains('is-collapsed') && li.classList.contains('is-extra')));
+    const expand = () => { list.classList.remove('is-collapsed'); if (moreBtn) moreBtn.parentNode.hidden = true; };
+    if (moreBtn) moreBtn.addEventListener('click', () => { expand(); list.focus(); });
 
     const highlight = (i, preview) => {
       cur = i;
@@ -84,7 +89,9 @@
     const openMenu = () => {
       menu.hidden = false;
       toggle.setAttribute('aria-expanded', 'true');
-      highlight(items.findIndex(li => li.dataset.schemeId === savedScheme), false);
+      const i = items.findIndex(li => li.dataset.schemeId === savedScheme);
+      if (i >= 0 && items[i].classList.contains('is-extra')) expand();   // 正在用的方案收在里面时直接展开
+      highlight(i, false);
       list.focus();
     };
     const closeMenu = (commit) => {
@@ -106,7 +113,10 @@
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
         const d = e.key === 'ArrowDown' ? 1 : -1;
-        highlight((cur + d + items.length) % items.length, true);
+        const vis = visible();
+        const at = vis.indexOf(items[cur]);
+        const next = vis[at < 0 ? (d > 0 ? 0 : vis.length - 1) : (at + d + vis.length) % vis.length];
+        highlight(items.indexOf(next), true);
       } else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         closeMenu(true);
@@ -181,21 +191,21 @@
 
     // 继续阅读：按路线顺序找到第一篇没读过的文章
     const resume = $('[data-resume]');
+    // 页面上默认写的是「从这里开始」第一篇；读过文章的人换成下一篇，只换文字不换结构，所以不会跳
     if (resume && readSet.size) {
-      const a = $('a', resume);
-      let found = false;
-      for (const s of series) {
+      const set = (label, title, go, href) => {
+        $('[data-resume-label]', resume).textContent = label;
+        $('[data-resume-title]', resume).textContent = title;
+        $('[data-resume-go]', resume).textContent = go;
+        resume.href = href;
+      };
+      const s = series.find(x => x.posts.some(p => !readSet.has(p.url)));
+      if (s) {
         const next = s.posts.find(p => !readSet.has(p.url));
-        if (next) {
-          a.href = next.url;
-          a.textContent = `${s.name} · ${next.title}`;
-          found = true;
-          break;
-        }
+        set('继续阅读', `${s.name} · ${next.title}`, '接着读 →', next.url);
+      } else {
+        set('全部读完', '✓ 所有专栏都读完了', '去刷题 →', (window.LT.root || '/') + 'problems/');
       }
-      // 全部读完也显示这一行：位置已经占好了，空着反而像出错
-      if (!found) { a.removeAttribute('href'); a.textContent = '✓ 所有专栏都读完了'; a.classList.add('c-accent'); }
-      resume.hidden = false;
     }
   }
 
@@ -594,10 +604,12 @@
   /* ---------- 手机顶栏：往下读时收起，往上滑时出现 ---------- */
   const narrow = matchMedia('(max-width: 760px)');
   const headerEl = $('.site-header');
+  const isPostPage = !!$('#post-content');
   let lastY = window.scrollY;
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
-    if (!narrow.matches || !headerEl) { html.classList.remove('is-header-hidden'); lastY = y; return; }
+    // 只在文章页收起：首页、列表页要经常点导航，收起来反而碍事
+    if (!narrow.matches || !headerEl || !isPostPage) { html.classList.remove('is-header-hidden'); lastY = y; return; }
     if (Math.abs(y - lastY) < 8) return;                         // 忽略手指的细小抖动
     const menuOpen = !$('[data-scheme-menu]').hidden;
     html.classList.toggle('is-header-hidden', y > lastY && y > headerEl.offsetHeight && !menuOpen);

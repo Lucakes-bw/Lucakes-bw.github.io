@@ -23,7 +23,6 @@
     <img class="gh-avatar" src="<%- avatar_src() %>" alt="<%= theme.prompt.user %> 的头像" width="260" height="260">
     <h1 class="gh-name"><span class="gh-fullname"><%= config.title %></span><span class="gh-login"><%= theme.prompt.user %></span></h1>
     <p class="gh-bio"><%= theme.hero.intro %></p>
-    <% if (theme.github) { %><a class="btn btn-ghost gh-follow" href="<%- theme.github %>" target="_blank" rel="noopener">在 GitHub 上关注</a><% } %>
     <div class="gh-counts">
       <%- icon.file %> <strong><%= site.posts.length %></strong> 篇文章 · <strong><%= totalcount(site) %></strong> 字
     </div>
@@ -50,15 +49,26 @@
 
   <%# ---------- 右侧 ---------- %>
   <div class="gh-main">
+    <%# 首屏的主入口：新访客是「从这里开始」第一篇，读过的人由 main.js 换成「继续阅读」下一篇。
+        服务端先把第一篇写好，脚本只替换文字，这一块的大小不变 %>
+    <% const startS = allSeries.find(s => s.items.length); const startP = startS && startS.items[0].post; %>
+    <% if (startP) { %>
+    <a class="gh-card gh-start" href="<%- url_for(startP.path) %>" data-resume>
+      <span class="gh-start-label" data-resume-label>从这里开始</span>
+      <span class="gh-start-title" data-resume-title><%= startS.name %> · <%= startP.title %></span>
+      <span class="gh-start-go" data-resume-go>开始阅读 →</span>
+    </a>
+    <% } %>
+
+    <% const notes = essay.essay_list.slice(0, 2); %>
     <section class="gh-card gh-readme">
-      <div class="gh-readme-head"><%= theme.prompt.user %> / <strong>README</strong>.md</div>
+      <div class="gh-readme-head"><span class="ui-term"><span class="c-accent">$</span> cat notice.md</span><span class="ui-ios">公告</span><a class="gh-readme-more" href="<%- url_for('/essay/') %>">全部</a></div>
       <ul class="gh-readme-list">
-        <li>按专栏顺序读：从 C/C++ 语法，到数据结构，再到 Linux、网络编程、数据库，最后是 Qt 客户端开发。</li>
-        <% essay.essay_list.slice(0, 3).forEach(function (n) { %>
+        <% if (!notes.length) { %><li>按专栏顺序读：从 C/C++ 语法，到数据结构，再到 Linux、网络编程、数据库，最后是 Qt 客户端开发。</li><% } %>
+        <% notes.forEach(function (n) { %>
         <li><%= n.content %><% if (n.link) { %> <a href="<%- url_for(n.link) %>">→</a><% } %> <span class="gh-date"><%= date(n.date, 'MM-DD') %></span></li>
         <% }) %>
       </ul>
-      <p class="gh-resume" data-resume hidden>继续阅读 <a href="#"></a></p>
     </section>
 
     <section class="gh-sec">
@@ -69,14 +79,13 @@
           <div class="gh-repo-head">
             <%- icon.repo %>
             <a class="gh-repo-name" href="<%- url_for(s.path) %>"><%= s.name %></a>
-            <span class="gh-pill"><%= String(s.index).padStart(2, '0') %> · 专栏</span>
+            <span class="gh-pill"><%= String(s.index).padStart(2, '0') %></span>
           </div>
           <p class="gh-repo-desc"><%= s.desc %></p>
           <p class="gh-repo-next" data-next="<%= s.key %>">下一篇 <% if (first) { %><a href="<%- url_for(first.post.path) %>"><%= first.post.title %></a><% } else { %><span>敬请期待…</span><% } %></p>
           <div class="gh-repo-foot">
             <% if (s.lang) { %><span><i class="gh-dot" style="background:<%= s.color || 'var(--muted)' %>"></i><%= s.lang %></span><% } %>
             <span><%- icon.file %> <%= s.items.length %> 篇</span>
-            <span><%- icon.book %> <%= s.chapters.length %> 章</span>
             <span class="gh-progress" title="本机的阅读进度"><span class="gh-bar"><i data-bar-fill style="width:0"></i></span><span><span data-count>0</span>/<%= s.items.length %></span></span>
           </div>
         </article>

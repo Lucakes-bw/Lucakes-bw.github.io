@@ -4,6 +4,13 @@
 
 /* 等宽字体放在本站（只留拉丁子集，各约 21KB），不再依赖 jsdelivr。
    浏览器只在页面真用到这个字体时才下载，iOS 风格没有代码的页面不会去取。 */
+/* 回退字体按 JetBrains Mono 的字宽（0.6em）校准：字体还没下载完时先用它，换过去时文字宽度基本不变。
+   Menlo、SF Mono 本来就是 0.6em，不用调；Consolas 是 0.55em，放大到 109%。 */
+@font-face {
+  font-family: "LT Consolas";
+  src: local("Consolas");
+  size-adjust: 109%;
+}
 @font-face {
   font-family: "JetBrains Mono";
   font-style: normal;
@@ -22,7 +29,7 @@
 }
 
 :root {
-  --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, "LT Consolas", Consolas, "PingFang SC", "Microsoft YaHei", monospace;
   --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
   --radius: 10px;
   --header-h: 56px;
@@ -266,7 +273,16 @@
 
 /* ---------- 基础 ---------- */
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + 16px); }
+/* scrollbar-gutter：长页有滚动条、短页没有时，页面不再左右晃 */
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + 16px); scrollbar-gutter: stable; }
+
+/* 切页过渡：浏览器支持时（Chrome / Edge / Safari 18+）新旧页面淡入淡出，顶栏单独成一层保持不动 */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+.site-header { view-transition-name: site-header; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .16s; }
+::view-transition-group(site-header) { animation: none; }
 /* 关闭等宽字体连字，避免 -> != == 被显示成箭头和不等号。
    需要 !important：下面很多规则用了 font 简写，它会把这两个属性重置为默认值 */
 html, html * { font-variant-ligatures: none !important; font-feature-settings: "liga" 0, "calt" 0 !important; }
@@ -324,7 +340,9 @@ html[data-ui="ios"] .ui-term { display: none; }
 .p-sep { color: var(--muted); }
 .p-path { color: var(--link); overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
 .p-dollar { color: var(--muted); margin: 0 6px 0 2px; }
-.cursor { width: 9px; height: 17px; background: var(--accent); animation: blink 1.1s steps(1) infinite; }
+/* 光标只闪几下就停住，常亮；不会一直在余光里闪 */
+.cursor { width: 9px; height: 17px; background: var(--accent); animation: blink 1.1s steps(1) 4; }
+@media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
 @keyframes blink { 50% { opacity: 0; } }
 
 .nav { display: flex; gap: 4px; margin-left: auto; }
@@ -337,7 +355,9 @@ html[data-ui="ios"] .ui-term { display: none; }
 }
 .nav-item:hover { background: var(--panel-2); text-decoration: none; color: var(--fg); }
 .nav-item.is-active { color: var(--fg); background: var(--panel-2); }
-.nav-cmd { color: var(--accent); margin-right: 6px; }
+/* 命令前缀弱化：平时是浅色小字，悬停和当前项才用强调色，名称才是主角 */
+.nav-cmd { color: var(--muted); font-size: 12px; margin-right: 5px; transition: color .15s; }
+.nav-item:hover .nav-cmd, .nav-item.is-active .nav-cmd { color: var(--accent); }
 
 .header-tools { display: flex; gap: 8px; }
 .tool-btn {
@@ -400,6 +420,13 @@ html[data-ui="ios"] .ui-term { display: none; }
 .scheme-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .scheme-mode { font-size: 11px; color: var(--muted); }
 .sr-scheme a { display: flex !important; align-items: center; gap: 10px; }
+.scheme-list.is-collapsed .is-extra { display: none; }
+.scheme-more button {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+  padding: 8px; border: 0; border-radius: 6px; background: none; cursor: pointer;
+  font: inherit; color: var(--link); text-align: left;
+}
+.scheme-more button:hover { background: var(--panel-2); }
 
 .read-progress {
   position: fixed; top: 0; left: 0; z-index: 60;
@@ -490,7 +517,7 @@ html[data-ui="ios"] .ui-term { display: none; }
 /* ---------- 首页（GitHub 主页风格） ----------
    左边个人资料，右边 README、专栏卡片、学习热力图、学习动态、最近更新 */
 .gh { display: grid; grid-template-columns: 272px minmax(0, 1fr); gap: 36px; align-items: start; }
-.gh-avatar { display: block; width: 100%; max-width: 180px; height: auto; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--border); background: var(--panel); }
+.gh-avatar { display: block; width: 100%; max-width: 128px; height: auto; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--border); background: var(--panel); }
 .gh-name { margin: 16px 0 0; line-height: 1.25; }
 .gh-fullname { display: block; font: 700 24px/1.3 var(--sans); color: var(--fg); }
 .gh-login { display: block; font: 300 20px/1.4 var(--sans); color: var(--muted); }
@@ -503,11 +530,12 @@ html[data-ui="ios"] .ui-term { display: none; }
 .gh-info svg, .gh-counts svg { color: var(--muted); flex: none; }
 .gh-side-sec { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
 .gh-side-title { margin: 0 0 12px; font: 600 16px/1.4 var(--sans); color: var(--fg); }
-.gh-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+/* 成就由脚本画出来：先按两排的高度占好位置；解锁前后大小一样，不再缩放 */
+.gh-badges { display: flex; flex-wrap: wrap; gap: 8px; min-height: 88px; align-content: flex-start; }
 .gh-badge {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 56px; height: 56px; border-radius: 50%;
-  font: 700 16px/1 var(--mono); color: #fff;
+  width: 40px; height: 40px; border-radius: 50%;
+  font: 700 13px/1 var(--mono); color: #fff;
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .35);
 }
 .gh-badge.b0 { background: linear-gradient(135deg, #f9a8d4, #a78bfa); }
@@ -517,13 +545,10 @@ html[data-ui="ios"] .ui-term { display: none; }
 .gh-badge.b4 { background: linear-gradient(135deg, #a5b4fc, #4338ca); }
 .gh-badge.b5 { background: linear-gradient(135deg, #fda4af, #e11d48); }
 .gh-badge.b6 { background: linear-gradient(135deg, #fde68a, #65a30d); }
-.gh-badge.is-locked { background: none; color: var(--muted); box-shadow: none; border: 2px dashed var(--border-2); opacity: .75; font-size: 14px; }
-.gh-badges.is-empty { gap: 6px; }
-.gh-badges.is-empty .gh-badge { width: 34px; height: 34px; font-size: 11px; border-width: 1.5px; }
-.gh-sec.is-empty .gh-contrib, .gh-sec.is-empty .gh-years, .gh-sec.is-empty .gh-act-title { display: none; }
-.gh-sec.is-empty .gh-activity { margin-top: 0; }
-.gh-sec.is-empty .gh-act-empty { padding: 16px 20px; text-align: left; }
-.gh-badges-hint { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+.gh-badge.is-locked { background: none; color: var(--muted); box-shadow: none; border: 1.5px dashed var(--border-2); opacity: .75; font-size: 12px; }
+/* 新访客没有学习记录：整块「学习记录」收起（head 里的脚本首屏前就加好 has-records，不等 main.js） */
+.gh-sec.is-empty, html:not(.has-records) .gh-sec[data-contrib] { display: none; }
+.gh-badges-hint { margin: 10px 0 0; min-height: 1.5em; font-size: 12px; color: var(--muted); }
 .gh-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .gh-tags a { padding: 3px 10px; border-radius: 999px; font: 500 12px/1.6 var(--sans); background: color-mix(in srgb, var(--link) 12%, var(--bg)); color: var(--link); }
 .gh-tags a:hover { background: var(--link); color: var(--bg); text-decoration: none; }
@@ -537,15 +562,33 @@ html[data-ui="ios"] .ui-term { display: none; }
 .gh-readme-head { font: 13px/1 var(--mono); color: var(--fg-2); margin-bottom: 12px; }
 .gh-readme-list { margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.85; color: var(--fg); }
 .gh-readme-list li::marker { color: var(--muted); }
-.gh-resume { margin: 14px 0 0; padding-top: 14px; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted); }
-.gh-resume a { font-weight: 600; margin-left: 6px; }
-/* 占位：脚本还没填好时先留出这一行的高度（has-read 由 head 里的脚本加） */
-html.has-read .gh-resume[hidden] { display: block; visibility: hidden; }
-.gh-resume { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gh-readme-head { display: flex; justify-content: space-between; align-items: center; }
+.gh-readme-more { font: 13px/1 var(--sans); }
+
+/* 首屏主入口：「从这里开始」/「继续阅读」，整块可点 */
+.gh-start {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 16px;
+  margin-bottom: 16px; padding: 16px 20px;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-soft); color: var(--fg);
+  transition: border-color .15s, transform .15s;
+}
+.gh-start:hover { text-decoration: none; border-color: var(--accent); transform: translateY(-1px); }
+.gh-start-label { grid-column: 1; font: 600 12px/1.4 var(--sans); color: var(--accent); }
+.gh-start-title { grid-column: 1; font: 600 17px/1.4 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gh-start-go {
+  grid-column: 2; grid-row: 1 / span 2;
+  display: inline-flex; align-items: center; justify-content: center; min-width: 7.5em;
+  height: 34px; padding: 0 14px; border-radius: 8px;
+  background: var(--accent); color: var(--bg); font: 600 13px/1 var(--sans); white-space: nowrap;
+}
 
 .gh-sec { margin-top: 28px; }
 .gh-sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
 .gh-sec-head h2, .gh-act-title { margin: 0; font: 400 16px/1.5 var(--sans); color: var(--fg); }
+/* 标题会被脚本改成「过去一年有 N 次学习记录」：固定一行，不把右边的年份按钮挤下去 */
+.gh-sec-head h2 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gh-sec-head > :not(h2) { flex: none; }
 .gh-sec-head a { font-size: 13px; }
 .gh-repos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .gh-repo { display: flex; flex-direction: column; padding: 16px; min-width: 0; }
@@ -567,6 +610,7 @@ html.has-read .gh-resume[hidden] { display: block; visibility: hidden; }
 .gh-cal-scroll { overflow-x: auto; scrollbar-width: thin; }
 .gh-cal-grid {
   display: grid; gap: 3px; width: max-content;
+  min-height: 107px;   /* 16px 月份行 + 7 行 10px 格子 + 7 个间隔：格子画出来之前先占好高度 */
   grid-template-columns: 30px repeat(var(--weeks, 53), 10px);
   grid-template-rows: 16px repeat(7, 10px);
   font: 10px/10px var(--sans); color: var(--muted);
@@ -711,7 +755,9 @@ html.has-read .gh-resume[hidden] { display: block; visibility: hidden; }
   background: var(--accent-soft);
 }
 .post-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; font: 13px/1.6 var(--mono); color: var(--muted); }
-.post-meta > span + span::before { content: "·"; margin: 0 10px; color: var(--border-2); }
+/* 分隔点挂在前一项的末尾、每项不拆行：换行时点留在上一行行尾，不会跑到新一行开头 */
+.post-meta > span { white-space: nowrap; }
+.post-meta > span:has(~ span:not([style*="none"]))::after { content: "·"; margin: 0 10px; color: var(--border-2); }
 .post-tags { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; font: 12px/1 var(--mono); }
 .post-tags a { padding: 5px 9px; border-radius: 999px; background: var(--panel-2); color: var(--fg-2); }
 .post-tags a:hover { color: var(--accent); text-decoration: none; }
@@ -1022,7 +1068,8 @@ html.has-read .gh-resume[hidden] { display: block; visibility: hidden; }
   border-radius: 12px;
   background: var(--panel);
 }
-.mark-read .btn { margin-left: auto; }
+/* 「标记为已读 / 未读」在实心和描边之间切换：字重和最小宽度固定，按钮不会变大变小 */
+.mark-read .btn { margin-left: auto; font-weight: 600; min-width: 8.5em; }
 .mark-read.is-read { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); background: var(--accent-soft); }
 
 /* 按钮：.btn 描边、.btn-solid 实心主按钮、.btn-ghost 中性；高度、圆角全站一致 */
@@ -1114,6 +1161,11 @@ html.is-focus .site-main { padding-top: 40px; }
   .gh-name { margin: 0; }
   .gh-side > :not(.gh-avatar):not(.gh-name) { grid-column: 1 / -1; }
   .gh-side-sec { display: none; }
+  /* 窄屏：统计和链接排成一两行，不用滑一整屏才看到正文 */
+  .gh-bio { margin: 10px 0 8px; }
+  .gh-counts { margin-top: 0; }
+  .gh-info { display: flex; flex-wrap: wrap; gap: 0 16px; margin-top: 4px; }
+  .gh-info li:first-child { display: none; }
   aside.toc { display: none; }   /* 只隐藏外层：Hexo 生成的 <ol> 也带 class="toc" */
   .post-head, .post-end, .comments { max-width: none; }
   /* 窄屏目录：右下角悬浮按钮 + 底部弹出的目录 */
@@ -1149,7 +1201,8 @@ html.is-focus .site-main { padding-top: 40px; }
   .header-inner { flex-wrap: wrap; gap: 8px 12px; padding-top: 10px; padding-bottom: 8px; }
   .brand { flex: 1; }
   .p-path { max-width: 34vw; }
-  .nav { order: 3; width: 100%; margin: 0 -10px; overflow-x: auto; scrollbar-width: none; }
+  .nav { order: 3; width: 100%; margin: 0 -10px; overflow-x: auto; scrollbar-width: none; justify-content: space-between; }
+  .nav-cmd { display: none; }
   .nav::-webkit-scrollbar { display: none; }
   .search-label, .search-btn kbd { display: none; }
   .scheme-menu { width: min(260px, calc(100vw - 32px)); }
@@ -1168,6 +1221,10 @@ html.is-focus .site-main { padding-top: 40px; }
   .rm-node { flex: 0 0 78%; scroll-snap-align: start; scroll-margin-left: 16px; }
   .rm-node::after { display: none; }
   .gh-repos { grid-template-columns: minmax(0, 1fr); }
+  /* 手机：整块本来就能点，去掉按钮把宽度让给标题，再加一个箭头提示 */
+  .gh-start { grid-template-columns: minmax(0, 1fr) auto; padding: 14px 16px; }
+  .gh-start-go { font-size: 0; min-width: 0; width: 34px; padding: 0; }
+  .gh-start-go::after { content: "→"; font-size: 16px; }
   .gh-fullname { font-size: 20px; }
   .gh-login { font-size: 16px; }
   .ls-row { grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 8px 10px; padding: 12px 4px; }
@@ -1328,7 +1385,7 @@ html[data-ui="ios"] .post-no {
 html[data-ui="ios"] .post-no::before { content: "第 "; }
 html[data-ui="ios"] .post-no::after { content: " 节"; }
 html[data-ui="ios"] .post-meta { font: 14px/1.6 var(--sans); }
-html[data-ui="ios"] .post-meta > span + span::before { color: var(--muted); margin: 0 8px; }
+html[data-ui="ios"] .post-meta > span::after { color: var(--muted); margin: 0 8px; }
 html[data-ui="ios"] .post-tags { font: 13px/1 var(--sans); }
 html[data-ui="ios"] .post-tags a { background: var(--fill); color: var(--fg-2); padding: 6px 11px; }
 

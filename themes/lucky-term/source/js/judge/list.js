@@ -46,6 +46,11 @@
     $('[data-pb-empty]').hidden = shown > 0;
   }
 
+  // 筛选条件存在本标签页里：点进一道题再返回，难度、标签、关键字都还在
+  const FILTER_KEY = 'lt-pb-filter';
+  const saveFilter = () => { try { sessionStorage.setItem(FILTER_KEY, JSON.stringify(filter)); } catch (e) { /* ignore */ } };
+  const qInput = $('[data-filter-q]');
+
   $$('[data-filter]').forEach(group => {
     group.addEventListener('click', e => {
       const b = e.target.closest('button[data-v]');
@@ -56,7 +61,20 @@
       filter[key] = v;
       $$('button[data-v]', group).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === v)));
       apply();
+      saveFilter();
     });
   });
-  $('[data-filter-q]').addEventListener('input', e => { filter.q = e.target.value.trim().toLowerCase(); apply(); });
+  qInput.addEventListener('input', e => { filter.q = e.target.value.trim().toLowerCase(); apply(); saveFilter(); });
+
+  let saved = null;
+  try { saved = JSON.parse(sessionStorage.getItem(FILTER_KEY)); } catch (e) { /* ignore */ }
+  if (saved && typeof saved === 'object') {
+    Object.keys(filter).forEach(k => { if (typeof saved[k] === 'string') filter[k] = saved[k]; });
+    $$('[data-filter]').forEach(group => {
+      const v = filter[group.dataset.filter];
+      $$('button[data-v]', group).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === v)));
+    });
+    if (filter.q && !qInput.value) qInput.value = filter.q;
+    apply();
+  }
 })();
