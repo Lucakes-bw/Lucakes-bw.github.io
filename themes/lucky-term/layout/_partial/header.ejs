@@ -1,6 +1,10 @@
 <%
   const cur = page.path.replace(/index\.html$/, '').replace(/\/$/, '');
-  const shownPath = cur ? '~/' + decodeURI(cur) : '~';
+  // 专栏里的文章算在「专栏」下：导航点亮「专栏」，提示符也显示 ~/column
+  const inSeries = is_post() && !!series_of(page);
+  // 提示符只显示到第一级目录：完整路径已经在文章的面包屑里了，这里写全只会又长又被截断
+  const top = inSeries ? 'column' : decodeURI(cur.split('/')[0] || '');
+  const shownPath = top ? '~/' + top : '~';
 %>
 <header class="site-header">
   <div class="wrap header-inner">
@@ -10,7 +14,7 @@
     <nav class="nav" aria-label="主导航">
       <% theme.menu.forEach(function (item) {
         const href = url_for(item.path);
-        const active = ('/' + cur + '/').startsWith(item.path);
+        const active = ('/' + cur + '/').startsWith(item.path) || (inSeries && item.path === '/column/');
       %>
       <a class="nav-item<%= active ? ' is-active' : '' %>" href="<%- href %>"><span class="nav-cmd"><%= item.cmd %></span><%= item.name %></a>
       <% }) %>
@@ -38,9 +42,17 @@
             </div>
           </div>
           <div class="ui-switch-label scheme-list-label">配色</div>
-          <ul class="scheme-list" role="listbox" aria-label="配色方案" tabindex="-1">
-            <% ((theme.schemes && theme.schemes.list) || []).forEach(function (s) { %>
-            <li class="scheme-item" role="option" aria-selected="false" data-scheme-id="<%= s.id %>">
+          <%
+            const allSchemes = (theme.schemes && theme.schemes.list) || [];
+            const featuredIds = (theme.schemes && theme.schemes.featured) || [];
+            const featured = featuredIds.map(id => allSchemes.find(x => x.id === id)).filter(Boolean);
+            const extra = featured.length ? allSchemes.filter(x => !featuredIds.includes(x.id)) : [];
+            const ordered = featured.length ? featured.concat(extra) : allSchemes;
+          %>
+          <ul class="scheme-list<%= extra.length ? ' is-collapsed' : '' %>" role="listbox" aria-label="配色方案" tabindex="-1">
+            <% ordered.forEach(function (s, i) { const isExtra = featured.length && i >= featured.length; %>
+            <% if (isExtra && i === featured.length) { %><li class="scheme-more" role="presentation"><button type="button" data-scheme-more>更多配色 <span class="c-muted"><%= extra.length %></span></button></li><% } %>
+            <li class="scheme-item<%= isExtra ? ' is-extra' : '' %>" role="option" aria-selected="false" data-scheme-id="<%= s.id %>">
               <span class="scheme-swatch" data-scheme="<%= s.id %>" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
               <span class="scheme-name"><%= s.name %></span>
               <span class="scheme-mode"><%= s.mode %></span>

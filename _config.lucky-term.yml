@@ -26,6 +26,8 @@ schemes:
   ui: term
   light: default-light
   dark: default-dark
+  # featured：菜单里直接列出的常用方案，其余收进「更多配色」（当前用着的方案在里面时会自动展开）
+  featured: [default-light, default-dark, github-light, one-dark, ios-light, ios-dark]
   list:
     - { id: ios-light, name: iOS Light, mode: light }
     - { id: ios-dark, name: iOS Dark, mode: dark }

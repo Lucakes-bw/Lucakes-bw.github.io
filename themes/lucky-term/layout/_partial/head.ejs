@@ -56,8 +56,15 @@
       root.setAttribute('data-scheme', id);
       root.setAttribute('data-theme', mode[id] || 'light');
       if (ui === 'ios') root.setAttribute('data-ui', 'ios');
-      // 有阅读记录时首页会显示「继续阅读」：首屏前先占好这一行，脚本填内容时下面不往下跳
-      try { if (JSON.parse(localStorage.getItem('lt-read') || '[]').length) root.classList.add('has-read'); } catch (e) {}
+      // 有没有学习记录（读完文章、通过题目、跟练）：首页的热力图和学习动态据此在首屏前就决定显示还是收起，
+      // 不用等 main.js 算完再改，避免整块跳动。判断和 main.js 里的 events 保持一致（只看带时间的记录）
+      try {
+        var J = function (k) { return JSON.parse(localStorage.getItem(k) || '{}') || {}; };
+        var pb = J('lt-pb-state');
+        var rec = Object.keys(J('lt-read-at')).length || Object.keys(J('lt-practice')).length ||
+          Object.keys(pb).some(function (k) { return pb[k] && pb[k].status === 'ac' && pb[k].at; });
+        if (rec) root.classList.add('has-records');
+      } catch (e) {}
       // 等宽字体的 @font-face 在 style.css 里，用到才下载。
       // 终端风格整页都用，提前 preload 省掉「CSS 解析完才发现要字体」的那段等待；
       // iOS 风格只有代码用，由 main.js 发现页面里有代码时再调用
