@@ -50,6 +50,14 @@ hexo.extend.processor.register('_problems/:slug.md', async function (file) {
 
 hexo.extend.helper.register('difficulty_name', d => DIFF[d] || d);
 
+// 文章末尾的「练一练」：related 里写了这篇文章的题目，按题号排序
+hexo.extend.helper.register('problems_for_post', function (post) {
+  const slug = path.basename((post && post.source) || '', '.md');
+  if (!slug) return [];
+  return [...problems.values()].filter(p => p.related.includes(slug)).sort((a, b) => a.id - b.id)
+    .map(p => ({ slug: p.slug, id: p.id, title: p.title, difficulty: p.difficulty }));
+});
+
 // 首页学习动态用：题目的 slug、标题、地址
 hexo.extend.helper.register('problems_json', function () {
   const urlFor = hexo.extend.helper.get('url_for').bind(hexo);
