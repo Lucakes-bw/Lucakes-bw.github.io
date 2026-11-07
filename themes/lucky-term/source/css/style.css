@@ -1024,6 +1024,19 @@ html[data-ui="ios"] .ui-term { display: none; }
 }
 @keyframes tc-blink { 50% { opacity: 0; } }
 @keyframes tc-shake { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+/* Notebook：文章的代码块连成一个程序（见 js/judge/snippet.js） */
+.nb-idx { flex: none; margin-right: 8px; color: var(--accent); font: 12px/1 var(--mono); letter-spacing: 0; min-width: 2.4em; }
+.nb-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap;
+  margin: 0 0 16px; padding: 12px 16px;
+  border: 1px dashed var(--border-2); border-radius: 10px; background: var(--panel);
+  font: 13px/1.6 var(--mono); color: var(--fg-2);
+}
+.nb-text { flex: 1 1 320px; min-width: 0; }
+.nb-text .ui-term, .nb-text .ui-ios { margin-right: 6px; color: var(--fg); }
+.md details.nb-hidden { margin: 0 0 16px; }
+.md details.nb-hidden > summary { cursor: pointer; color: var(--muted); font: 13px/1.6 var(--mono); padding: 2px 0; }
+.md details.nb-hidden[open] > summary { margin-bottom: 8px; }
 /* 文末「跟练」汇总 */
 .practice-sum {
   display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap;

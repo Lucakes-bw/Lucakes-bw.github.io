@@ -13,6 +13,7 @@ description: 栈是只能在一端插入和删除的线性表，后进先出。�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-stack]
+notebook: true
 ---
 
 > **本文目标**：理解栈的后进先出特性；会用数组实现栈；会用栈解决括号匹配问题；理解中缀表达式、后缀表达式，会用栈完成转换和求值；知道函数调用栈和栈的关系。

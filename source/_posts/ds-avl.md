@@ -13,6 +13,7 @@ description: 普通二叉搜索树在有序插入时会退化成链表。AVL 树
 top_group_list: true
 disableNunjucks: true
 viz: [ds-avl]
+notebook: true
 ---
 
 > **本文目标**：理解平衡因子；掌握左旋和右旋，理解旋转为什么不破坏二叉搜索树的性质；能区分 LL、RR、LR、RL 四种失衡情况；会实现 AVL 树的插入；了解平衡树的代价和其他选择。
@@ -178,10 +179,25 @@ AVLNode* insert(AVLNode* root, int key)
 
 <div class="dsviz" data-viz="avl-insert"></div>
 
+<!-- run: hidden -->
+```c
+void preorder(const AVLNode* n)   // 前序遍历，见《二叉树与遍历》
+{
+    if (n == NULL) return;
+    printf("%d ", n->key);
+    preorder(n->left);
+    preorder(n->right);
+}
+```
+
 ```c
 AVLNode* root = NULL;
 for (int k = 1; k <= 7; ++k) root = insert(root, k);
 printf("有序插入 1..7，前序: "); preorder(root); printf("，高度 %d\n", height(root));
+AVLNode* r2 = NULL;
+int ks[] = {30, 10, 20};
+for (int k = 0; k < 3; ++k) r2 = insert(r2, ks[k]);
+printf("插入 30 10 20，前序: "); preorder(r2); printf("\n");
 ```
 
 ```

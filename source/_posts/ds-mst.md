@@ -14,6 +14,7 @@ description: 用最少的总长度把所有城市连起来，就是最小生成�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-mst]
+notebook: true
 ---
 
 > **本文目标**：掌握并查集的查找和合并，理解路径压缩和按秩合并；理解最小生成树；会实现 Kruskal 和 Prim 算法，知道如何选择。
@@ -94,6 +95,11 @@ int unite(UnionFind* uf, int a, int b)
 在演示中，箭头从每个元素指向它的父节点。按提示依次合并，注意合并 5 和 3 时，查找 3 的根会顺便把 3 直接挂到根 0 上：
 
 <div class="dsviz" data-viz="union-find"></div>
+
+<!-- run: hidden -->
+```c
+void ufFree(UnionFind* uf) { free(uf->parent); free(uf->rank); }
+```
 
 ```c
 UnionFind uf = ufCreate(8);

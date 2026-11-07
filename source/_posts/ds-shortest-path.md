@@ -14,6 +14,7 @@ description: 地图导航、网络路由都要回答同一个问题：两点之�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-dijkstra]
+notebook: true
 ---
 
 > **本文目标**：理解松弛操作；掌握 Dijkstra 算法及其正确性的关键；会用堆优化 Dijkstra，并记录路径；会使用 Floyd 算法；知道 Dijkstra 不能处理负权边。
@@ -38,6 +39,7 @@ typedef struct { int n; EdgeList* adj; } WGraph;
 
 所有最短路径算法都基于一个操作，叫作**松弛**（relax）：用 `dist[v]` 记录目前已知的从 s 到 v 的最短距离（一开始是 ∞），如果发现了一条经过 u 再到 v 的路更短，就更新它：
 
+<!-- run: skip -->
 ```c
 if (dist[u] + w < dist[v]) {        // 经过 u 到 v 更近
     dist[v] = dist[u] + w;
@@ -59,6 +61,11 @@ if (dist[u] + w < dist[v]) {        // 经过 u 到 v 更近
 这又是一种**贪心**策略：每次只处理当前最近的顶点。
 
 ### 3.1 朴素实现
+
+<!-- run: hidden -->
+```c
+#define INF LLONG_MAX                          // 还没有到达的顶点的距离
+```
 
 ```c
 void dijkstraNaive(const WGraph* g, int s, long long* dist, int* prev)
@@ -91,6 +98,40 @@ void dijkstraNaive(const WGraph* g, int s, long long* dist, int* prev)
 ### 3.2 堆优化
 
 「找 dist 最小的顶点」正是优先队列擅长的事。把 `(距离, 顶点)` 放进小顶堆，每次取出最小的：
+
+<!-- run: hidden -->
+```c
+typedef struct { long long d; int v; } Item;      // 距离 d、顶点 v
+typedef struct { Item* a; int size, cap; } PQ;  // 按 d 排序的小顶堆，见《堆与优先队列》
+
+static void pqPush(PQ* q, Item x)
+{
+    if (q->size == q->cap) {
+        q->cap = q->cap ? q->cap * 2 : 16;
+        q->a = realloc(q->a, q->cap * sizeof(Item));
+        if (q->a == NULL) exit(1);
+    }
+    int i = q->size++;
+    while (i > 0 && q->a[(i - 1) / 2].d > x.d) { q->a[i] = q->a[(i - 1) / 2]; i = (i - 1) / 2; }   // 上浮
+    q->a[i] = x;
+}
+
+static Item pqPop(PQ* q)
+{
+    Item top = q->a[0], x = q->a[--q->size];
+    int i = 0;
+    for (;;) {                                  // 下沉
+        int c = 2 * i + 1;
+        if (c >= q->size) break;
+        if (c + 1 < q->size && q->a[c + 1].d < q->a[c].d) ++c;
+        if (x.d <= q->a[c].d) break;
+        q->a[i] = q->a[c];
+        i = c;
+    }
+    q->a[i] = x;
+    return top;
+}
+```
 
 ```c
 void dijkstra(const WGraph* g, int s, long long* dist, int* prev)
@@ -140,12 +181,40 @@ void printPath(const int* prev, int v)
 
 对演示中的图（`addEdge` 的参数是两个端点和长度）：
 
+<!-- run: hidden -->
+```c
+WGraph wgCreate(int n)                          // n 个顶点、没有边的带权图
+{
+    WGraph g = {n, calloc(n, sizeof(EdgeList))};
+    if (g.adj == NULL) exit(1);
+    return g;
+}
+
+void addArc(WGraph* g, int u, int v, int w)     // 有向边 u → v，长度 w
+{
+    EdgeList* l = &g->adj[u];
+    if (l->size == l->cap) {
+        l->cap = l->cap ? l->cap * 2 : 4;
+        l->e = realloc(l->e, l->cap * sizeof(Edge));
+        if (l->e == NULL) exit(1);
+    }
+    l->e[l->size++] = (Edge){v, w};
+}
+
+void addEdge(WGraph* g, int u, int v, int w) { addArc(g, u, v, w); addArc(g, v, u, w); }   // 无向边
+```
+
 ```c
 WGraph g = wgCreate(6);
 int E[][3] = {{0, 1, 7}, {0, 2, 9}, {0, 5, 14}, {1, 2, 10}, {1, 3, 15}, {2, 3, 11}, {2, 5, 2}, {3, 4, 6}, {4, 5, 9}};
 for (int i = 0; i < 9; ++i) addEdge(&g, E[i][0], E[i][1], E[i][2]);
 long long dist[6]; int prev[6];
 dijkstra(&g, 0, dist, prev);
+for (int v = 0; v < 6; ++v) {
+    printf("到 %d 的距离 %lld，路径 ", v, dist[v]);
+    printPath(prev, v);
+    printf("\n");
+}
 ```
 
 ```
@@ -180,6 +249,7 @@ Dijkstra 的正确性依赖于「边的长度非负」。如果有负权边会�
 WGraph ng = wgCreate(4);
 addArc(&ng, 0, 1, 2); addArc(&ng, 0, 2, 5); addArc(&ng, 2, 1, -4); addArc(&ng, 1, 3, 1);
 dijkstraNaive(&ng, 0, dist, prev);
+printf("负权边：dist[1] = %lld，dist[3] = %lld（实际最短：0→2→1 = 1，0→2→1→3 = 2）\n", dist[1], dist[3]);
 ```
 
 ```
