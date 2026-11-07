@@ -48,12 +48,27 @@
   /* ---------- 练习记录：{ 页面路径: { 代码哈希: { fill: 时间, type: 时间, recall: 时间 } } } ---------- */
   const REC_KEY = 'lt-practice';
   const records = () => store.json(REC_KEY, {});
-  function record(hash, mode) {
+  function record(hash, mode, section) {
     const all = records();
     const page = all[PAGE] = all[PAGE] || {};
     const r = page[hash] = page[hash] || {};
     r[mode] = Date.now();
-    store.set(REC_KEY, JSON.stringify(all));
+    store.set(REC_KEY, JSON.stringify(all));    // 复习页（js/review.js）用：每次通过的时间，和代码块所在小节的标题
+    const rv = store.json('lt-review', {});
+    const id = `snip:${PAGE}#${hash}`;
+    const e = rv[id] = rv[id] && typeof rv[id] === 'object' ? rv[id] : {};
+    e.p = (Array.isArray(e.p) ? e.p : []).concat(Date.now()).slice(-20);
+    if (section) e.t = section;
+    store.set('lt-review', JSON.stringify(rv));
+  }
+  // 代码块所在小节的标题（往前找最近的 h2 / h3）
+  function sectionOf(fig) {
+    let n = fig;
+    while (n && n.parentElement && !n.parentElement.classList.contains('md')) n = n.parentElement;
+    for (n = n && n.previousElementSibling; n; n = n.previousElementSibling) {
+      if (/^H[23]$/.test(n.tagName)) return n.textContent.replace(/[#¶]\s*$/, '').trim().slice(0, 40);
+    }
+    return '';
   }
   const recordOf = hash => (records()[PAGE] || {})[hash] || {};
   const levelOf = r => Math.max(0, ...Object.keys(r).map(m => (MODES[m] && MODES[m].level) || 0));
@@ -101,6 +116,14 @@
 
     const id = ++seq;
     const hash = S.hash(original);
+    // 复习页链接到 #snip-<哈希>：给代码块加上锚点；页面是带着这个锚点打开的，就滚过去并闪一下
+    if (!fig.id && !document.getElementById('snip-' + hash)) {
+      fig.id = 'snip-' + hash;
+      if (location.hash === '#' + fig.id) {
+        requestAnimationFrame(() => { fig.scrollIntoView({ block: 'center' }); fig.classList.add('is-target'); });
+        setTimeout(() => fig.classList.remove('is-target'), 2400);
+      }
+    }
     const draftKey = mode => `lt-snip:${PAGE}:${hash}${mode === 'edit' ? '' : ':' + mode}`;
     const scroll = $('.code-scroll', fig) || $('table', fig);
     const practicable = !info.error;       // 演示错误的代码只能改一改
@@ -504,7 +527,7 @@
       }
       if (ok) {
         // 通过：判定信息放进代码下方的通过条，输出面板里不再重复
-        record(hash, mode);
+        record(hash, mode, sectionOf(fig));
         showBadge();
         renderSummary();
         v.hidden = true;

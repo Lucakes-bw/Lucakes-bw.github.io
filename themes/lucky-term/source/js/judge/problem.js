@@ -421,10 +421,20 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
     }));
   }
 
+  // 每次通过都记一笔，复习页（js/review.js）据此排间隔复习
+  function logReview(id) {
+    const all = store.get('lt-review', {});
+    const e = all[id] = all[id] && typeof all[id] === 'object' ? all[id] : {};
+    e.p = (Array.isArray(e.p) ? e.p : []).concat(Date.now()).slice(-20);
+    store.set('lt-review', all);
+  }
   function record(ac) {
     const s = store.get(KEY_STATE, {});
     const cur = s[P.slug];
-    if (ac) s[P.slug] = { status: 'ac', at: Date.now(), lang };
+    if (ac) {
+      s[P.slug] = { status: 'ac', at: Date.now(), lang };
+      logReview('pb:' + P.slug);
+    }
     else if (!cur || cur.status !== 'ac') s[P.slug] = { status: 'tried', at: Date.now(), lang };
     store.set(KEY_STATE, s);
     showSolved();

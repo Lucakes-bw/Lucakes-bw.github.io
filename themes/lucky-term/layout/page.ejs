@@ -73,6 +73,33 @@
     <% }) %>
   </ul>
 
+<% } else if (page.type === 'review') { %>
+  <%# 错题本与间隔复习：内容全由 js/review.js 按本机记录画出来 %>
+  <div data-review-page>
+    <h1 class="page-title"><span class="ui-term"><span class="c-accent">$</span> crontab -l <span class="c-muted"># 今天该复习的</span></span><span class="ui-ios">复习</span></h1>
+    <p class="rv-sum" data-rv-sum>&nbsp;</p>
+    <section class="rv-sec">
+      <h2 class="rv-h"><span class="ui-term">## </span>今天该复习</h2>
+      <ul class="rv-list" data-rv-due></ul>
+    </section>
+    <section class="rv-sec">
+      <h2 class="rv-h"><span class="ui-term">## </span>接下来 7 天</h2>
+      <ol class="rv-week" data-rv-week></ol>
+    </section>
+    <section class="rv-sec">
+      <h2 class="rv-h"><span class="ui-term">## </span>错题本 <span class="c-muted rv-h-sub">提交过、还没通过的题</span></h2>
+      <ul class="rv-list" data-rv-wrong></ul>
+    </section>
+    <details class="rv-rules">
+      <summary>复习是怎么安排的？</summary>
+      <p>在刷题里通过一道题，或在文章的代码块里通过一次填空 / 照着敲 / 默写，就开始跟踪它：第二天复习一次，之后依次隔 2、4、7、15、30 天再复习。复习 = 再通过一次（题目重新提交通过，代码块再做一次填空、照着敲或默写）。没到日子提前做不算一轮，过了日子再做也照常往后排。六轮都完成就算掌握，不再提醒。</p>
+      <p>记录只保存在这个浏览器里，可以用页脚的「学习记录备份」带到别的浏览器。</p>
+    </details>
+  </div>
+  <script type="application/json" id="posts-data"><%- posts_json() %></script>
+  <script type="application/json" id="problems-data"><%- problems_json() %></script>
+  <script src="<%- asset_url('/js/review.js') %>"></script>
+
 <% } else if (page.type === '404') { %>
   <div class="nf-ios ui-ios">
     <p class="nf-code">404</p>

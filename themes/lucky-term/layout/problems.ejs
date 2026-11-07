@@ -27,6 +27,7 @@
       <button type="button" data-v="todo" aria-pressed="false">未通过</button>
       <button type="button" data-v="ac" aria-pressed="false">已通过</button>
     </div>
+    <a class="pb-review-link" href="<%- url_for('/review/') %>"><span class="ui-term">$ </span>错题本与复习 →</a>
     <label class="pb-search"><span class="c-accent ui-term">grep</span><svg class="ui-ios" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="search" placeholder="题目 / 编号" data-filter-q aria-label="搜索题目"></label>
   </div>
   <div class="tag-cloud pb-tags-filter" data-filter="tag">
