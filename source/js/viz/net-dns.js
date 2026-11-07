@@ -15,7 +15,8 @@
       var b = B[k];
       boxes.push({ id: k, x: b.x, y: b.y, w: b.w, h: 40, text: b.text, hl: hl[k] });
     });
-    var arrows = x.arrow ? [{ from: x.arrow[0], to: x.arrow[1], label: x.arrow[2], hl: 'cur', curve: x.arrow[3] || 0 }] : [];
+    var arrows = x.arrow ? [{ from: x.arrow[0], to: x.arrow[1], label: x.arrow[2], hl: 'cur', curve: x.arrow[3] || 0,
+      pkt: x.arrow[2] === 'A?' ? '查询' : x.arrow[2], pktHl: x.arrow[2] === 'A?' ? null : 'alt' }] : [];
     var texts = [{ id: 'ch', x: 10, y: 196, text: '解析器的缓存：', cls: 'muted' }];
     (m.cache.length ? m.cache : ['（空）']).forEach(function (c, i) {
       texts.push({ id: 'c' + i, x: 10, y: 216 + i * 18, text: c, cls: 'muted' });

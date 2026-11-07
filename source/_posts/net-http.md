@@ -1,7 +1,7 @@
 ---
 title: HTTP/1.1
 date: 2026-10-24 16:05:00
-updated: 2026-10-24 16:05:00
+updated: 2026-11-07 10:00:00
 categories:
   - 计算机网络
   - 应用层协议
@@ -12,6 +12,7 @@ order: 2
 description: HTTP 是一个文本协议，用 nc 就能手写一个请求。本文手写请求访问 example.com，读懂响应中的状态行、头部和分块传输的正文（241 就是十六进制的 577）；去掉 Host 头，立即得到 400；用一个自己写的小服务器演示 POST、301 重定向和分块传输，抓包看请求的原始格式；最后实测持久连接：5 个请求各建一个连接，每次约 0.2 秒，复用同一个连接后，后面的请求只要 0.075 秒。
 top_group_list: true
 disableNunjucks: true
+viz: [net-journey, net-pkts]
 ---
 
 > **本文目标**：理解 HTTP 请求和响应的格式；认识常用的方法、状态码和头部；理解 Host 头和虚拟主机；理解 Content-Length 和分块传输两种确定正文长度的方式；理解持久连接（keep-alive）的作用；会用 curl 和 nc 调试 HTTP。
@@ -101,6 +102,16 @@ Server: cloudflare
 ```
 
 **400 Bad Request**。HTTP/1.1 规定请求必须带 `Host` 头。原因是同一个 IP 地址上可能运行着成千上万个网站：上一篇看到 example.com 的地址是 Cloudflare 的，Cloudflare 的同一台服务器同时为大量的域名服务。TCP 连接中只有 IP 地址和端口，服务器只能靠 `Host` 头知道你要访问哪个网站，这叫**虚拟主机**。
+
+### 1.4 一次访问的全部报文
+
+把视角从 HTTP 拉远一点：`curl http://example.com/` 从敲下回车到拿到网页，网线上一共走了哪些包？下面的演示用真实抓到的 15 个包逐个播放（时间取自两次抓包：一次 DNS，一次 HTTP）。每个包都要先交给网关，再由网关送进互联网：
+
+<div class="dsviz" data-viz="web-journey"></div>
+
+HTTP 请求本身只是其中一个包。把它逐字节拆开，能看到请求就是一串 ASCII 文本，夹在 TCP 头部后面：右边的 ASCII 栏里直接就能读出 `GET / HTTP/1.1`，每行末尾的 `0d 0a` 就是 `\r\n`，最后单独的一个 `0d 0a` 是空行。
+
+<div class="pktview" data-pkt="http-get"></div>
 
 ## 2. 方法和状态码
 

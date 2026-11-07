@@ -18,6 +18,7 @@
       <span>已读 <span data-count>0</span> / <%= s.items.length %> 篇 · 共 <%= s.chapters.length %> 章</span>
     </div>
   </div>
+  <% if (page.content && page.content.trim()) { %><div class="md series-note"><%- page.content %></div><% } %>
   <% s.chapters.forEach(function (c) { %>
   <section class="chapter series-chapter">
     <h2 class="chapter-title"><span class="c-accent"><span class="ui-term">ch<%= c.no %></span><span class="ui-ios">第 <%= c.no %> 章</span></span> <%= c.name %> <span class="c-muted chapter-count"><%= c.posts.length %> 篇</span></h2>

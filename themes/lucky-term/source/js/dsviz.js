@@ -16,6 +16,9 @@
  *
  * run 中调用 rec.step(行号, 说明, 额外) 记录一步：引擎会调用 view(模型, 额外) 拍下当前的场景。
  * 场景 = { kind: 'list' | 'array' | 'tree' | 'graph' | 'bars' | 'free' | 'multi', ...，vars: { 变量名: 值 } }。
+ *
+ * 网络演示：free 场景的箭头写 pkt: '标签'（或者场景写 pkt: true，当前箭头用自己的 label），
+ * 前进到这一步时，会有一个数据包沿着箭头飞过去。pktHl: 'alt' | 'warn' 换颜色。
  */
 (function () {
   'use strict';
@@ -170,8 +173,13 @@
       var p = pos[a.from], q = pos[a.to];
       if (!p || !q) return;
       var back = q.x + q.w <= p.x;
+      var pk = a.pkt != null ? a.pkt : (s.pkt && a.hl === 'cur' ? (a.label || '') : null);
       items.push({ key: 'a' + a.from + '>' + a.to, type: 'arrow', x1: back ? p.x : p.x + p.w, y1: p.y + (p.h || 36) / 2,
-        x2: back ? q.x + q.w + 2 : q.x - 2, y2: q.y + (q.h || 36) / 2, hl: a.hl, label: a.label, curve: a.curve || 0 });
+        x2: back ? q.x + q.w + 2 : q.x - 2, y2: q.y + (q.h || 36) / 2, hl: a.hl, label: a.label, curve: a.curve || 0,
+        pkt: pk === false ? null : pk, pktHl: a.pktHl, pktDelay: a.pktDelay, pktDur: a.pktDur });
+    });
+    (s.cols || []).forEach(function (c, i) {     // 柱子：{ id, x, y, w, h, text, hl }，文字画在柱顶
+      items.push({ key: 'c' + (c.id != null ? c.id : i), type: 'column', x: c.x, y: c.y, w: c.w, h: c.h, text: c.text, hl: c.hl });
     });
     (s.texts || []).forEach(function (t, i) {
       items.push({ key: 't' + (t.id || i), type: 'text', x: t.x, y: t.y, text: t.text, cls: t.cls, anchor: t.anchor });
@@ -212,19 +220,30 @@
   /* ---------------- 图元 → SVG（按 key 复用元素，产生过渡动画） ---------------- */
 
   function arrowPath(it) {
+    var g = arrowGeom(it);
+    return g.cx == null ? 'M' + g.x1 + ',' + g.y1 + ' L' + g.x2 + ',' + g.y2
+      : 'M' + g.x1 + ',' + g.y1 + ' Q' + g.cx + ',' + g.cy + ' ' + g.x2 + ',' + g.y2;
+  }
+  // 箭头的几何：起点、终点，以及二次贝塞尔的控制点（直线时 cx 为空）
+  function arrowGeom(it) {
     var x1 = it.x1, y1 = it.y1, x2 = it.x2, y2 = it.y2;
     if (it.r) {                         // 从圆的边缘出发、到圆的边缘结束
       var dx = x2 - x1, dy = y2 - y1, d = Math.sqrt(dx * dx + dy * dy) || 1;
       x1 += dx / d * it.r; y1 += dy / d * it.r;
       x2 -= dx / d * (it.r + (it.type === 'arrow' ? 3 : 0)); y2 -= dy / d * (it.r + (it.type === 'arrow' ? 3 : 0));
     }
-    if (!it.curve) return 'M' + x1 + ',' + y1 + ' L' + x2 + ',' + y2;
+    if (!it.curve) return { x1: x1, y1: y1, x2: x2, y2: y2 };
     var mx = (x1 + x2) / 2, my = (y1 + y2) / 2 + it.curve;
     if (it.type !== 'arrow' || it.r) {  // 图中的弯曲边：法线方向偏移
       var ddx = x2 - x1, ddy = y2 - y1, len = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
       mx = (x1 + x2) / 2 - ddy / len * it.curve; my = (y1 + y2) / 2 + ddx / len * it.curve;
     }
-    return 'M' + x1 + ',' + y1 + ' Q' + mx + ',' + my + ' ' + x2 + ',' + y2;
+    return { x1: x1, y1: y1, x2: x2, y2: y2, cx: mx, cy: my };
+  }
+  function geomAt(g, t) {
+    if (g.cx == null) return { x: g.x1 + (g.x2 - g.x1) * t, y: g.y1 + (g.y2 - g.y1) * t };
+    var u = 1 - t;
+    return { x: u * u * g.x1 + 2 * u * t * g.cx + t * t * g.x2, y: u * u * g.y1 + 2 * u * t * g.cy + t * t * g.y2 };
   }
 
   function Stage(svg, markerId) {
@@ -232,11 +251,34 @@
     this.layerE = el('g', {}, svg);   // 边在下
     this.layerN = el('g', {}, svg);   // 节点在上
     this.layerP = el('g', {}, svg);   // 指针最上
+    this.layerK = el('g', {}, svg);   // 飞行中的数据包
     this.map = {};
     this.markerId = markerId;
   }
-  Stage.prototype.draw = function (items, animate) {
+  // 数据包沿箭头从起点飞到终点
+  Stage.prototype.fly = function (it) {
+    var g = el('g', { 'class': 'dv-pkt' + (it.pktHl ? ' is-' + it.pktHl : '') }, this.layerK);
+    var label = String(it.pkt || ''), w = Math.max(14, label.replace(/[^\x00-\xff]/g, 'xx').length * 6.6 + 12);
+    el('rect', { x: -w / 2, y: -9, width: w, height: 18, rx: 9 }, g);
+    var t = el('text', { 'text-anchor': 'middle', y: 4 }, g);
+    t.textContent = label;
+    var geo = arrowGeom(it), t0 = null, DUR = it.pktDur || 700, DELAY = it.pktDelay || 0;
+    g.style.opacity = 0;
+    function frame(now) {
+      if (t0 == null) t0 = now + DELAY;
+      if (now < t0) { requestAnimationFrame(frame); return; }
+      var k = Math.min(1, (now - t0) / DUR), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      var p = geomAt(geo, e);
+      g.setAttribute('transform', 'translate(' + p.x + ',' + p.y + ')');
+      g.style.opacity = k > .85 ? (1 - k) / .15 : 1;
+      if (k < 1) requestAnimationFrame(frame); else g.remove();
+    }
+    requestAnimationFrame(frame);
+  };
+  Stage.prototype.clearFlying = function () { while (this.layerK.firstChild) this.layerK.firstChild.remove(); };
+  Stage.prototype.draw = function (items, animate, forward) {
     var seen = {}, self = this;
+    this.clearFlying();
     items.forEach(function (it) {
       seen[it.key] = true;
       var g = self.map[it.key];
@@ -249,6 +291,7 @@
         if (animate) { g.style.opacity = 0; g.getBoundingClientRect(); setTimeout(function () { g.style.opacity = ''; }, 16); }
       }
       self.update(g, it, animate && !fresh);
+      if (animate && forward && it.pkt != null && it.type === 'arrow') self.fly(it);
     });
     Object.keys(this.map).forEach(function (k) {
       if (!seen[k]) {
@@ -406,10 +449,11 @@
     var rec = { step: snapshot };
 
     function show(i, animate) {
+      var prev = cur;
       cur = Math.max(0, Math.min(i, steps.length - 1));
       var s = steps[cur];
       var kind = s.scene.kind;
-      stage.draw(R[kind](Object.assign({ height: height, width: width }, s.scene)), animate && !reduceMotion);
+      stage.draw(R[kind](Object.assign({ height: height, width: width }, s.scene)), animate && !reduceMotion, cur > prev || (cur === 0 && i === 0 && animate));
       msg.innerHTML = '';
       h('span', 'dv-step', msg, '第 ' + (cur + 1) + ' 步');
       h('span', null, msg, s.msg || '');
