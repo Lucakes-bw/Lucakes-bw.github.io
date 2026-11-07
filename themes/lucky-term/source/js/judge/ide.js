@@ -145,9 +145,10 @@
     let w = null, ready = false, seq = 0;
     const waiting = {};
     // 下载卡住的看门狗：网络请求有时会一直挂着既不完成也不报错。
-    // 下载过程中 20 秒没有任何进度就放弃这个 Worker，正在等的编译都按「加载失败」返回，下次重新下载
-    const STALL = 20000;
-    let lastProgress = 0, downloading = false, watchdog = null;
+    // 下载过程中 20 秒没有任何进度就放弃这个 Worker，正在等的编译都按「加载失败」返回，下次重新下载。
+    // 另外，Worker 启动后 30 秒一条消息都没有（连不上 CDN，一个进度都收不到）也报错，不能一直停在「下载编译器…」
+    const STALL = 20000, SILENT = 30000;
+    let lastProgress = 0, downloading = false, watchdog = null, startedAt = 0, heard = false;
     function fail(msg) {
       if (w) w.terminate();
       w = null;
@@ -162,13 +163,17 @@
       watchdog = setInterval(() => {
         if (ready) { clearInterval(watchdog); watchdog = null; return; }
         if (downloading && Date.now() - lastProgress > STALL) fail('下载编译器卡住了（20 秒没有进展）');
+        else if (!heard && Date.now() - startedAt > SILENT) fail('连不上编译器的下载地址（30 秒没有响应）');
       }, 2000);
     }
     function worker() {
       if (w) return w;
       w = new Worker(workerUrl, { type: 'module' });
+      startedAt = Date.now();
+      heard = false;
       watch();
       w.onmessage = ({ data }) => {
+        heard = true;
         if (data.type === 'progress' && data.total) {
           lastProgress = Date.now();
           downloading = data.done < data.total;
