@@ -14,6 +14,7 @@ description: 二分查找的思想人人都懂，但要写对却出奇地难。�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-bsearch]
+notebook: true
 ---
 
 > **本文目标**：理解二分查找的前提和复杂度；能根据区间的定义写出不会出错的二分查找；会用 lowerBound 和 upperBound 查找边界；避免整数溢出和死循环；会在答案上二分。
@@ -175,6 +176,7 @@ isqrt(10) = 3, isqrt(16) = 4, isqrt(INT_MAX) = 46340
 
 为什么上面的 `isqrt` 要**向上取整**？如果用向下取整的 `mid = lo + (hi - lo) / 2`：
 
+<!-- run: loose -->
 ```c
 int target = 10, lo = 0, hi = target, rounds = 0;
 while (lo < hi && rounds < 20) {

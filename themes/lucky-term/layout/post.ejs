@@ -81,7 +81,8 @@
   window.LT_SNIPPET = {
     clang: <%- JSON.stringify(clang_pkg()) %>,
     cppWorker: <%- JSON.stringify(asset_url('/js/judge/cpp-worker.js')) %>,
-    wasiWorker: <%- JSON.stringify(asset_url('/js/judge/wasi-worker.js')) %>
+    wasiWorker: <%- JSON.stringify(asset_url('/js/judge/wasi-worker.js')) %>,
+    notebook: <%- JSON.stringify(!!page.notebook) %>
   };
 </script>
 <script defer src="<%- asset_url('/js/judge/snippet-core.js') %>"></script>

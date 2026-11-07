@@ -14,6 +14,7 @@ description: 哈希表通过哈希函数直接算出元素的位置，平均 O(1
 top_group_list: true
 disableNunjucks: true
 viz: [ds-hash]
+notebook: true
 ---
 
 > **本文目标**：理解哈希函数和冲突；会实现链地址法的哈希表（含扩容）和线性探测的开放寻址法；理解负载因子对性能的影响；知道好的哈希函数的重要性；会根据需求选择哈希表或其他查找结构。
@@ -148,10 +149,22 @@ static void hmRehash(HashMap* m)                // 桶的个数翻倍，所有�
 
 扩容一次是 O(n)，但和《顺序表》一样，因为每次翻倍，均摊到每次插入上是 O(1)。
 
+<!-- run: hidden -->
+```c
+HashMap hmCreate(size_t nbuckets, uint32_t (*hash)(const char*))   // nbuckets 个空桶
+{
+    HashMap m = {calloc(nbuckets, sizeof(Entry*)), nbuckets, 0, hash};
+    if (m.buckets == NULL) exit(1);
+    return m;
+}
+```
+
 ```c
 HashMap ages = hmCreate(4, hashFNV);
 hmPut(&ages, "alice", 30); hmPut(&ages, "bob", 25); hmPut(&ages, "carol", 35);
 hmPut(&ages, "dave", 28); hmPut(&ages, "eve", 22); hmPut(&ages, "bob", 26);
+printf("bob = %d，frank %s，元素 %zu 个，桶 %zu 个\n", *hmGet(&ages, "bob", NULL),
+       hmGet(&ages, "frank", NULL) ? "存在" : "不存在", ages.size, ages.nbuckets);
 ```
 
 ```
@@ -163,6 +176,23 @@ bob = 26，frank 不存在，元素 5 个，桶 8 个
 ## 4. 开放寻址法
 
 开放寻址法不使用链表，所有元素都直接存放在数组中。发生冲突时，按某种规则去找**下一个空位**。最简单的是**线性探测**：被占了就看下一个位置。
+
+<!-- run: hidden -->
+```c
+typedef struct {
+    int* slots;                                 // -1 表示空位
+    size_t cap;
+    size_t size;
+} IntSet;
+
+static uint32_t mix(uint32_t x)                 // 打乱整数各个位的哈希函数
+{
+    x ^= x >> 16;
+    x *= 0x45d9f3bu;
+    x ^= x >> 16;
+    return x;
+}
+```
 
 ```c
 int isInsert(IntSet* s, int key)

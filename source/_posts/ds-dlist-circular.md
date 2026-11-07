@@ -13,6 +13,7 @@ description: 单链表只能往后走，删除一个节点还得先找到它的�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-dlist]
+notebook: true
 ---
 
 > **本文目标**：理解单链表的局限；会实现双向链表的插入和删除，理解指针修改的顺序；理解循环链表，会用它解决约瑟夫问题；了解带哨兵的双向循环链表。
@@ -140,6 +141,7 @@ int main(void)
 
 建立 n 个节点的单链表和双向链表，记下每个节点的地址，然后按随机顺序删除所有节点（`-O2`）：
 
+<!-- run: skip -->
 ```c
 for (int k = 0; k < n; ++k) {           // 单链表：要从头找到前驱
     SNode* target = sp[order[k]];
@@ -175,6 +177,14 @@ n = 100000  单链表    1740.1 ms，双向链表   0.94 ms
 n 个人围成一圈，编号 1 到 n。从 1 号开始报数，报到 k 的人出列，下一个人重新从 1 开始报数，直到只剩下一个人。求出列的顺序和最后剩下的人。
 
 用循环链表模拟这个过程非常自然：
+
+<!-- run: hidden -->
+```c
+typedef struct Node {                           // 单链表的节点，见《单链表》
+    int value;
+    struct Node* next;
+} Node;
+```
 
 ```c
 int josephus(int n, int k)
@@ -235,6 +245,7 @@ n = 10, k = 2，最后剩下 5
 
 这种结构的好处是：**链表中没有任何 `NULL` 指针**，空链表时哨兵的 `prev` 和 `next` 都指向它自己。于是插入和删除中所有关于「有没有后继」的判断都可以去掉：
 
+<!-- run: skip -->
 ```c
 // 带哨兵的双向循环链表：不需要判断 NULL
 node->prev = p;
@@ -286,6 +297,7 @@ p->next = node;
 
 3. 空链表时哨兵的 `next` 指向它自己：`sentinel->next == sentinel`。遍历：
 
+   <!-- run: skip -->
    ```c
    for (DNode* p = sentinel->next; p != sentinel; p = p->next) { ... }
    ```

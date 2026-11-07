@@ -13,6 +13,7 @@ order: 2
 description: 二叉搜索树把二分查找的思想放进了树里，查找、插入、删除都只需要沿着一条路径走。本文实现查找、插入和删除的三种情况，配有逐步演示；并实测插入有序数据时树退化成链表：10 万个节点高度变成 100000，建树和查找都慢了 500 多倍。
 top_group_list: true
 disableNunjucks: true
+notebook: true
 viz: [ds-bst]
 ---
 
@@ -123,6 +124,17 @@ int removeKey(Node** root, int key)
 <div class="dsviz" data-viz="bst-remove"></div>
 
 测试一下（`inorder` 是中序遍历）：
+
+<!-- run: hidden -->
+```c
+void inorder(const Node* root)   // 中序遍历，见《二叉树与遍历》
+{
+    if (root == NULL) return;
+    inorder(root->left);
+    printf("%d ", root->key);
+    inorder(root->right);
+}
+```
 
 ```c
 Node* root = NULL;

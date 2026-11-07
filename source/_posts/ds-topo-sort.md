@@ -13,6 +13,7 @@ order: 4
 description: 课程有先修关系，编译要先编译依赖的模块，任务之间有先后顺序。拓扑排序为有向无环图中的顶点找出一个满足所有先后关系的顺序。本文实现 Kahn 算法和基于 DFS 的算法，用三种颜色检测环，并用一个课程安排的逐步演示展示入度的变化。
 disableNunjucks: true
 viz: [ds-topo]
+notebook: true
 ---
 
 > **本文目标**：理解有向无环图和拓扑排序；会实现 Kahn 算法（基于入度和队列）和基于 DFS 的拓扑排序；会用拓扑排序判断有向图中是否有环；了解拓扑排序的应用。
@@ -85,11 +86,26 @@ int topoKahn(const Digraph* g, int* order)
 
 <div class="dsviz" data-viz="topo-kahn"></div>
 
+<!-- run: hidden -->
+```c
+Digraph dgCreate(int n)                         // n 个顶点、没有边的有向图
+{
+    Digraph g = {n, calloc(n, sizeof(AdjList))};
+    if (g.adj == NULL) exit(1);
+    return g;
+}
+```
+
 ```c
 const char* names[] = {"C 语言", "数据结构", "离散数学", "算法", "操作系统", "计算机网络", "编译原理"};
 Digraph g = dgCreate(7);
 int arcs[][2] = {{0, 1}, {2, 1}, {1, 3}, {2, 3}, {1, 4}, {0, 4}, {4, 5}, {3, 6}, {1, 6}};
 for (int i = 0; i < 9; ++i) addArc(&g, arcs[i][0], arcs[i][1]);
+int order[7];
+int cnt = topoKahn(&g, order);
+printf("Kahn:");
+for (int i = 0; i < cnt; ++i) printf(" %s", names[order[i]]);
+printf("\n");
 ```
 
 ```

@@ -15,6 +15,7 @@ description: 图描述的是多对多的关系：社交网络、地图、网页�
 top_group_list: true
 disableNunjucks: true
 viz: [ds-graph]
+notebook: true
 ---
 
 > **本文目标**：掌握图的基本术语；会用邻接矩阵和邻接表存储图，知道如何选择；会实现 DFS 和 BFS；会用 BFS 求无权图的最短路径，用 DFS 求连通分量。

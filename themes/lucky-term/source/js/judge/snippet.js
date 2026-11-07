@@ -10,6 +10,11 @@
  *         用到时间、随机数的程序输出不固定，只要求能正常运行。
  * 草稿按代码块和练法保存在本机，文章里的代码更新后作废；通过记录存在 lt-practice（首页学习动态用）。
  * 编译器和做题页共用（ide.js / cpp-worker.js / wasi-worker.js），第一次运行时才下载。
+ *
+ * Notebook（front-matter 写 notebook: true，拼接规则见 snippet-core.js 的 assemble）：
+ *   文章里的代码块连成一个程序，像 Jupyter 一样后面的格子能用前面的定义。运行第 N 格 = 把第 1～N 格拼起来编译运行，
+ *   输出按格子切开，显示在各自下面；开着编辑器的格子用编辑器里的代码，所以改了前面的函数，后面的测试结果会跟着变。
+ *   跟练的判定用整篇程序：把这一格换成你写的，其余用原文，输出和全用原文时一致就算通过。
  */
 (function () {
   'use strict';
@@ -88,7 +93,8 @@
     const lines = $$('.code .line', fig).map(l => l.textContent);
     const original = lines.length ? lines.join('\n') : ($('code', fig) || fig).textContent;
     const opt = S.parseOptions(optionComment(fig));
-    const info = S.classify(lang, original, opt);
+    const cell = NB && NB.byFig.get(fig);    // notebook 里的一格（def / main）；自带 main 的、跳过的不算
+    const info = cell ? S.classify(lang, original, Object.assign({}, opt, { mode: 'on' })) : S.classify(lang, original, opt);
     const head = $('.code-head', fig);
     if (!info.runnable || !head) return;
 
@@ -97,7 +103,7 @@
     const draftKey = mode => `lt-snip:${PAGE}:${hash}${mode === 'edit' ? '' : ':' + mode}`;
     const scroll = $('.code-scroll', fig) || $('table', fig);
     const practicable = !info.error;       // 演示错误的代码只能改一改
-    const unstable = S.unstable(original);
+    const unstable = cell ? NB.cells.some(c => S.unstable(c.original)) : S.unstable(original);
     const blankLines = practicable ? S.blanks(original, opt.blank) : [];
     fig.classList.add('is-runnable');
     const canFill = blankLines.length > 0;  // 太短的程序（比如 hello world）挖不出空，不提供填空
@@ -110,6 +116,14 @@
       + `<button type="button" class="code-btn" data-snip-run title="编译运行（${MOD}+Enter）">▶ run</button>`
       + `<button type="button" class="code-btn" data-snip-edit title="改代码、填空、照着敲、默写">edit</button>`;
     head.insertBefore(acts, $('.code-copy', head));
+    let idxEl = null;
+    if (cell) {
+      idxEl = document.createElement('span');
+      idxEl.className = 'nb-idx';
+      idxEl.textContent = `[${cell.num}]`;
+      idxEl.title = cell.kind === 'main' ? '语句格：放进 main 里运行，能用前面各格的定义' : '定义格：后面的格子能用这里的函数和类型';
+      head.insertBefore(idxEl, head.firstChild);
+    }
     const runBtn = $('[data-snip-run]', acts), editBtn = $('[data-snip-edit]', acts), badge = $('[data-badge]', acts);
 
     let mode = null;                       // 打开编辑器时的练法
@@ -162,6 +176,29 @@
     const initial = k => (k === 'fill' ? S.blankCode(original, blankLines) : k === 'type' || k === 'recall' ? '' : original);
     const code = () => (!mode || mode === 'type' ? original : editor ? editor.getValue() : fallback ? fallback.value : original);
 
+    // 实际编译的程序。notebook 里是拼起来的第 1～upto 格：这一格用 src，其余格子用各自当前的代码（pristine 时全用原文）
+    const LAST = NB ? NB.cells.length - 1 : 0;
+    function program(src, upto, pristine) {
+      if (!cell) return src;
+      return S.assemble(NB.lang, NB.cells.map(c => ({
+        kind: c.kind, name: c.name, code: c === cell ? src : pristine ? c.original : c.current()
+      })), upto).source;
+    }
+    // 这一格（含）往后有没有语句格：定义格后面没有测试代码时，跟练只能看编译过没过
+    const untested = cell && !NB.cells.some(c => c.index >= cell.index && c.kind === 'main');
+    if (cell) {
+      cell.current = code;
+      cell.show = (text, status, cls) => {
+        ensurePanel();
+        api.status(status, cls);
+        const o = $('[data-out]', panel);
+        o.classList.toggle('is-empty', !text);
+        o.textContent = text || '（没有输出）';
+      };
+      cell.busy = on => { if (idxEl) idxEl.textContent = on ? '[*]' : `[${cell.num}]`; };
+      cell.runAll = () => run({ upto: LAST, all: true });
+    }
+
     /* --- 编译和运行（同样的代码只编译一次） --- */
     const builds = new Map();
     function build(src) {
@@ -180,7 +217,7 @@
     const expected = new Map();
     function expectedOutput(stdin) {
       if (!expected.has(stdin)) {
-        expected.set(stdin, build(original).then(c => {
+        expected.set(stdin, build(program(original, LAST, true)).then(c => {
           if (!c.ok) return { error: '原程序编译失败' };
           return IDE.runWasm(CFG.wasiWorker, c.wasm, stdin, TIME_LIMIT);
         }).then(r => { if (r.error || r.timeout) expected.delete(stdin); return r; }));
@@ -246,41 +283,73 @@
     }
 
     // 编译运行 src，输出写进面板。返回 { ok: 编译通过, run: 运行结果 }
-    async function execute(src, stdin) {
+    // notebook：诊断里的文件名换成格子编号
+    const cellLabel = n => (/^cell(\d+)$/.test(n) ? `[${n.slice(4)}]` : /^hidden/.test(n) ? '[辅助代码]' : `[${n}]`);
+    const clang = text => {
+      const t = IDE.cleanClang(text);
+      return cell ? t.replace(/\b(cell\d+|hidden\d+|main|prelude)\.(?:c|cpp):/g, (_, n) => cellLabel(n) + ':') : t;
+    };
+    // nbo: { upto, split（按格子分发输出）, all（每个语句格都显示）}，只在 notebook 里用
+    async function execute(src, stdin, nbo) {
       const o = $('[data-out]', panel);
       o.innerHTML = '';
       o.classList.remove('is-empty');
       mark([]);
       api.status(compilePhase(), 'busy');
       const c = await build(src);
-      const diags = S.diagnostics(lang, c.stderr);
+      let diags;
+      if (cell) {
+        const all = S.nbDiagnostics(c.stderr);
+        diags = all.filter(d => d.cell === cell.name);
+        const other = all.find(d => d.severity === 'error' && d.cell !== cell.name);
+        if (!c.ok && other && !diags.some(d => d.severity === 'error')) c.where = cellLabel(other.cell);
+      } else diags = S.diagnostics(lang, c.stderr);
       mark(diags);
       // 作者标了 run: error 的代码本来就是演示错误的，没改过时出错给一句说明
       const demo = info.error && src === original ? ' <span class="c-muted">· 这段代码本来就是用来演示这个错误的</span>' : '';
       if (!c.ok) {
-        api.status(c.loadError ? '✗ 编译器加载失败' : '✗ 编译出错' + demo, 'bad');
-        o.innerHTML = `<span class="snip-err">${esc(IDE.cleanClang(c.stderr) || '编译失败')}</span>`;
+        api.status(c.loadError ? '✗ 编译器加载失败' : '✗ 编译出错' + (c.where ? `（错在第 ${c.where} 格，这一格本身没问题）` : '') + demo, 'bad');
+        o.innerHTML = `<span class="snip-err">${esc(clang(c.stderr) || '编译失败')}</span>`;
         return { ok: false };
       }
-      const warn = IDE.cleanClang(c.stderr);
+      const warn = clang(c.stderr);
       if (warn) o.innerHTML = `<details class="snip-warn"><summary>编译警告 ${diags.filter(d => d.severity === 'warning').length || ''} 条</summary>${esc(warn)}</details>`;
       api.status('运行中…', 'busy');
       const outNode = document.createTextNode('');
       o.appendChild(outNode);
       const t0 = performance.now();
-      const r = await IDE.runWasm(CFG.wasiWorker, c.wasm, stdin, TIME_LIMIT, text => { outNode.data += text; });
+      let raw = '';
+      const r = await IDE.runWasm(CFG.wasiWorker, c.wasm, stdin, TIME_LIMIT, text => {
+        if (!cell) { outNode.data += text; return; }
+        raw += text;
+        outNode.data = S.stripMarks(raw);
+      });
       const ms = performance.now() - t0;
-      outNode.data = r.stdout;
+      let where = '';
+      if (cell && nbo && nbo.split) {
+        // 按格子切开：这一格显示自己的那段，其他语句格（已经打开输出的，或者「全部运行」时每一格）显示各自的
+        const seg = S.splitOutput(r.stdout);
+        const stopped = (r.timeout || r.error) && seg.last != null && seg.last >= 0 ? NB.cells[seg.last] : null;
+        if (stopped && stopped !== cell) where = `（停在第 [${stopped.num}] 格）`;
+        NB.cells.forEach(x => {
+          if (x === cell || x.kind !== 'main' || x.index > nbo.upto || !x.show) return;
+          if (!nbo.all && !x.hasPanel()) return;
+          const ran = seg.last === -1 || (seg.last != null && seg.last >= x.index);
+          x.show(seg.out[x.index] || '', ran ? (x === stopped ? '✗ 运行到这一格出错了' : `✓ 随第 [${cell.num}] 格一起运行`) : '没有运行到这一格', x === stopped ? 'bad' : ran ? 'ok' : '');
+        });
+        outNode.data = cell.kind === 'main' ? (seg.out[cell.index] || '') : '';
+      } else outNode.data = cell ? S.stripMarks(r.stdout) : r.stdout;
       if (r.stderr) o.insertAdjacentHTML('beforeend', `<span class="snip-err">${esc(r.stderr)}</span>`);
       if (r.timeout) {
-        api.status(`✗ 超时：运行超过 ${TIME_LIMIT / 1000} 秒，已停止${demo || '（死循环，或者在等输入？）'}`, 'bad');
+        api.status(`✗ 超时：运行超过 ${TIME_LIMIT / 1000} 秒，已停止${where}${demo || '（死循环，或者在等输入？）'}`, 'bad');
       } else if (r.error) {
-        api.status('✗ 运行出错' + demo, 'bad');
+        api.status('✗ 运行出错' + where + demo, 'bad');
         o.insertAdjacentHTML('beforeend', `<span class="snip-err">${esc(r.error)}</span>`);
       } else {
-        api.status(`✓ 运行结束 · ${fmtMs(ms)}${r.exitCode ? ` · <span class="c-warn">退出码 ${r.exitCode}</span>${demo}` : ''}`, 'ok');
+        const nbNote = cell && nbo && nbo.split ? (cell.kind === 'main' ? (cell.num > 1 ? ` · 连同前面 ${cell.num - 1} 格${NB.cells.some(c => c.kind === 'hidden' && c.index < cell.index) ? '和辅助代码' : ''}一起编译` : '') : ' · 定义格本身没有输出，编译通过') : '';
+        api.status(`✓ 运行结束 · ${fmtMs(ms)}${nbNote}${r.exitCode ? ` · <span class="c-warn">退出码 ${r.exitCode}</span>${demo}` : ''}`, 'ok');
       }
-      if (!r.stdout && !r.stderr && !r.error && !warn) { o.classList.add('is-empty'); o.textContent = '（没有输出）'; }
+      if (!outNode.data && !r.stderr && !r.error && !warn) { o.classList.add('is-empty'); o.textContent = cell && cell.kind !== 'main' && nbo && nbo.split ? '（定义格没有输出：后面的语句格会用到它）' : '（没有输出）'; }
       return { ok: true, run: r };
     }
 
@@ -290,23 +359,27 @@
       runBtn.disabled = true;
       if (bar) $('[data-check]', bar).disabled = true;
       active = api;
+      if (cell) cell.busy(true);
       try {
         await fn();
       } catch (e) {
         api.status('✗ 出错了', 'bad');
         $('[data-out]', panel).textContent = String(e && e.stack || e);
       } finally {
+        if (cell) cell.busy(false);
         busy = false;
         runBtn.disabled = false;
         if (bar) $('[data-check]', bar).disabled = false;
       }
     }
 
-    function run() {
+    function run(nbo) {
       if (needStdin()) return;
       ensurePanel();
       $('[data-verdict]', panel).hidden = true;
-      return guarded(() => execute(code(), stdinValue()));
+      if (!cell) return guarded(() => execute(code(), stdinValue()));
+      const o = Object.assign({ upto: cell.index, split: true }, nbo && nbo.upto != null ? nbo : null);
+      return guarded(() => execute(program(code(), o.upto), stdinValue(), o));
     }
 
     /* --- 判定 --- */
@@ -324,10 +397,11 @@
       verdict.hidden = true;
       await guarded(async () => {
         const stdin = stdinValue();
-        const mine = await execute(src, stdin);
+        const mine = await execute(program(src, LAST, true), stdin);
         if (!mine.ok) { showVerdict(false, '编译没通过，先把错误改掉'); return; }
         const r = mine.run;
         if (r.timeout || r.error) { showVerdict(false, '程序没能正常运行完'); return; }
+        if (untested) { showVerdict(true, '后面没有用到它的测试代码，编译通过就算通过'); return; }
         if (unstable) {
           showVerdict(true, '这段程序每次运行输出都不一样（用到了时间或随机数），能正常运行就算通过');
           return;
@@ -335,10 +409,10 @@
         api.status('运行原程序，对比输出…', 'busy');
         const exp = await expectedOutput(stdin);
         if (exp.error || exp.timeout) { showVerdict(false, '原程序没能运行，无法对比：' + (exp.error || '超时')); return; }
-        const cmp = S.compareOutput(r.stdout, exp.stdout);
+        const cmp = S.compareOutput(S.stripMarks(r.stdout), S.stripMarks(exp.stdout));
         api.status(cmp.ok ? '✓ 运行结束' : '✓ 运行结束，但输出和原程序不一样', cmp.ok ? 'ok' : 'bad');
         if (cmp.ok) showVerdict(true, '输出和原程序完全一致');
-        else showVerdict(false, `输出从第 ${cmp.line} 行开始不一样`, cmp, exp.stdout);
+        else showVerdict(false, `输出从第 ${cmp.line} 行开始不一样${cell ? '（整篇程序的输出）' : ''}`, cmp, S.stripMarks(exp.stdout));
       });
     }
     function showVerdict(ok, text, cmp, expOut) {
@@ -421,7 +495,7 @@
         if (expectEl.hidden) return;
         expectEl.innerHTML = r.error || r.timeout
           ? `<span class="snip-err">原程序没能运行：${esc(r.error || '超时')}</span>`
-          : `<div class="c-muted">原程序的输出${unstable ? '（每次运行都不一样）' : ''}：</div><pre>${esc(r.stdout) || '（没有输出）'}</pre>`;
+          : `<div class="c-muted">${cell ? '整篇程序（全用原文）' : '原程序'}的输出${unstable ? '（每次运行都不一样）' : ''}：</div><pre>${esc(S.stripMarks(r.stdout)) || '（没有输出）'}</pre>`;
       });
     }
 
@@ -588,7 +662,8 @@
       store.del(draftKey(mode));
     }
 
-    runBtn.addEventListener('click', run);
+    if (cell) cell.hasPanel = () => !!panel;
+    runBtn.addEventListener('click', () => run());
     editBtn.addEventListener('click', () => (mode ? close() : open('edit')));
     snip.open = k => { fig.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (!mode) open(k); else switchMode(k); };
   }
@@ -619,6 +694,52 @@
         本文有 <b>${list.length}</b> 段代码可以动手练，已通过 <b>${done}</b> 段${done ? `（${[1, 2, 3].map(l => `${LEVEL_NAME[l]} ${levels.filter(x => x >= l).length}`).join(' · ')}）` : ''}</span>
       ${next < 0 ? '<span class="c-accent">全部默写通过 ✓</span>'
         : `<button type="button" class="btn btn-ghost btn-sm" data-goto="${next}" data-mode="${nextMode}">${done ? '继续练' : '开始练'}：第 ${next + 1} 段「${MODES[nextMode].name}」</button>`}`;
+  }
+
+  /* ---------- Notebook ---------- */
+  const NB = CFG.notebook ? buildNotebook() : null;
+  function buildNotebook() {
+    const figs = $$('.md figure.highlight').map(fig => {
+      const lang = S.normLang((fig.className.replace('highlight', '').trim() || '').split(/\s+/)[0]);
+      if (!lang) return null;
+      const lines = $$('.code .line', fig).map(l => l.textContent);
+      const original = lines.length ? lines.join('\n') : ($('code', fig) || fig).textContent;
+      const opt = S.parseOptions(optionComment(fig));
+      if (fig.closest('details')) opt.details = true;      // 练习答案里的代码默认不参与拼接
+      return { fig, lang, original, kind: S.cellKind(lang, original, opt) };
+    }).filter(Boolean);
+    const nbLang = S.notebookLang(figs);
+    let num = 0, hid = 0;
+    const cells = figs.filter(f => /^(def|main|hidden)$/.test(f.kind) && f.lang === nbLang).map((f, index) => Object.assign(f, {
+      index,
+      num: f.kind === 'hidden' ? null : ++num,
+      name: f.kind === 'hidden' ? 'hidden' + (++hid) : 'cell' + num,
+      current: () => f.original
+    }));
+    if (!cells.some(c => c.kind === 'main')) return null;      // 没有语句格，拼起来也跑不出东西
+    // 辅助代码默认折叠
+    cells.filter(c => c.kind === 'hidden').forEach(c => {
+      const d = document.createElement('details');
+      d.className = 'nb-hidden';
+      d.innerHTML = '<summary>辅助代码：文中没有写出来，运行时会自动带上</summary>';
+      c.fig.before(d);
+      d.appendChild(c.fig);
+    });
+    // 第一格前面的说明和「全部运行」
+    const first = cells.find(c => c.kind !== 'hidden');
+    const bar = document.createElement('div');
+    bar.className = 'nb-bar';
+    bar.innerHTML = `<span class="nb-text"><span class="ui-term"><span class="c-accent">$</span> notebook</span><span class="ui-ios">Notebook</span>
+      这篇文章的 ${num} 段代码是连着的：后面的格子能用前面定义的函数和类型。运行某一格时会连同前面的格子一起运行；改了前面的代码，后面的结果会跟着变。</span>
+      <button type="button" class="btn btn-ghost btn-sm" data-nb-all>▶ 全部运行</button>`;
+    (first.fig.closest('details.nb-hidden') || first.fig).before(bar);
+    const byFig = new Map(cells.filter(c => c.kind !== 'hidden').map(c => [c.fig, c]));
+    const nb = { lang: nbLang, cells, byFig };
+    $('[data-nb-all]', bar).addEventListener('click', () => {
+      const last = cells.filter(c => c.runAll && c.kind === 'main').pop();   // 在最后一个语句格上跑整篇
+      if (last) last.runAll();
+    });
+    return nb;
   }
 
   $$('.md figure.highlight').forEach(setup);

@@ -14,6 +14,7 @@ description: 堆是用数组存储的完全二叉树，能在 O(log n) 时间内
 top_group_list: true
 disableNunjucks: true
 viz: [ds-heap]
+notebook: true
 ---
 
 > **本文目标**：理解堆的性质和数组存储方式；会实现上浮和下沉，以及基于它们的插入和取出最大值；理解为什么 heapify 建堆是 O(n)；会实现堆排序；会用堆解决 Top K 问题；会使用 C++ 的 `priority_queue`。
@@ -61,6 +62,11 @@ typedef struct {
 堆的所有操作都基于两个基本动作。
 
 **上浮**（sift up）：某个元素比父节点大，就和父节点交换，一直到它不比父节点大或者到达堆顶：
+
+<!-- run: hidden -->
+```c
+static void swap(int* a, int* b) { int t = *a; *a = *b; *b = t; }
+```
 
 ```c
 static void siftUp(int* a, size_t i)
