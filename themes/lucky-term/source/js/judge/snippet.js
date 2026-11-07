@@ -1,7 +1,8 @@
 /**
- * 文章代码块「跟练」：能在浏览器里运行的 C/C++ 代码块（判定规则见 snippet-core.js）在标题栏多出两个按钮
- *   run   编译运行，输出显示在代码块下面
- *   edit  打开编辑器，有四种练法：
+ * 文章代码块「跟练」：能在浏览器里运行的 C/C++ 代码块（判定规则见 snippet-core.js）
+ *   标题栏的 ▶ run  编译运行，输出显示在代码块下面
+ *   代码下方的一条  「改一改」和「动手练 · N 关」的入口；练习时变成操作栏（期望输出、重来、运行、检查答案），
+ *                   通过后变成通过条（下一关 →）。练习时代码上方是关卡头：关卡步骤、本关标题和说明。练法：
  *           改一改  原代码随便改着跑
  *           填空    挖掉几行，补上后输出和原程序一致就算通过
  *           照着敲  直接在变灰的原代码上敲，敲过的恢复高亮（见 snippet-type.js）；敲完就算通过
@@ -37,10 +38,10 @@
   const PAGE = location.pathname;
 
   const MODES = {
-    edit: { name: '改一改', tip: '随便改，改完点 run 看看结果有什么变化' },
-    fill: { name: '填空', level: 1, tip: '补全挖掉的几行（行尾注释是提示），输出和原程序一致就算通过' },
+    edit: { name: '改一改', tip: `随便改，改完点 ▶ 运行（${MOD}+Enter）看看结果有什么变化` },
+    fill: { name: '填空', level: 1, tip: '把高亮的空补上（行尾注释是提示），输出和原程序一致就算通过' },
     type: { name: '照着敲', level: 2, tip: '点一下代码，在灰色的原文上直接敲：缩进、注释、中文自动跳过，敲错了要改对才能继续' },
-    recall: { name: '默写', level: 3, tip: '不看原文，写出输出一样的程序' }
+    recall: { name: '默写', level: 3, tip: '不看原文，写出输出一样的程序；实在想不起来可以偷看一眼' }
   };
   const LEVEL_NAME = ['', '填空', '照着敲', '默写'];
 
@@ -113,9 +114,12 @@
     const acts = document.createElement('span');
     acts.className = 'code-acts';
     acts.innerHTML = `<span class="code-badge" data-badge hidden></span>`
-      + `<button type="button" class="code-btn" data-snip-run title="编译运行（${MOD}+Enter）">▶ run</button>`
-      + `<button type="button" class="code-btn" data-snip-edit title="改代码、填空、照着敲、默写">edit</button>`;
+      + `<button type="button" class="code-btn" data-snip-run title="编译运行（${MOD}+Enter）">▶ run</button>`;
     head.insertBefore(acts, $('.code-copy', head));
+    // 代码下方的一条：阅读时是「改一改 / 动手练 N 关」的入口，练习时是操作栏，通过后变成通过条
+    const strip = document.createElement('div');
+    strip.className = 'snip-strip';
+    fig.appendChild(strip);
     let idxEl = null;
     if (cell) {
       idxEl = document.createElement('span');
@@ -124,7 +128,7 @@
       idxEl.title = cell.kind === 'main' ? '语句格：放进 main 里运行，能用前面各格的定义' : '定义格：后面的格子能用这里的函数和类型';
       head.insertBefore(idxEl, head.firstChild);
     }
-    const runBtn = $('[data-snip-run]', acts), editBtn = $('[data-snip-edit]', acts), badge = $('[data-badge]', acts);
+    const runBtn = $('[data-snip-run]', acts), badge = $('[data-badge]', acts);
 
     let mode = null;                       // 打开编辑器时的练法
     let editor = null, m = null, edBox = null, bar = null, expectEl = null, fallback = null;
@@ -160,6 +164,11 @@
       }
     });
 
+    // 闯关的关卡：填空（挖不出空的短程序没有）→ 照着敲 → 默写；演示错误的代码没有关卡
+    const LEVELS = practicable ? ['fill', 'type', 'recall'].filter(k => k !== 'fill' || canFill) : [];
+    const nextLevel = () => LEVELS.find(k => !recordOf(hash)[k]);
+    let passedMode = null;                 // 刚通过的那一关：操作栏显示通过条
+
     function showBadge() {
       const lv = levelOf(recordOf(hash));
       badge.hidden = !lv;
@@ -168,9 +177,57 @@
       if (bar) $$('[data-mode]', bar).forEach(b => b.classList.toggle('is-passed', !!recordOf(hash)[b.dataset.mode]));
     }
     const hasDraft = () => Object.keys(MODES).some(k => store.get(draftKey(k)) !== null);
-    const markDraft = () => { editBtn.classList.toggle('has-draft', !mode && hasDraft()); };
+    const dots = () => LEVELS.map(k => `<span class="snip-dot${recordOf(hash)[k] ? ' is-on' : ''}" title="${MODES[k].name}${recordOf(hash)[k] ? ' ✓' : ''}"></span>`).join('');
+
+    // 代码下方那一条：阅读 / 练习 / 刚通过 三种样子
+    function renderStrip() {
+      strip.classList.toggle('is-pass', !!passedMode);
+      if (!mode) {
+        const nx = nextLevel(), done = LEVELS.length && !nx;
+        const draft = Object.keys(MODES).some(k => k !== 'type' && store.get(draftKey(k)) !== null);
+        strip.innerHTML = `<button type="button" class="code-btn${draft ? ' has-draft' : ''}" data-act="edit" title="随便改这段代码，改完运行看看">✎ 改一改</button>`
+          + (LEVELS.length ? `<span class="snip-strip-info">动手练 · ${LEVELS.length} 关 <span class="snip-dots">${dots()}</span></span>`
+            + `<button type="button" class="btn btn-sm ${done ? 'btn-ghost' : 'btn-solid'}" data-act="go">${done ? '全部通过 ✓ 再练' : recordOf(hash)[LEVELS[0]] ? `继续第 ${LEVELS.indexOf(nx) + 1} 关` : '开始第 1 关'}</button>` : '');
+        return;
+      }
+      if (passedMode) {
+        const k = LEVELS.indexOf(passedMode), nx = LEVELS[k + 1];
+        strip.innerHTML = `<span class="snip-pass-text"><b>✓ ${k >= 0 ? `第 ${k + 1} 关通过` : '通过'}</b><span data-pass-msg></span></span>`
+          + `<button type="button" class="code-btn" data-act="stay">留在这关</button>`
+          + (nx ? `<button type="button" class="btn btn-solid btn-sm" data-act="next" data-to="${nx}">下一关：${MODES[nx].name} →</button>`
+            : `<button type="button" class="btn btn-solid btn-sm" data-act="exit">全部通过，收起</button>`);
+        return;
+      }
+      const judge = mode === 'fill' || mode === 'recall';
+      strip.innerHTML = `<span class="snip-strip-tools">`
+        + (judge ? `<button type="button" class="code-btn" data-expect>期望输出</button>` : '')
+        + (mode === 'recall' ? `<button type="button" class="code-btn" data-peek>偷看原文</button>` : '')
+        + `<button type="button" class="code-btn" data-reset title="恢复成这一关的初始代码">↺ 重来</button></span>`
+        + `<button type="button" class="code-btn${judge ? '' : ' is-primary-run'}" data-act="run" title="${MOD}+Enter">▶ 运行</button>`
+        + (judge ? `<button type="button" class="btn btn-solid btn-sm snip-check" data-check title="${MOD}+Shift+Enter">检查答案</button>` : '');
+    }
+    strip.addEventListener('click', e => {
+      const t = e.target.closest('button');
+      if (!t) return;
+      const a = t.dataset.act;
+      if (a === 'edit') open('edit');
+      else if (a === 'go') open(nextLevel() || LEVELS[0]);
+      else if (a === 'run') run();
+      else if (a === 'stay') { passedMode = null; renderStrip(); }
+      else if (a === 'next') { passedMode = null; switchMode(t.dataset.to); }
+      else if (a === 'exit') close();
+      else if ('check' in t.dataset) check();
+      else if ('reset' in t.dataset) reset();
+      else if ('peek' in t.dataset) {
+        const on = scroll.hidden;
+        scroll.hidden = !on;
+        t.classList.toggle('is-on', on);
+        t.textContent = on ? '藏起原文' : '偷看原文';
+      } else if ('expect' in t.dataset) toggleExpect(t);
+    });
+    const markDraft = () => { if (!mode) renderStrip(); };
     showBadge();
-    markDraft();
+    renderStrip();
 
     // 每种练法的初始代码
     const initial = k => (k === 'fill' ? S.blankCode(original, blankLines) : k === 'type' || k === 'recall' ? '' : original);
@@ -242,7 +299,7 @@
         <label class="snip-stdin" hidden><span class="c-muted">标准输入（程序读到的内容，改完再点 run）</span><textarea rows="2" spellcheck="false" autocomplete="off" id="snip-stdin-${id}"></textarea></label>
         <div class="snip-verdict" data-verdict hidden></div>
         <pre class="snip-out" data-out></pre>`;
-      fig.appendChild(panel);
+      fig.insertBefore(panel, strip);
       const ta = $('textarea', panel);
       ta.value = info.stdin;
       const toggle = $('[data-stdin-toggle]', panel);
@@ -357,7 +414,7 @@
       if (busy) return;
       busy = true;
       runBtn.disabled = true;
-      if (bar) $('[data-check]', bar).disabled = true;
+      $$('[data-check], [data-act="run"]', strip).forEach(b => { b.disabled = true; });
       active = api;
       if (cell) cell.busy(true);
       try {
@@ -369,7 +426,7 @@
         if (cell) cell.busy(false);
         busy = false;
         runBtn.disabled = false;
-        if (bar) $('[data-check]', bar).disabled = false;
+        $$('[data-check], [data-act="run"]', strip).forEach(b => { b.disabled = false; });
       }
     }
 
@@ -425,15 +482,18 @@
         html += `<details class="snip-expect-all"><summary>原程序的完整输出</summary><pre>${esc(expOut)}</pre></details>`;
       }
       if (ok) {
-        const next = { fill: 'type', type: 'recall' }[mode];
-        if (next) html += ` <button type="button" class="link-btn" data-next="${next}">接着试试「${MODES[next].name}」→</button>`;
+        // 通过：判定信息放进代码下方的通过条，输出面板里不再重复
         record(hash, mode);
         showBadge();
         renderSummary();
+        v.hidden = true;
+        passedMode = mode;
+        renderStrip();
+        $('[data-pass-msg]', strip).textContent = text;
+        renderLevelBar();
+        return;
       }
       v.innerHTML = html;
-      const nb = $('[data-next]', v);
-      if (nb) nb.addEventListener('click', () => switchMode(nb.dataset.next));
     }
 
     /* --- 编辑器和练法 --- */
@@ -441,31 +501,33 @@
       if (!bar) return;
       const t = $('[data-tip]', bar);
       t.textContent = text;
-      t.className = 'snip-tip' + (cls ? ' is-' + cls : '');
+      t.className = 'snip-tip' + (cls ? ' is-' + cls : '') + (mode === 'type' ? ' is-stats' : '');
     }
     function defaultTip() {
-      if (mode === 'type') { const st = typer.stats(); tip(st.done ? `已经敲完了 ✓ 想再练一遍点 reset` : st.pos ? `接着上次敲 · ${typeStats(st)}` : MODES.type.tip, st.done ? 'ok' : ''); return; }
+      if (mode === 'type') { const st = typer.stats(); tip(st.done ? `已经敲完了 ✓ 想再练一遍点 ↺ 重来` : st.pos ? `接着上次敲 · ${typeStats(st)}` : MODES.type.tip, st.done ? 'ok' : ''); return; }
       let t = MODES[mode].tip;
       if (unstable && mode !== 'edit') t += '。这段程序输出不固定，能正常运行就算通过';
       tip(t);
     }
 
+    // 每一关的标题
+    const TITLE = {
+      edit: '改一改：随便改',
+      fill: () => `填空：补全 ${blankLines.length} 行`,
+      type: '照着敲：一字不差地敲一遍',
+      recall: '默写：不看原文写出来'
+    };
+    // 练习时代码上方的关卡头：关卡步骤（可以点着切换）、本关标题和说明、退出
     function buildBar() {
       bar = document.createElement('div');
-      bar.className = 'snip-modes';
-      const tabs = Object.keys(MODES).filter(k => k === 'edit' || (practicable && (k !== 'fill' || canFill)))
-        .map(k => `<button type="button" class="snip-tab" data-mode="${k}" role="tab">${MODES[k].name}</button>`).join('');
+      bar.className = 'snip-level';
       bar.innerHTML = `
-        <div class="snip-tabs" role="tablist" aria-label="练法">${tabs}</div>
-        <div class="snip-mode-row">
-          <span class="snip-tip" data-tip></span>
-          <span class="snip-mode-acts">
-            <button type="button" class="code-btn" data-peek hidden>偷看原文</button>
-            <button type="button" class="code-btn" data-expect hidden>期望输出</button>
-            <button type="button" class="code-btn" data-reset title="恢复成这种练法的初始代码">reset</button>
-            <button type="button" class="btn btn-solid btn-sm snip-check" data-check hidden>提交检查</button>
-          </span>
-        </div>`;
+        <div class="snip-level-top">
+          <span class="snip-steps" role="tablist" aria-label="关卡" data-steps></span>
+          <button type="button" class="code-btn" data-exit title="收起（改动会保留）">退出</button>
+        </div>
+        <div class="snip-level-title" data-title></div>
+        <div class="snip-tip" data-tip></div>`;
       expectEl = document.createElement('div');
       expectEl.className = 'snip-expect';
       expectEl.hidden = true;
@@ -473,30 +535,35 @@
       head.after(bar);
       bar.addEventListener('click', e => {
         const t = e.target.closest('[data-mode]');
-        if (t) switchMode(t.dataset.mode);
+        if (t) { passedMode = null; switchMode(t.dataset.mode); return; }
+        if (e.target.closest('[data-exit]')) close();
       });
-      $('[data-check]', bar).addEventListener('click', check);
-      $('[data-reset]', bar).addEventListener('click', reset);
-      $('[data-peek]', bar).addEventListener('click', e => {
-        const on = scroll.hidden;
-        scroll.hidden = !on;
-        e.currentTarget.classList.toggle('is-on', on);
-        e.currentTarget.textContent = on ? '藏起原文' : '偷看原文';
-      });
-      $('[data-expect]', bar).addEventListener('click', async e => {
-        const btn = e.currentTarget;
-        if (!expectEl.hidden) { expectEl.hidden = true; btn.classList.remove('is-on'); return; }
-        btn.classList.add('is-on');
-        expectEl.hidden = false;
-        if (info.readsStdin && !stdinValue()) { expectEl.innerHTML = '<span class="c-muted">这段程序要读输入：先在输出面板的 stdin 里填好输入。</span>'; ensurePanel(); $('.snip-stdin', panel).hidden = false; return; }
-        expectEl.innerHTML = `<span class="c-muted"><span class="snip-spin" aria-hidden="true"></span> 运行原程序…</span>`;
-        active = { status: t => { expectEl.innerHTML = `<span class="c-muted">${t}</span>`; } };
-        const r = await expectedOutput(stdinValue());
-        if (expectEl.hidden) return;
-        expectEl.innerHTML = r.error || r.timeout
-          ? `<span class="snip-err">原程序没能运行：${esc(r.error || '超时')}</span>`
-          : `<div class="c-muted">${cell ? '整篇程序（全用原文）' : '原程序'}的输出${unstable ? '（每次运行都不一样）' : ''}：</div><pre>${esc(S.stripMarks(r.stdout)) || '（没有输出）'}</pre>`;
-      });
+    }
+    function renderLevelBar() {
+      const steps = mode === 'edit'
+        ? `<span class="snip-step is-on">改一改</span>`
+          + (LEVELS.length ? `<span class="snip-step-sep">·</span><button type="button" class="snip-step" data-mode="${nextLevel() || LEVELS[0]}">去闯关 →</button>` : '')
+        : LEVELS.map((k, i) => {
+          const done = !!recordOf(hash)[k];
+          return (i ? '<span class="snip-step-sep">›</span>' : '')
+            + `<button type="button" class="snip-step${k === mode ? ' is-on' : ''}${done ? ' is-passed' : ''}" data-mode="${k}" role="tab" aria-selected="${k === mode}">${done ? '✓' : i + 1} ${MODES[k].name}</button>`;
+        }).join('');
+      $('[data-steps]', bar).innerHTML = (mode === 'edit' ? '' : `<span class="snip-level-no">第 ${LEVELS.indexOf(mode) + 1} / ${LEVELS.length} 关</span>`) + steps;
+      const t = TITLE[mode];
+      $('[data-title]', bar).textContent = typeof t === 'function' ? t() : t;
+    }
+    async function toggleExpect(btn) {
+      if (!expectEl.hidden) { expectEl.hidden = true; btn.classList.remove('is-on'); return; }
+      btn.classList.add('is-on');
+      expectEl.hidden = false;
+      if (info.readsStdin && !stdinValue()) { expectEl.innerHTML = '<span class="c-muted">这段程序要读输入：先在输出面板的 stdin 里填好输入。</span>'; ensurePanel(); $('.snip-stdin', panel).hidden = false; return; }
+      expectEl.innerHTML = `<span class="c-muted"><span class="snip-spin" aria-hidden="true"></span> 运行原程序…</span>`;
+      active = { status: t => { expectEl.innerHTML = `<span class="c-muted">${t}</span>`; } };
+      const r = await expectedOutput(stdinValue());
+      if (expectEl.hidden) return;
+      expectEl.innerHTML = r.error || r.timeout
+        ? `<span class="snip-err">原程序没能运行：${esc(r.error || '超时')}</span>`
+        : `<div class="c-muted">${cell ? '整篇程序（全用原文）' : '原程序'}的输出${unstable ? '（每次运行都不一样）' : ''}：</div><pre>${esc(S.stripMarks(r.stdout)) || '（没有输出）'}</pre>`;
     }
 
     function saveDraft() {
@@ -507,10 +574,8 @@
 
     async function open(k) {
       mode = k;
-      editBtn.textContent = 'done';
-      editBtn.title = '收起编辑器（改动会保留）';
+      passedMode = null;
       fig.classList.add('is-editing');
-      markDraft();
       cc.preload();                          // 开始练的时候就在后台准备编译器
       if (!bar) buildBar();
       bar.hidden = false;
@@ -569,19 +634,12 @@
 
     // 切换练法：换编辑器内容、显示或隐藏原代码
     function applyMode() {
-      $$('[data-mode]', bar).forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('is-on', on); b.setAttribute('aria-selected', String(on)); });
-      const practice = mode !== 'edit';
-      $('[data-check]', bar).hidden = !practice;
-      $('[data-peek]', bar).hidden = mode !== 'recall';
-      $('[data-peek]', bar).textContent = '偷看原文';
-      $('[data-peek]', bar).classList.remove('is-on');
-      $('[data-expect]', bar).hidden = !(mode === 'fill' || mode === 'recall');
-      $('[data-expect]', bar).classList.remove('is-on');
+      renderLevelBar();
+      renderStrip();
       expectEl.hidden = true;
       const typing = mode === 'type';
       scroll.hidden = !typing;                   // 照着敲直接在原代码块上敲；其他练法用编辑器
       edBox.hidden = typing;
-      $('[data-check]', bar).hidden = !practice || typing;   // 照着敲敲完就算通过，不用提交
       showBadge();
       if (panel) $('[data-verdict]', panel).hidden = true;
       if (typing) {
@@ -610,6 +668,7 @@
       if (k === mode) return;
       saveDraft();
       mode = k;
+      if (panel) { panel.remove(); panel = null; }   // 上一关的输出已经过时了
       applyMode();
     }
 
@@ -632,15 +691,14 @@
     function close() {
       saveDraft();
       mode = null;
-      editBtn.textContent = 'edit';
-      editBtn.title = '改代码、填空、照着敲、默写';
+      passedMode = null;
       fig.classList.remove('is-editing');
       typer.stop();
       bar.hidden = true;
       edBox.hidden = true;
       scroll.hidden = false;
       if (panel) $('[data-verdict]', panel).hidden = true;
-      markDraft();
+      renderStrip();
     }
     function reset() {
       if (mode === 'type') {
@@ -668,7 +726,6 @@
     const warm = () => cc.preload();
     runBtn.addEventListener('pointerenter', warm, { once: true });
     runBtn.addEventListener('focus', warm, { once: true });
-    editBtn.addEventListener('click', () => (mode ? close() : open('edit')));
     snip.open = k => { fig.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (!mode) open(k); else switchMode(k); };
   }
 
