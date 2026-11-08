@@ -1,4 +1,5 @@
 # 设计模式专栏的配套代码：每篇文章一个目录，目录下每个 .cpp 编译成一个程序
+# 以 _ce.cpp 结尾的文件是故意编译不过的演示（compile error），不参与构建
 #   cmake -B build && cmake --build build
 #   ./build/02-uml/lifetime
 cmake_minimum_required(VERSION 3.16)
@@ -14,6 +15,7 @@ add_compile_options(-Wall -Wextra)
 file(GLOB chapters RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/[0-9][0-9]-*)
 foreach(dir ${chapters})
   file(GLOB sources ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp)
+  list(FILTER sources EXCLUDE REGEX "_ce\\.cpp$")
   foreach(src ${sources})
     get_filename_component(name ${src} NAME_WE)
     add_executable(${dir}_${name} ${src})

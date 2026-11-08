@@ -3,7 +3,7 @@ id: 102
 title: 重构挑战：运费计算
 difficulty: medium
 tags: [重构挑战, 设计模式, 策略模式]
-related: [dp-uml-class-diagram]
+related: [dp-why-design-patterns, dp-uml-class-diagram]
 langs: [cpp]
 function: shippingCost
 params: { method: string, weight: double, distance: int }
