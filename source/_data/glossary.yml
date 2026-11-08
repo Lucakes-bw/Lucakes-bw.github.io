@@ -93,6 +93,15 @@
   en: branch prediction
   desc: CPU 遇到条件跳转、switch 或虚函数调用时，不等结果算出来就先猜一个方向继续执行，猜错了再丢掉重来，每次要损失十几个时钟周期。数据的规律越明显，猜得越准。
   post: dp-composition-over-inheritance
+- term: 单例模式
+  alias: [单例]
+  en: Singleton
+  desc: 保证一个类只有一个实例，并提供全局访问点。C++11 起推荐用局部静态变量实现（Meyers 单例），线程安全且第一次使用时才构造；但它本质上是全局变量，会隐藏依赖、让测试互相干扰。
+  post: dp-singleton
+- term: 静态初始化顺序问题
+  en: static initialization order fiasco
+  desc: 不同源文件里的全局对象，初始化的先后顺序没有规定（实际取决于链接顺序）。一个全局对象的构造函数如果用到另一个源文件里的全局对象，可能读到还没初始化的值。
+  post: dp-singleton
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
