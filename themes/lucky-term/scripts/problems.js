@@ -44,7 +44,7 @@ hexo.extend.processor.register('_problems/:slug.md', async function (file) {
     sig,
     examples,
     tests: (fm.tests || []).map(t => ({ in: t.in, out: t.out })),
-    content: await md(fm._content || '')
+    content: await md(hexo.ltUmlFences ? hexo.ltUmlFences(fm._content || '', `_problems/${slug}.md`) : fm._content || '')
   });
 });
 
@@ -83,7 +83,7 @@ hexo.extend.generator.register('problems', function (locals) {
     layout: ['problem'],
     data: {
       title: `${p.id}. ${p.title}`,
-      description: `${p.title}（${DIFF[p.difficulty]}）：在浏览器里用 C++ / Python / JavaScript 直接写代码、运行和提交。`,
+      description: `${p.title}（${DIFF[p.difficulty]}）：在浏览器里用 ${J.langsOf(p.sig).map(l => J.LANGS[l].name).join(' / ')} 直接写代码、运行和提交。`,
       ide: true,
       problem: p,
       prev: list[i - 1] || null,

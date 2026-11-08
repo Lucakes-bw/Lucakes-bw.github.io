@@ -187,6 +187,12 @@
     return items;
   };
 
+  // UML 类图：字段见 source/js/uml.js（front-matter 写 uml_viz: true 才会加载它）。每个类、每条关系是一个元素，按 key 复用
+  R.uml = function (s) {
+    if (!window.UML) return [{ key: 'uml-missing', type: 'text', x: 10, y: 20, text: '缺少 uml.js：front-matter 加上 uml_viz: true' }];
+    return window.UML.parts(s).parts.map(function (p) { return { key: 'u' + p.key, type: 'raw', html: p.svg, layer: p.layer }; });
+  };
+
   // 组合场景：parts 中的每个子场景各自带有 x0 / top 等位置参数
   R.multi = function (s) {
     var items = [];
@@ -302,7 +308,7 @@
     });
   };
   Stage.prototype.create = function (it) {
-    var t = it.type, layer = (t === 'arrow' || t === 'line') ? this.layerE : (t === 'ptr' ? this.layerP : this.layerN);
+    var t = it.type, layer = (t === 'arrow' || t === 'line' || (t === 'raw' && !it.layer)) ? this.layerE : (t === 'ptr' ? this.layerP : this.layerN);
     var g = el('g', { 'class': 'dv-item' }, layer);
     if (t === 'box' || t === 'column') {
       g._rect = el('rect', { rx: t === 'column' ? 3 : 6 }, g);
@@ -318,6 +324,8 @@
       g._path = el('path', { fill: 'none' }, g);
       if (t === 'arrow') g._path.setAttribute('marker-end', 'url(#' + this.markerId + ')');
       g._label = el('text', { 'text-anchor': 'middle', 'class': 'dv-w' }, g);
+    } else if (t === 'raw') {
+      g._html = null;
     } else if (t === 'text') {
       g._text = el('text', {}, g);
     } else if (t === 'ptr') {
@@ -369,6 +377,8 @@
         g._label.setAttribute('x', mx); g._label.setAttribute('y', my - 4);
         g._label.textContent = it.label;
       } else g._label.textContent = '';
+    } else if (t === 'raw') {
+      if (g._html !== it.html) { g.innerHTML = it.html; g._html = it.html; }
     } else if (t === 'text') {
       g._text.setAttribute('x', it.x); g._text.setAttribute('y', it.y);
       g._text.setAttribute('text-anchor', it.anchor || 'start');
