@@ -46,6 +46,18 @@
 
 # ---------- 设计模式 ----------
 # 每写好一个模式的文章，就把模式名加进来（post 指向那篇文章）
+- term: 设计模式
+  en: design pattern
+  desc: 针对常见设计问题、被反复验证过的解决方案，比如策略、观察者、工厂。核心是把会变化的部分隔离开，让新需求只需要新增代码；模式名也是团队之间的共同词汇。
+  post: dp-why-design-patterns
+- term: GoF
+  en: Gang of Four
+  desc: 1994 年出版《设计模式》一书的四位作者（Gamma、Helm、Johnson、Vlissides）。书中的 23 种模式称为 GoF 模式，分为创建型、结构型、行为型三类。
+  post: dp-why-design-patterns
+- term: 散弹式修改
+  en: shotgun surgery
+  desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
+  post: dp-why-design-patterns
 - term: UML
   en: Unified Modeling Language
   desc: 统一建模语言，一套画软件结构的标准图形符号。日常最常用的是描述类之间关系的类图，和描述调用顺序的时序图。
