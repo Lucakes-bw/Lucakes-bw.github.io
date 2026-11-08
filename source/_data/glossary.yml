@@ -54,6 +54,18 @@
   en: Gang of Four
   desc: 1994 年出版《设计模式》一书的四位作者（Gamma、Helm、Johnson、Vlissides）。书中的 23 种模式称为 GoF 模式，分为创建型、结构型、行为型三类。
   post: dp-why-design-patterns
+- term: SOLID
+  desc: 五条面向对象设计原则的缩写：单一职责、开闭、里氏替换、接口隔离、依赖倒置。由 Robert C. Martin 整理，是理解设计模式「为什么这样设计」的基础。
+  post: dp-solid-srp-ocp
+- term: 单一职责原则
+  alias: [单一职责]
+  en: Single Responsibility Principle
+  desc: 一个模块只对一类角色负责，也就是只有一类人会要求修改它。判断方法是问「谁会要求改这段代码」，而不是数它有几个函数。
+  post: dp-solid-srp-ocp
+- term: 开闭原则
+  en: Open/Closed Principle
+  desc: 软件实体应该对扩展开放、对修改关闭：加新功能时新增代码，而不是修改已经写好、测试过的代码。做法是在会变化的方向上留出扩展点，比如抽象类、std::function、插件。
+  post: dp-solid-srp-ocp
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
