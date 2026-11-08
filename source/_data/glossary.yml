@@ -85,6 +85,14 @@
   en: dependency injection
   desc: 对象需要的依赖从外面传进来（比如通过构造函数参数），而不是自己在内部创建。测试时可以传入假的实现，是实现依赖倒置最常用的方式。
   post: dp-solid-lsp-isp-dip
+- term: 脆弱基类
+  en: fragile base class
+  desc: 子类依赖了基类没有承诺的实现细节（比如基类的一个函数内部调用了另一个虚函数），基类在不改接口的情况下修改内部实现，子类的行为就悄悄变了。是「组合优于继承」的主要理由之一。
+  post: dp-composition-over-inheritance
+- term: 分支预测
+  en: branch prediction
+  desc: CPU 遇到条件跳转、switch 或虚函数调用时，不等结果算出来就先猜一个方向继续执行，猜错了再丢掉重来，每次要损失十几个时钟周期。数据的规律越明显，猜得越准。
+  post: dp-composition-over-inheritance
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
