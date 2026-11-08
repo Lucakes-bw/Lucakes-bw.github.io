@@ -106,6 +106,13 @@ category_map:
   音视频实战: av-project
   分布式系统: dist
   分布式基础: dist-basics
+  设计模式: design-patterns
+  基础与设计原则: dp-basics
+  创建型模式: creational
+  结构型模式: structural
+  行为型模式: behavioral
+  C++惯用法: cpp-idioms
+  设计模式实战: dp-project
   未分类: uncategorized
 tag_map:
 

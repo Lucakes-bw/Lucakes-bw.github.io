@@ -28,8 +28,9 @@
   // 一次运行（所有用例一起跑）的时间限制；Python 慢，给得宽一些
   const limit = l => (P.timeLimit || 3000) * (l === 'python' ? 3 : 1);
 
+  const LANG_LIST = J.langsOf(sig);                  // 重构挑战等题目只开放部分语言
   let lang = store.get(KEY_LANG, 'cpp');
-  if (!J.LANGS[lang]) lang = 'cpp';
+  if (!LANG_LIST.includes(lang)) lang = LANG_LIST[0];
 
   /* ---------- 状态栏 ---------- */
   const statusEl = $('[data-status]');
@@ -60,7 +61,7 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
     window.LTCppComplete.register(monaco);
     registerPython(monaco);
 
-    Object.keys(J.LANGS).forEach(l => {
+    LANG_LIST.forEach(l => {
       const m = monaco.editor.createModel(codeOf(l), J.LANGS[l].monaco, monaco.Uri.parse(`file:///${J.LANGS[l].file}`));
       let timer;
       m.onDidChangeContent(() => {
@@ -83,9 +84,10 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
 
   /* ---------- 语言切换和重置 ---------- */
   const langSel = $('[data-lang]');
-  langSel.innerHTML = Object.keys(J.LANGS).map(l => `<option value="${l}">${J.LANGS[l].name}</option>`).join('');
+  langSel.innerHTML = LANG_LIST.map(l => `<option value="${l}">${J.LANGS[l].name}</option>`).join('');
   langSel.value = lang;
   $('[data-file]').textContent = J.LANGS[lang].file;
+  langSel.disabled = LANG_LIST.length < 2;
   langSel.addEventListener('change', () => {
     lang = langSel.value;
     store.set(KEY_LANG, lang);
@@ -95,7 +97,7 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
   });
 
   $('[data-reset]').addEventListener('click', () => {
-    if (!confirm(`把 ${J.LANGS[lang].name} 代码恢复为初始模板？（之后可以用 ${MOD}+Z 撤销）`)) return;
+    if (!confirm(`把 ${J.LANGS[lang].name} 代码恢复为${sig.starter && sig.starter[lang] ? '题目给出的初始代码' : '初始模板'}？（之后可以用 ${MOD}+Z 撤销）`)) return;
     const tpl = J.template(lang, sig);
     if (editor) {
       const m = models[lang];
@@ -464,6 +466,18 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
     if (monaco) monaco.editor.setModelMarkers(models[lang], 'judge', []);
     const code = getCode();
     store.set(codeKey(lang), code);
+    // 代码检查（重构挑战）：提交时不通过就不运行；运行时只提示
+    const fails = J.checkCode(sig, code, lang);
+    if (fails.length) mark(fails.filter(f => f.line).map(f => ({ line: f.line, msg: f.msg, severity: mode === 'submit' ? 'error' : 'warning' })));
+    if (mode === 'submit' && fails.length) {
+      resultEl.innerHTML = `<div class="res-head is-bad"><b>代码检查未通过</b><span class="c-muted res-lang">${J.LANGS[lang].name}</span></div>` +
+        `<p class="res-note c-muted">这道题要求重构代码的结构，功能对了还不够：</p><ul class="res-checks">${fails.map(f => `<li>${esc(f.msg)}${f.line ? ` <span class="c-muted">（第 ${f.line} 行）</span>` : ''}</li>`).join('')}</ul>`;
+      record(false);
+      busy = false;
+      runBtn.disabled = submitBtn.disabled = false;
+      root.classList.remove('is-busy');
+      return;
+    }
     try {
       const run = await RUNNERS[lang](code, list, phase);
       const res = J.evaluate(sig, list, run);
@@ -471,6 +485,8 @@ declare class TreeNode { constructor(val?: number, left?: TreeNode | null, right
       const bad = res.cases.find(c => c.status === 'RE' && c.line);
       if (bad) mark([{ line: bad.line, msg: bad.error, severity: 'error' }]);
       renderResult(mode, list, res);
+      if (mode === 'run' && fails.length) resultEl.insertAdjacentHTML('beforeend',
+        `<p class="res-note c-warn">代码检查还有 ${fails.length} 项没通过，提交时会检查：${fails.map(f => esc(f.msg)).join('；')}</p>`);
       if (mode === 'submit') record(res.status === 'AC');
     } catch (e) {
       resultEl.innerHTML = `<div class="res-head is-bad"><b>出错了</b></div><pre class="res-err">${esc(e && e.stack || e)}</pre>`;

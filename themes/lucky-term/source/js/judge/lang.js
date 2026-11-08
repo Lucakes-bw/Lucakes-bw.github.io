@@ -75,7 +75,71 @@
       if (sig.returns === 'void' && !sig.params.some(p => p[0] === sig.output)) throw new Error('returns 为 void 时需要用 output 指定输出的参数');
     }
     types.forEach(t => { if (t !== 'void' && !(parseType(t).base in CPP_BASE)) throw new Error('无法识别的类型：' + t); });
+
+    // 重构挑战：只开放部分语言、给出自己的起始代码、提交前检查代码结构
+    if (fm.langs) {
+      sig.langs = [].concat(fm.langs).map(String);
+      sig.langs.forEach(l => { if (!LANGS[l]) throw new Error('langs 里有未知的语言：' + l); });
+    }
+    if (fm.starter) {
+      sig.starter = typeof fm.starter === 'string' ? { [(sig.langs || ['cpp'])[0]]: fm.starter } : Object.assign({}, fm.starter);
+    }
+    if (fm.checks) {
+      sig.checks = [].concat(fm.checks).map(c => {
+        const kind = c.forbid != null ? 'forbid' : c.require != null ? 'require' : null;
+        if (!kind || !c.msg) throw new Error('checks 的每一项需要 forbid 或 require，以及 msg');
+        const pattern = String(c[kind]);
+        new RegExp(pattern, 'm');                     // 正则写错时在这里就报出来
+        const o = { kind, pattern, msg: String(c.msg) };
+        if (c.min) o.min = c.min;
+        if (c.lang) o.lang = String(c.lang);
+        return o;
+      });
+    }
     return sig;
+  }
+
+  // 这道题开放的语言
+  const langsOf = sig => (sig.langs && sig.langs.length ? sig.langs : Object.keys(LANGS));
+
+  /**
+   * 代码检查（重构挑战用）：去掉注释和字符串后，用正则检查代码结构
+   *   forbid：不能出现（比如 if (type == ...) 这样的分支）
+   *   require：必须出现，min 指定至少出现几次（比如至少写 3 个策略类）
+   * 返回没通过的检查 [{ msg, line }]，line 是 forbid 第一次出现的行号
+   */
+  function stripCode(code, lang) {
+    const hash = lang === 'python';
+    let out = '', i = 0;
+    while (i < code.length) {
+      const c = code[i], n = code[i + 1];
+      if (!hash && c === '/' && n === '/' || hash && c === '#') { while (i < code.length && code[i] !== '\n') i++; continue; }
+      if (!hash && c === '/' && n === '*') {
+        i += 2;
+        while (i < code.length && !(code[i] === '*' && code[i + 1] === '/')) { out += code[i] === '\n' ? '\n' : ' '; i++; }
+        i += 2; continue;
+      }
+      if (c === '"' || c === "'" || c === '`') {
+        out += c; i++;
+        while (i < code.length && code[i] !== c && code[i] !== '\n') { if (code[i] === '\\') { out += ' '; i++; } out += ' '; i++; }
+        if (i < code.length) { out += code[i]; i++; }
+        continue;
+      }
+      out += c; i++;
+    }
+    return out;
+  }
+  function checkCode(sig, code, lang) {
+    const src = stripCode(code, lang), fails = [];
+    (sig.checks || []).forEach(c => {
+      if (c.lang && c.lang !== lang) return;
+      const re = new RegExp(c.pattern, 'gm'), hits = [];
+      let m;
+      while ((m = re.exec(src))) { hits.push(m.index); if (m[0] === '') re.lastIndex++; }
+      if (c.kind === 'forbid' && hits.length) fails.push({ msg: c.msg, line: src.slice(0, hits[0]).split('\n').length });
+      if (c.kind === 'require' && hits.length < (c.min || 1)) fails.push({ msg: c.msg + (c.min ? `（现在 ${hits.length} 处，至少 ${c.min} 处）` : ''), line: 0 });
+    });
+    return fails;
   }
 
   // 函数真正的参数（特殊输入的题目和用例格式不同）
@@ -201,6 +265,7 @@ class Node:
     .concat(returns === undefined ? [] : [` * @return {${jsType(returns)}}`]).join('\n');
 
   function template(lang, sig) {
+    if (sig.starter && sig.starter[lang]) return String(sig.starter[lang]).replace(/\n*$/, '\n');
     const defs = ['ListNode', 'TreeNode', 'Node'].filter(b => uses(sig, b)).map(b => DEFS[lang][b] + '\n');
     const head = defs.join('');
     if (sig.design) return head + designTemplate(lang, sig.design);
@@ -1018,5 +1083,5 @@ def _lt_judge(code, sig_json, inp):
     return { status: first ? first.status : out.every(c => c.status === 'AC') ? 'AC' : 'DONE', cases: out };
   }
 
-  return { LANGS, parseType, signature, template, cppProgram, CLANG, CPP_FLAGS, cppFiles, PY_PRELUDE, PY_DRIVER, runJs, fmtLog, encodeInput, parseOutput, compare, evaluate };
+  return { LANGS, parseType, signature, langsOf, checkCode, template, cppProgram, CLANG, CPP_FLAGS, cppFiles, PY_PRELUDE, PY_DRIVER, runJs, fmtLog, encodeInput, parseOutput, compare, evaluate };
 });

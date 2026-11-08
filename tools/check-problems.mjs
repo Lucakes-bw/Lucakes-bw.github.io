@@ -122,13 +122,28 @@ for (const f of files) {
     if (error && /error:/.test(error)) { console.log(`    \x1b[31m✗ C++ 模板编译失败\x1b[0m\n${error}`); failed++; }
   }
 
-  for (const lang of Object.keys(RUN)) {
+  // 重构挑战：题目给的起始代码不应该直接通过（要么代码检查不过，要么有用例不过）
+  if (sig.starter) {
+    for (const lang of Object.keys(sig.starter).filter(l => RUN[l] && (l !== 'cpp' || clang))) {
+      const starter = J.template(lang, sig), cases = fm._cases;
+      const res = J.evaluate(sig, cases, await RUN[lang](sig, starter, J.encodeInput(cases)));
+      const fails = J.checkCode(sig, starter, lang);
+      if (res.status === 'CE') { console.log(`    \x1b[31m✗ ${lang} 起始代码编译失败\x1b[0m\n${res.compileError}`); failed++; }
+      else if (res.status === 'AC' && !fails.length) { console.log(`    \x1b[31m✗ ${lang} 起始代码直接就能通过，挑战没有意义\x1b[0m`); failed++; }
+      else console.log(`    \x1b[2m- ${lang} 起始代码：${res.cases.filter(c => c.status === 'AC').length}/${cases.length} 个用例通过，代码检查 ${fails.length} 项不通过（应当不能直接提交）\x1b[0m`);
+    }
+  }
+
+  for (const lang of J.langsOf(sig).filter(l => RUN[l])) {
     const file = path.join(DIR, 'solutions', `${slug}.${EXT[lang]}`);
     if (!fs.existsSync(file)) { console.log(`    \x1b[2m- ${lang} 没有参考解答\x1b[0m`); continue; }
     if (lang === 'cpp' && !clang) continue;
     const cases = fm._cases;
+    const code = fs.readFileSync(file, 'utf8');
+    const fails = J.checkCode(sig, code, lang);
+    if (fails.length) { failed++; console.log(`    \x1b[31m✗ ${lang.padEnd(10)} 代码检查不通过：${fails.map(f => f.msg).join('；')}\x1b[0m`); continue; }
     const t0 = Date.now();
-    const res = J.evaluate(sig, cases, await RUN[lang](sig, fs.readFileSync(file, 'utf8'), J.encodeInput(cases)));
+    const res = J.evaluate(sig, cases, await RUN[lang](sig, code, J.encodeInput(cases)));
     const ms = Date.now() - t0;
     if (res.status === 'AC') {
       console.log(`    \x1b[32m✓ ${lang.padEnd(10)} ${cases.length}/${cases.length}\x1b[0m \x1b[2m${ms}ms\x1b[0m`);

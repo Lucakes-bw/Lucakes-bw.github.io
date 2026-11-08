@@ -159,6 +159,8 @@ body.is-ide .site-header .wrap { max-width: none; padding: 0 22px; }
 .res-head.is-bad b { color: var(--danger); }
 .res-lang { margin-left: auto; }
 .res-note { margin: 0 0 10px; font-size: 14px; }
+.res-checks { margin: 0 0 10px; padding-left: 1.4em; font-size: 14px; color: var(--danger); }
+.res-checks li { margin: 2px 0; }
 .res-block { margin-bottom: 10px; }
 .res-label { font: 12px/1.4 var(--mono); color: var(--muted); margin-bottom: 4px; }
 .res-block pre, .res-err {

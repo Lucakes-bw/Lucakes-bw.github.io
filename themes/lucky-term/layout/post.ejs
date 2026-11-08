@@ -106,7 +106,8 @@
 <script src="<%- asset_url('/js/pktview.js') %>"></script>
 <% } %>
 <% if (page.viz) { %>
-<script src="<%- asset_url('/js/dsviz.js') %>"></script>
+<% if (page.uml_viz) { %><script src="<%- asset_url('/js/uml.js') %>"></script>
+<% } %><script src="<%- asset_url('/js/dsviz.js') %>"></script>
 <% [].concat(page.viz).forEach(function (v) { %><script src="<%- url_for('/js/viz/' + v + '.js') %>"></script>
 <% }) %>
 <% } %>

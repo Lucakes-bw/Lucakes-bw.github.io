@@ -44,6 +44,17 @@
   desc: 用统一的方式遍历容器的对象，用法像指针：*it 取元素，++it 到下一个。STL 算法只和迭代器打交道，所以同一个算法能用在不同的容器上。
   post: cppbasic-iterators-algorithms
 
+# ---------- 设计模式 ----------
+# 每写好一个模式的文章，就把模式名加进来（post 指向那篇文章）
+- term: UML
+  en: Unified Modeling Language
+  desc: 统一建模语言，一套画软件结构的标准图形符号。日常最常用的是描述类之间关系的类图，和描述调用顺序的时序图。
+  post: dp-uml-class-diagram
+- term: 类图
+  en: class diagram
+  desc: 用方框表示类、用不同的连线表示类之间关系的图：三角是继承和实现，菱形是组合和聚合，虚线箭头是依赖。设计模式的结构几乎都用它来表达。
+  post: dp-uml-class-diagram
+
 # ---------- 数据结构与算法 ----------
 - term: 时间复杂度
   en: time complexity
