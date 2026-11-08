@@ -17,6 +17,7 @@ g++ -std=c++17 -Wall -Wextra -o lifetime 02-uml/lifetime.cpp
 | --- | --- | --- |
 | `01-why` | 为什么需要设计模式 | `report_if_v1~v3`（if-else 版的三个版本）、`report_if_bug`（漏改 printFooter）、`report_oop_v1~v3`（多态版的三个版本）、`report_oop_ce.cpp`（漏写 footer，编译失败）、`report_enum_bug`（练习 2）、`report_oop_md`（练习 3） |
 | `03-solid1` | SOLID 原则（上） | `srp_shared`（共用函数引发的事故）、`srp_split`（按角色拆分）、`ocp_flags` / `ocp_rules`（密码规则）；`headers/measure.py`（头文件依赖的编译代价，`python3 headers/measure.py g++`）；`plugin/run.sh`（插件实验，需要 `dlopen`，CMake 不构建子目录） |
+| `04-solid2` | SOLID 原则（下） | `lsp_square` / `lsp_fixed`（正方形与长方形）、`lsp_vector_bool_ce.cpp`（练习 1，编译失败）、`dip_before` / `dip_after` / `dip_measure`（依赖倒置与测试耗时）；`isp/measure.sh`（接口隔离：改 `fax()` 后重新编译的文件，需要 CMake 和 make） |
 | `02-uml` | UML 类图 | `lifetime`（组合、聚合、关联的生命周期）、`lifetime_owned`（练习 4）、`player`（从代码画类图） |
 
 文中的输出来自 macOS 上的 Apple clang 21（libc++）。另在 Ubuntu 24.04 的 GCC 13（libstdc++）上验证过：《UML 类图》练习 4（两者 `vector` 元素的析构顺序不同），《为什么需要设计模式》中 `report_if_bug` 开 `-Wall -Wextra` 没有警告、`report_enum_bug` 有 `-Wswitch` 警告。

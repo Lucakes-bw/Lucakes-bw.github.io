@@ -66,6 +66,25 @@
   en: Open/Closed Principle
   desc: 软件实体应该对扩展开放、对修改关闭：加新功能时新增代码，而不是修改已经写好、测试过的代码。做法是在会变化的方向上留出扩展点，比如抽象类、std::function、插件。
   post: dp-solid-srp-ocp
+- term: 里氏替换原则
+  alias: [里氏替换]
+  en: Liskov Substitution Principle
+  desc: 凡是使用父类的地方，换成任何子类都应该照样正确。决定能否继承的不是「is-a」，而是行为契约：前置条件不能加强、后置条件不能削弱、不变式必须保持。
+  post: dp-solid-lsp-isp-dip
+- term: 接口隔离原则
+  alias: [接口隔离]
+  en: Interface Segregation Principle
+  desc: 不应该强迫使用者依赖它用不到的方法。接口按使用者的角色拆小，否则实现类会出现「不支持」的空函数，改一个函数还会牵连所有包含这个接口的源文件重新编译。
+  post: dp-solid-lsp-isp-dip
+- term: 依赖倒置原则
+  alias: [依赖倒置]
+  en: Dependency Inversion Principle
+  desc: 高层业务和低层细节都依赖抽象，并且抽象由高层定义。运行时仍然是业务调用存储、网络等细节，但源码依赖的方向倒了过来，业务代码可以脱离这些细节测试和替换。
+  post: dp-solid-lsp-isp-dip
+- term: 依赖注入
+  en: dependency injection
+  desc: 对象需要的依赖从外面传进来（比如通过构造函数参数），而不是自己在内部创建。测试时可以传入假的实现，是实现依赖倒置最常用的方式。
+  post: dp-solid-lsp-isp-dip
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
