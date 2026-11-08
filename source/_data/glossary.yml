@@ -111,6 +111,11 @@
   en: simple factory
   desc: 用一个函数按名字或类型码创建对象，调用者只拿到接口。不是 GoF 模式，但很常用；加新类型时要修改这个函数，但修改集中在一处。
   post: dp-factory-method
+- term: 抽象工厂模式
+  alias: [抽象工厂]
+  en: Abstract Factory
+  desc: 用一个工厂接口创建一整族相互配套的对象（比如同一种硬件加速的解码器和渲染器），每个族一个具体工厂。产品都出自同一个工厂，就不会混用；代价是加一种新产品要改所有工厂。
+  post: dp-abstract-factory
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
