@@ -21,6 +21,7 @@ g++ -std=c++17 -Wall -Wextra -o lifetime 02-uml/lifetime.cpp
 | `05-composition` | 组合优于继承与 C++ 的四种多态 | `fragile_base` / `fragile_fixed`（脆弱基类与组合）、`four_ways`（四种多态写法）、`bench`（性能实测，请用 `-O2` 编译，CMake 默认的 Debug 构建不适合测性能）、`variant_missing_ce.cpp`（练习 3，编译失败） |
 | `06-singleton` | 单例模式 | `race_naive` / `race_meyers`（8 个线程同时第一次访问）、`bench_access`（五种写法的访问开销，请用 `-O2 -pthread` 编译）、`singleton_basic`、`test_order` / `test_di`（单例与依赖注入的测试）；`initorder/run.sh`（静态初始化顺序）；`dup/run.sh`（动态库里的重复实例） |
 | `07-factory` | 简单工厂与工厂方法 | `simple_factory`、`factory_method`、`probe_registry`（单文件版）；`registry/run.sh`（多文件的注册表工厂：用 ffmpeg 从测试视频提取样本，比较直接链接、静态库、强制链接整个静态库三种构建方式）；`registry/exercise/flv_parser.cpp`（练习 3） |
+| `08-abstract-factory` | 抽象工厂 | `mix_bug`（分别配置，9 种组合只有 3 种能用）、`abstract_factory`（按运行环境选后端）、`family_templates`（编译期产品族）、`family_mix_ce.cpp`（混用两族，编译失败） |
 | `02-uml` | UML 类图 | `lifetime`（组合、聚合、关联的生命周期）、`lifetime_owned`（练习 4）、`player`（从代码画类图） |
 
 文中的输出来自 macOS 上的 Apple clang 21（libc++）。另在 Ubuntu 24.04 的 GCC 13（libstdc++）上验证过：《UML 类图》练习 4（两者 `vector` 元素的析构顺序不同），《为什么需要设计模式》中 `report_if_bug` 开 `-Wall -Wextra` 没有警告、`report_enum_bug` 有 `-Wswitch` 警告。
