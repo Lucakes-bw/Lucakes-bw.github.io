@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="<%= config.language %>">
 <%- partial('_partial/head') %>
-<body<% if (page.ide) { %> class="is-ide"<% } %>>
+<body class="<%= [page.ide ? 'is-ide' : '', theme.music && theme.music.enable ? 'has-music' : ''].filter(Boolean).join(' ') %>">
   <div class="read-progress" id="read-progress"></div>
   <%- partial('_partial/header') %>
   <main class="site-main">
@@ -9,6 +9,10 @@
   </main>
   <%- partial('_partial/footer') %>
   <%- partial('_partial/search') %>
+  <% if (theme.music && theme.music.enable) { %>
+  <%- partial('_partial/music') %>
+  <script src="<%- asset_url('/js/music.js') %>" defer></script>
+  <% } %>
   <script src="<%- asset_url('/js/main.js') %>"></script>
   <%# 切页加速：鼠标悬停（手机上是按下）站内链接时，Chrome / Edge 提前在后台渲染目标页，点下去几乎立刻出现。
       不支持的浏览器由 main.js 里的悬停预取兜底。站外链接、下载文件、新窗口打开的链接不预渲染。 %>

@@ -1,0 +1,39 @@
+<%
+  const music = site.data.music || {};
+  const tracks = (Array.isArray(music.tracks) ? music.tracks : []).filter(t => t && t.title && t.src).map(t => ({
+    title: String(t.title), artist: String(t.artist || ''), src: url_for(String(t.src)),
+    cover: t.cover ? url_for(String(t.cover)) : ''
+  }));
+  const musicIcon = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13M9 8l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></svg>';
+%>
+<aside class="music" id="music" aria-label="音乐播放器" hidden>
+  <section class="music-panel" id="music-panel" aria-label="音乐播放面板" hidden>
+    <div class="music-heading"><span>音乐</span><button class="music-icon" type="button" data-music-close aria-label="收起音乐播放器"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <div class="music-now">
+      <span class="music-art music-art-large" data-music-art><%- musicIcon %><img alt="" hidden></span>
+      <div class="music-info"><strong data-music-title>听点音乐</strong><span data-music-artist>歌单准备中</span></div>
+    </div>
+    <div class="music-progress">
+      <input type="range" min="0" max="1000" step="1" value="0" data-music-seek aria-label="播放进度" disabled>
+      <div class="music-time"><span data-music-time>0:00</span><span data-music-duration>0:00</span></div>
+    </div>
+    <div class="music-controls">
+      <button class="music-icon" type="button" data-music-loop aria-label="切换为单曲循环" aria-pressed="false" title="列表循环" disabled><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3"/></svg></button>
+      <button class="music-icon" type="button" data-music-prev aria-label="上一首" disabled><svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="currentColor"><path d="M5 5h2v14H5zm14 0v14L8 12z"/></svg></button>
+      <button class="music-icon music-play" type="button" data-music-play aria-label="播放" disabled><svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true" fill="currentColor"><path data-music-play-icon d="m9 5 11 7-11 7z"/></svg></button>
+      <button class="music-icon" type="button" data-music-next aria-label="下一首" disabled><svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="currentColor"><path d="M17 5h2v14h-2zM5 5l11 7-11 7z"/></svg></button>
+      <span class="music-control-spacer" aria-hidden="true"></span>
+    </div>
+    <div class="music-volume"><button class="music-icon" type="button" data-music-mute aria-label="静音" aria-pressed="false" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m11 4-6 5H2v6h3l6 5zM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button><input type="range" min="0" max="1" step="0.01" value="0.65" data-music-volume aria-label="音量" disabled></div>
+    <div class="music-list-heading"><span>播放列表</span><span><%= tracks.length %> 首</span></div>
+    <p class="music-empty" <% if (tracks.length) { %>hidden<% } %>>歌单还是空的<span>留一点安静，歌曲稍后就来。</span></p>
+    <ol class="music-list" data-music-list <% if (!tracks.length) { %>hidden<% } %>></ol>
+    <p class="music-status" data-music-status role="status" hidden></p>
+  </section>
+  <button class="music-toggle" type="button" data-music-toggle aria-label="展开音乐播放器" aria-expanded="false" aria-controls="music-panel">
+    <span class="music-art" data-music-art><%- musicIcon %><img alt="" hidden></span>
+    <span class="music-caption" data-music-caption>听点音乐</span>
+  </button>
+  <audio data-music-audio preload="none"></audio>
+</aside>
+<script type="application/json" id="music-data"><%- JSON.stringify(tracks).replace(/</g, '\\u003c') %></script>

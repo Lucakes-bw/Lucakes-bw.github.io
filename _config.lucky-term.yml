@@ -71,6 +71,10 @@ og_image: /img/og.png
 github: https://github.com/Lucakes-bw
 since: 2026
 
+# 全站左下角音乐播放器；歌单在 source/_data/music.yml 中维护
+music:
+  enable: true
+
 # 不蒜子访问统计
 busuanzi: true
 
