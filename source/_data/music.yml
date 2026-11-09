@@ -1,0 +1,8 @@
+# 歌单暂时留空。后续将音频放在 source/music/，封面放在 source/img/music/。
+# src、cover 可使用站内路径或支持直接播放的 https 地址。
+# tracks:
+#   - title: 歌曲名称
+#     artist: 歌手
+#     src: /music/song.mp3
+#     cover: /img/music/cover.jpg  # 可选
+tracks: []

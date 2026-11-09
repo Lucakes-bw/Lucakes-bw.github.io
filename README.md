@@ -34,6 +34,7 @@
 - 搜索：按 `/` 或 `Ctrl/⌘ + K` 打开全文搜索，支持多关键词
 - 外观：终端 / iOS 两种界面风格，17 套配色（默认跟随系统深浅色），手机端适配
 - Giscus 评论，不蒜子访问统计，Atom 订阅（`/atom.xml`）和 sitemap
+- 悬浮音乐播放器：桌面端左下角胶囊，手机端左下角圆形入口，点击展开播放控制与歌单；支持播放 / 暂停、切歌、进度、音量、静音和列表 / 单曲循环。歌单暂时留空
 
 **动手**
 
@@ -83,6 +84,20 @@ npx hexo server        # 打开 http://localhost:4000
 ├── projects/                   各章配套的实验程序和实战项目
 └── tools/                      检查脚本：代码块能否运行、题目能否通过
 ```
+
+## 音乐歌单
+
+在 `source/_data/music.yml` 的 `tracks` 中添加歌曲，音频可放在 `source/music/`，封面可放在 `source/img/music/`。`title`、`src` 必填，`artist`、`cover` 可选，也支持可直接播放的 HTTPS 音频地址：
+
+```yaml
+tracks:
+  - title: 歌曲名称
+    artist: 歌手
+    src: /music/song.mp3
+    cover: /img/music/cover.jpg
+```
+
+播放器跟随网站配色，不会自动播放。歌曲、进度和音量记在本机；整页跳转或刷新会中断播放，再次点击播放时从保存的进度继续。将 `_config.lucky-term.yml` 的 `music.enable` 设为 `false` 可关闭全站入口。
 
 ## 写文章
 
