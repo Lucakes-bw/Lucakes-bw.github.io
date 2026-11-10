@@ -1,6 +1,6 @@
 # 英文独立流行 / 摇滚。在线播放优先使用音乐人官方 CDN 的 MP3。
-# fallback 为本地 320 kbps MP3，外链失败或长时间缓冲时切换。
-# id 使用旧的 FLAC 地址，换播放源后继续识别已有的本机进度。
+# fallback 可配置本地或外部备用源，外链失败或长时间缓冲时切换。
+# id 是稳定标识，前三首保留旧的 FLAC 地址以识别已有的本机进度。
 tracks:
   - id: /music/youre-not-going-anywhere.flac
     title: You're Not Going Anywhere
@@ -30,3 +30,85 @@ tracks:
     source: https://blocsonic.com/releases/track/bscomp0018-disc-1-11-brad-sucks-certain-death/
     license: CC BY-SA 3.0
     license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - id: /music/brad-sucks-dropping-out-of-school
+    title: "Dropping out of School"
+    artist: Brad Sucks
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c001ebd758d4607c05d48d6/1543511803837/01+Brad+Sucks+-+Dropping+out+of+School.mp3
+    source: https://www.bradsucks.net/releases/out-of-it
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - id: /music/brad-sucks-fake-it
+    title: "Fake It"
+    artist: Brad Sucks
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c0026c62b6a2852f3a6b449/1543513840306/03+Brad+Sucks+-+Fake+It.mp3
+    source: https://www.bradsucks.net/releases/out-of-it
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - id: /music/brad-sucks-bad-sign
+    title: "Bad Sign"
+    artist: Brad Sucks
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c0026dd032be46c61f16ac7/1543513865363/04+Brad+Sucks+-+Bad+Sign.mp3
+    source: https://www.bradsucks.net/releases/out-of-it
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - id: /music/brad-sucks-theres-something-wrong
+    title: "There's Something Wrong"
+    artist: Brad Sucks
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c0026fa03ce6472531cec7f/1543513896287/05+Brad+Sucks+-+Theres+Something+Wrong.mp3
+    source: https://www.bradsucks.net/releases/out-of-it
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - id: /music/brad-sucks-gasoline
+    title: "Gasoline"
+    artist: Brad Sucks
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c0026fa562fa725e167de64/1543513906329/06+Brad+Sucks+-+Gasoline.mp3
+    source: https://www.bradsucks.net/releases/out-of-it
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - id: /music/brad-sucks-total-breakdown
+    title: "Total Breakdown"
+    artist: Brad Sucks
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c002710758d4607c05ddd61/1543513915803/07+Brad+Sucks+-+Total+Breakdown.mp3
+    source: https://www.bradsucks.net/releases/out-of-it
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - id: /music/brad-sucks-understood-by-your-dad
+    title: "Understood by Your Dad"
+    artist: Brad Sucks
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c0027446d2a73e6ae54c541/1543514006060/08+Brad+Sucks+-+Understood+by+Your+Dad.mp3
+    source: https://www.bradsucks.net/releases/out-of-it
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - id: /music/brad-sucks-out-of-it
+    title: "Out of It"
+    artist: Brad Sucks
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c002755c2241bd5bd765e9c/1543514016210/09+Brad+Sucks+-+Out+of+It.mp3
+    source: https://www.bradsucks.net/releases/out-of-it
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - id: /music/josh-woodward-i-want-to-destroy-something-beautiful
+    title: I Want To Destroy Something Beautiful
+    artist: Josh Woodward
+    src: https://cdn.jsdelivr.net/gh/worldveil/dejavu@e56a4a221ad204654a191d217f92aebf3f058b62/mp3/Josh-Woodward--I-Want-To-Destroy-Something-Beautiful.mp3
+    fallback: https://raw.githubusercontent.com/worldveil/dejavu/e56a4a221ad204654a191d217f92aebf3f058b62/mp3/Josh-Woodward--I-Want-To-Destroy-Something-Beautiful.mp3
+    source: https://freemusicarchive.org/music/Josh_Woodward/Dirty_Wings/JoshWoodward-DW-01-IWantToDestroySomethingBeautiful/
+    license: CC BY 3.0 US
+    license_url: https://creativecommons.org/licenses/by/3.0/us/
+
+  - id: /music/sean-fournier-falling-for-you
+    title: Falling For You (Piano Version)
+    artist: Sean Fournier
+    src: https://raw.githubusercontent.com/worldveil/dejavu/e56a4a221ad204654a191d217f92aebf3f058b62/mp3/Sean-Fournier--Falling-For-You.mp3
+    fallback: https://cdn.jsdelivr.net/gh/worldveil/dejavu@e56a4a221ad204654a191d217f92aebf3f058b62/mp3/Sean-Fournier--Falling-For-You.mp3
+    source: https://freemusicarchive.org/music/Sean_Fournier/none_given_1385/Falling_For_You_Piano_Version/
+    license: CC BY-NC-ND 3.0
+    license_url: https://creativecommons.org/licenses/by-nc-nd/3.0/
