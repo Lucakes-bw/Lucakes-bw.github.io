@@ -1,0 +1,40 @@
+name: Fetch English FLAC sources
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Fetch publisher-provided FLAC archive
+        run: |
+          curl --fail --location --retry 2 --connect-timeout 15 --max-time 240 https://archive.org/download/BSCOMP0018/00-netBlocVol18_FLAC.zip --output /tmp/source.zip
+          python3 - <<'PY'
+          import pathlib, zipfile, json
+          target = pathlib.Path('/tmp/selected')
+          target.mkdir()
+          chosen = {
+              "youre-not-going-anywhere": ("brad", "going"),
+              "im-letting-go": ("woodward", "letting"),
+              "certain-death": ("brad", "death"),
+          }
+          with zipfile.ZipFile('/tmp/source.zip') as archive:
+              files = [name for name in archive.namelist() if name.lower().endswith('.flac')]
+              print(json.dumps(files))
+              for slug, words in chosen.items():
+                  matches = [name for name in files if all(word in name.lower() for word in words)]
+                  if len(matches) != 1:
+                      raise RuntimeError(f'Expected one source for {slug}, found {matches}')
+                  data = archive.read(matches[0])
+                  if not data.startswith(b'fLaC'):
+                      raise RuntimeError(f'Invalid FLAC header: {matches[0]}')
+                  (target / f'{slug}.flac').write_bytes(data)
+                  print(slug, len(data))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-english-flac
+          path: /tmp/selected/*.flac
+          retention-days: 1
