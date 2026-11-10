@@ -34,7 +34,7 @@
 - 搜索：按 `/` 或 `Ctrl/⌘ + K` 打开全文搜索，支持多关键词
 - 外观：终端 / iOS 两种界面风格，17 套配色（默认跟随系统深浅色），手机端适配
 - Giscus 评论，不蒜子访问统计，Atom 订阅（`/atom.xml`）和 sitemap
-- 悬浮音乐播放器：桌面端左下角胶囊，手机端左下角圆形入口，点击展开播放控制与歌单；支持播放 / 暂停、切歌、进度、音量、静音和列表 / 单曲循环，附英文人声 FLAC 歌单
+- 悬浮音乐播放器：桌面端左下角胶囊，手机端左下角圆形入口，点击展开播放控制与歌单；支持播放 / 暂停、切歌、进度、音量、静音和列表 / 单曲循环，附英文人声歌单、在线音源与备用源切换
 
 **动手**
 
@@ -87,7 +87,9 @@ npx hexo server        # 打开 http://localhost:4000
 
 ## 音乐歌单
 
-当前收录 Brad Sucks 的《You're Not Going Anywhere》《Certain Death》和 Josh Woodward 的《I'm Letting Go》，均为英语人声的独立流行 / 摇滚作品。音频取自厂牌 [blocSonic 的 netBloc Vol. 18](https://blocsonic.com/releases/various-artists/netbloc-volume-18-frais-fresco-frisch-fresh-mmmmmmmmmmm-good/) 原始 FLAC 合辑，保存在 `source/music/`，音频内容及标签保持原样。每首歌的原始页面及 CC BY-SA 许可证链接在播放器中显示，也保存在歌单配置中。
+当前收录 Brad Sucks 的《You're Not Going Anywhere》《Certain Death》和 Josh Woodward 的《I'm Letting Go》，均为英语人声的独立流行 / 摇滚作品。Brad Sucks 的两首歌默认通过[音乐人官网](https://www.bradsucks.net/releases/out-of-it)的官方 CDN 在线播放，使用约 220–230 kbps 的 VBR MP3。Josh Woodward 的官方音频地址目前返回 403，默认使用本地 320 kbps MP3。
+
+本地 MP3 从厂牌 [blocSonic 的 netBloc Vol. 18](https://blocsonic.com/releases/various-artists/netbloc-volume-18-frais-fresco-frisch-fresh-mmmmmmmmmmm-good/) 原始 FLAC 编码取得，位于 `source/music/`。外链加载失败或连续缓冲 12 秒时，播放器自动尝试本地 MP3 备用源，继续原有播放进度。原始 FLAC 同目录存档。每首歌的原始页面及 CC BY-SA 许可证链接在播放器中显示，也保存在歌单配置中。
 
 专辑封面由 blocSonic 提供，使用其 [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) 许可的原始网页图片，文件为 `source/img/music/netbloc-18.webp`。
 
@@ -100,6 +102,8 @@ tracks:
     src: /music/song.mp3
     cover: /img/music/cover.jpg
 ```
+
+`fallback` 可配置备用音频地址。`id` 是稳定的歌曲标识，换 `src` 时保持 `id`，可以继续识别已有进度。现有三首歌使用旧的 FLAC 地址作为 `id`，兼容改版前保存的记录。
 
 播放器跟随网站配色，不会自动播放。歌曲、进度和音量记在本机；整页跳转或刷新会中断播放，再次点击播放时从保存的进度继续。将 `_config.lucky-term.yml` 的 `music.enable` 设为 `false` 可关闭全站入口。
 

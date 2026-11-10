@@ -1,25 +1,31 @@
-# 英文独立流行 / 摇滚，原始 FLAC 来自厂牌 blocSonic 的 netBloc Vol. 18。
-# 通过厂牌公开的 FLAC 合辑取得原档，保持原始音频和元数据，本地托管。
+# 英文独立流行 / 摇滚。在线播放优先使用音乐人官方 CDN 的 MP3。
+# fallback 为本地 320 kbps MP3，外链失败或长时间缓冲时切换。
+# id 使用旧的 FLAC 地址，换播放源后继续识别已有的本机进度。
 tracks:
-  - title: You're Not Going Anywhere
+  - id: /music/youre-not-going-anywhere.flac
+    title: You're Not Going Anywhere
     artist: Brad Sucks
-    src: /music/youre-not-going-anywhere.flac
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c002744352f5379ec726167/1543514027818/10+Brad+Sucks+-+Youre+not+Going+Anywhere.mp3
+    fallback: /music/youre-not-going-anywhere.mp3
     cover: /img/music/netbloc-18.webp
     source: https://blocsonic.com/releases/track/bscomp0018-disc-1-1-brad-sucks-youre-not-going-anywhere/
     license: CC BY-SA 3.0
     license_url: https://creativecommons.org/licenses/by-sa/3.0/
 
-  - title: I'm Letting Go
+  - id: /music/im-letting-go.flac
+    title: I'm Letting Go
     artist: Josh Woodward
-    src: /music/im-letting-go.flac
+    src: /music/im-letting-go.mp3
     cover: /img/music/netbloc-18.webp
     source: https://blocsonic.com/releases/track/bscomp0018-disc-1-2-josh-woodward-im-letting-go/
     license: CC BY-SA 3.0 US
     license_url: https://creativecommons.org/licenses/by-sa/3.0/us/
 
-  - title: Certain Death
+  - id: /music/certain-death.flac
+    title: Certain Death
     artist: Brad Sucks
-    src: /music/certain-death.flac
+    src: https://static1.squarespace.com/static/5bf9a31c96d4550b42f456f2/5c001ae6aa4a99a3597a9371/5c001ede2b6a2852f3a62853/1543513807893/02+Brad+Sucks+-+Certain+Death.mp3
+    fallback: /music/certain-death.mp3
     cover: /img/music/netbloc-18.webp
     source: https://blocsonic.com/releases/track/bscomp0018-disc-1-11-brad-sucks-certain-death/
     license: CC BY-SA 3.0
