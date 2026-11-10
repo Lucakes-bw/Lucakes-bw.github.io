@@ -9,10 +9,20 @@
   </main>
   <%- partial('_partial/footer') %>
   <%- partial('_partial/search') %>
-  <% if (theme.music && theme.music.enable) { %>
-  <%- partial('_partial/music') %>
-  <script src="<%- asset_url('/js/music.js') %>" defer></script>
-  <% } %>
+  <div class="floating-tools" role="group" aria-label="阅读工具">
+    <% if (theme.music && theme.music.enable) { %>
+    <%- partial('_partial/music') %>
+    <script src="<%- asset_url('/js/music.js') %>" defer></script>
+    <% } %>
+    <%- partial('_partial/pomodoro') %>
+    <script src="<%- asset_url('/js/pomodoro.js') %>" defer></script>
+    <% if (is_post() && toc(page.content, { list_number: false, max_depth: 3 })) { %>
+    <button type="button" class="toc-fab" data-toc-fab aria-controls="toc" aria-expanded="false">
+      <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 4h1M6 4h7.5M2.5 8h1M6 8h7.5M2.5 12h1M6 12h7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span class="toc-fab-text" data-toc-fab-text>目录</span>
+    </button>
+    <% } %>
+  </div>
   <script src="<%- asset_url('/js/main.js') %>"></script>
   <%# 切页加速：鼠标悬停（手机上是按下）站内链接时，Chrome / Edge 提前在后台渲染目标页，点下去几乎立刻出现。
       不支持的浏览器由 main.js 里的悬停预取兜底。站外链接、下载文件、新窗口打开的链接不预渲染。 %>

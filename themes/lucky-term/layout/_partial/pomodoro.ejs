@@ -1,0 +1,45 @@
+<%
+  const icons = url_for('/img/pomodoro-icons.svg');
+  const icon = name => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="' + icons + '#' + name + '"></use></svg>';
+%>
+<aside class="pomodoro" id="pomodoro" aria-label="番茄钟" hidden>
+  <section class="pomo-panel" id="pomo-panel" aria-labelledby="pomo-heading" hidden>
+    <div class="pomo-heading">
+      <h2 id="pomo-heading"><%- icon('clock') %>番茄钟</h2>
+      <button class="pomo-icon" type="button" data-pomo-settings aria-label="计时设置" aria-expanded="false" aria-controls="pomo-settings"><%- icon('settings') %></button>
+      <button class="pomo-icon" type="button" data-pomo-close aria-label="收起番茄钟"><%- icon('minus') %></button>
+    </div>
+    <p class="pomo-command ui-term" aria-hidden="true">$ focus --duration <span data-pomo-duration>25</span>m</p>
+    <div class="pomo-modes" role="group" aria-label="计时模式">
+      <button type="button" data-pomo-mode="focus" aria-pressed="true">专注</button>
+      <button type="button" data-pomo-mode="short" aria-pressed="false">短休息</button>
+      <button type="button" data-pomo-mode="long" aria-pressed="false">长休息</button>
+    </div>
+    <p class="pomo-status" data-pomo-status role="status">准备开始</p>
+    <div class="pomo-time" data-pomo-time role="timer" aria-live="off" aria-label="剩余时间">25:00</div>
+    <p class="pomo-caption" data-pomo-caption>留一点时间，只做一件事</p>
+    <button class="pomo-start" type="button" data-pomo-start>
+      <span data-pomo-play><%- icon('play') %></span><span data-pomo-pause hidden><%- icon('pause') %></span>
+      <span data-pomo-action>开始专注</span>
+    </button>
+    <button class="pomo-reset" type="button" data-pomo-reset><%- icon('rotate-ccw') %>重置</button>
+    <div class="pomo-round">
+      <span data-pomo-round>第 1 / 4 轮</span>
+      <span class="pomo-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span data-pomo-next>完成后休息 5 分钟</span>
+    </div>
+    <form class="pomo-settings" id="pomo-settings" hidden>
+      <div class="pomo-fields">
+        <label>专注（分钟）<input name="focus" type="number" min="1" max="180" step="1" required value="25"></label>
+        <label>短休息<input name="short" type="number" min="1" max="60" step="1" required value="5"></label>
+        <label>长休息<input name="long" type="number" min="1" max="120" step="1" required value="15"></label>
+      </div>
+      <label class="pomo-sound"><input name="sound" type="checkbox" checked>结束时播放提示音</label>
+      <p>每 4 轮专注后长休息。保存后重置当前计时。</p>
+      <button type="submit" class="pomo-save">保存设置</button>
+    </form>
+  </section>
+  <button class="pomo-toggle" type="button" data-pomo-toggle aria-label="展开番茄钟" aria-expanded="false" aria-controls="pomo-panel">
+    <%- icon('clock') %><span data-pomo-label>番茄钟</span><span class="pomo-mini-time" data-pomo-mini>25:00</span>
+  </button>
+</aside>
