@@ -1,5 +1,7 @@
 name: Fetch English FLAC sources
 on:
+  push:
+    branches: [codex/fetch-english-flac-20261110]
   workflow_dispatch:
 permissions:
   contents: read
