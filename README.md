@@ -34,7 +34,7 @@
 - 搜索：按 `/` 或 `Ctrl/⌘ + K` 打开全文搜索，支持多关键词
 - 外观：终端 / iOS 两种界面风格，17 套配色（默认跟随系统深浅色），手机端适配
 - Giscus 评论，不蒜子访问统计，Atom 订阅（`/atom.xml`）和 sitemap
-- 悬浮音乐播放器：桌面端左下角胶囊，手机端左下角圆形入口，点击展开播放控制与歌单；支持播放 / 暂停、切歌、进度、音量、静音和列表 / 单曲循环。歌单暂时留空
+- 悬浮音乐播放器：桌面端左下角胶囊，手机端左下角圆形入口，点击展开播放控制与歌单；支持播放 / 暂停、切歌、进度、音量、静音和列表 / 单曲循环，附英文人声 FLAC 歌单
 
 **动手**
 
@@ -86,6 +86,10 @@ npx hexo server        # 打开 http://localhost:4000
 ```
 
 ## 音乐歌单
+
+当前收录 Brad Sucks 的《You're Not Going Anywhere》《Certain Death》和 Josh Woodward 的《I'm Letting Go》，均为英语人声的独立流行 / 摇滚作品。音频取自厂牌 [blocSonic 的 netBloc Vol. 18](https://blocsonic.com/releases/various-artists/netbloc-volume-18-frais-fresco-frisch-fresh-mmmmmmmmmmm-good/) 原始 FLAC 合辑，保存在 `source/music/`，音频内容及标签保持原样。每首歌的原始页面及 CC BY-SA 许可证链接在播放器中显示，也保存在歌单配置中。
+
+专辑封面由 blocSonic 提供，使用其 [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) 许可的原始网页图片，文件为 `source/img/music/netbloc-18.webp`。
 
 在 `source/_data/music.yml` 的 `tracks` 中添加歌曲，音频可放在 `source/music/`，封面可放在 `source/img/music/`。`title`、`src` 必填，`artist`、`cover` 可选，也支持可直接播放的 HTTPS 音频地址：
 

@@ -1,8 +1,26 @@
-# 歌单暂时留空。后续将音频放在 source/music/，封面放在 source/img/music/。
-# src、cover 可使用站内路径或支持直接播放的 https 地址。
-# tracks:
-#   - title: 歌曲名称
-#     artist: 歌手
-#     src: /music/song.mp3
-#     cover: /img/music/cover.jpg  # 可选
-tracks: []
+# 英文独立流行 / 摇滚，原始 FLAC 来自厂牌 blocSonic 的 netBloc Vol. 18。
+# 通过厂牌公开的 FLAC 合辑取得原档，保持原始音频和元数据，本地托管。
+tracks:
+  - title: You're Not Going Anywhere
+    artist: Brad Sucks
+    src: /music/youre-not-going-anywhere.flac
+    cover: /img/music/netbloc-18.webp
+    source: https://blocsonic.com/releases/track/bscomp0018-disc-1-1-brad-sucks-youre-not-going-anywhere/
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/
+
+  - title: I'm Letting Go
+    artist: Josh Woodward
+    src: /music/im-letting-go.flac
+    cover: /img/music/netbloc-18.webp
+    source: https://blocsonic.com/releases/track/bscomp0018-disc-1-2-josh-woodward-im-letting-go/
+    license: CC BY-SA 3.0 US
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/us/
+
+  - title: Certain Death
+    artist: Brad Sucks
+    src: /music/certain-death.flac
+    cover: /img/music/netbloc-18.webp
+    source: https://blocsonic.com/releases/track/bscomp0018-disc-1-11-brad-sucks-certain-death/
+    license: CC BY-SA 3.0
+    license_url: https://creativecommons.org/licenses/by-sa/3.0/

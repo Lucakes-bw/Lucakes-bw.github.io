@@ -76,6 +76,16 @@
     $('[data-music-artist]').textContent = track.artist || '未知歌手';
     $('[data-music-caption]').textContent = track.title;
     toggle.title = track.artist ? `${track.title} · ${track.artist}` : track.title;
+    const credit = $('[data-music-credit]');
+    if (credit) {
+      const sourceLink = $('[data-music-source]');
+      const licenseLink = $('[data-music-license]');
+      credit.hidden = !track.source;
+      sourceLink.href = track.source || '';
+      licenseLink.hidden = !track.license || !track.licenseUrl;
+      licenseLink.href = track.licenseUrl || '';
+      licenseLink.textContent = track.license || '';
+    }
     root.querySelectorAll('[data-music-art]').forEach(art => {
       const img = art.querySelector('img');
       img.hidden = true;

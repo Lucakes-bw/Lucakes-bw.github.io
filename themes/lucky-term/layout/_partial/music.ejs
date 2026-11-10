@@ -2,7 +2,9 @@
   const music = site.data.music || {};
   const tracks = (Array.isArray(music.tracks) ? music.tracks : []).filter(t => t && t.title && t.src).map(t => ({
     title: String(t.title), artist: String(t.artist || ''), src: url_for(String(t.src)),
-    cover: t.cover ? url_for(String(t.cover)) : ''
+    cover: t.cover ? url_for(String(t.cover)) : '',
+    source: t.source ? url_for(String(t.source)) : '',
+    license: String(t.license || ''), licenseUrl: t.license_url ? url_for(String(t.license_url)) : ''
   }));
   const musicIcon = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13M9 8l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></svg>';
 %>
@@ -28,6 +30,7 @@
     <div class="music-list-heading"><span>播放列表</span><span><%= tracks.length %> 首</span></div>
     <p class="music-empty" <% if (tracks.length) { %>hidden<% } %>>歌单还是空的<span>留一点安静，歌曲稍后就来。</span></p>
     <ol class="music-list" data-music-list <% if (!tracks.length) { %>hidden<% } %>></ol>
+    <p class="music-credit" data-music-credit hidden><a data-music-source target="_blank" rel="noopener noreferrer">歌曲来源</a><a data-music-license target="_blank" rel="noopener noreferrer" hidden></a></p>
     <p class="music-status" data-music-status role="status" hidden></p>
   </section>
   <button class="music-toggle" type="button" data-music-toggle aria-label="展开音乐播放器" aria-expanded="false" aria-controls="music-panel">
