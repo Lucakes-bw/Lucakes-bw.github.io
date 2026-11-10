@@ -178,6 +178,29 @@
   en: string interning
   desc: 内容相同的字符串只存一份，其他地方只保存指向它的指针或 string_view。省内存，而且判断相等只要比较地址。Java 的 String.intern()、Python 的 sys.intern() 都是这么做的，是享元模式最常见的形式。
   post: dp-flyweight
+- term: 代理模式
+  alias: [Proxy 模式]
+  en: Proxy
+  desc: 给一个对象提供一个替身，替身和真实对象实现同一个接口，调用方分不出来；替身在转发之前或之后做点事来控制访问：推迟创建（虚代理）、检查权限（保护代理）、记住结果（缓存代理）、跨进程转发（远程代理）、管理生命周期（智能引用）。
+  post: dp-proxy
+- term: 虚代理
+  alias: [延迟加载代理]
+  en: virtual proxy
+  desc: 先放一个只记住参数的轻量替身，第一次真正需要时才创建开销大的真实对象，比如缩略图显示到屏幕上时才解码。它把工作从启动时挪到了用到时，并不减少总工作量；全部用到之后，内存和全部加载一样多。
+  post: dp-proxy
+- term: 保护代理
+  en: protection proxy
+  desc: 在转发之前检查调用方有没有权限，没有就拒绝。只有调用方拿不到真实对象时才真的有保护作用；和缓存代理一起用时，保护代理要套在缓存外面。
+  post: dp-proxy
+- term: 远程代理
+  en: remote proxy
+  desc: 在本地代表另一个进程或另一台机器上的对象，把每次调用打包成消息发出去、等回复。调用方看起来像本地调用，实际每次都是一次网络往返，所以远程接口要设计成粗粒度的。
+  post: dp-proxy
+- term: 智能引用
+  alias: [代理对象]
+  en: smart reference
+  desc: 用起来像指针或引用、背后多做一些事的对象：shared_ptr 在 -> 之外还维护引用计数；vector<bool>::reference 代表一个二进制位。用 auto 接住这种代理对象时，得到的不是值的拷贝，而是代理本身，容器销毁后就悬空了。
+  post: dp-proxy
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
