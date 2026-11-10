@@ -270,14 +270,14 @@ int main(int argc, char** argv) {
 }
 ```
 
-结果完全相同。用 macOS 自带的 `leaks --atExit -- ./build/raw_c bbb-10s.mp4` 检查程序退出时还有多少内存没有释放：
+结果完全相同。用 macOS 自带的 `leaks --atExit -- ./build/raw_c bbb-10s.mp4` 检查程序退出时还有多少内存没有释放；再在 Ubuntu 24.04 上用 GCC 13 加 `-fsanitize=address` 编译（FFmpeg 6.1），用 AddressSanitizer 的泄漏检测复核一遍：
 
-| 版本 | 泄漏 |
-| --- | --- |
-| 直接用 C API | **820 处，共 5226720 字节**（约 5 MB，每次调用约 510 KB） |
-| 通过适配器 | **0 处** |
+| 版本 | macOS（leaks，FFmpeg 9.0） | Linux（AddressSanitizer，FFmpeg 6.1） |
+| --- | --- | --- |
+| 直接用 C API | **820 处，共 5226720 字节**（约 5 MB） | **810 次分配，共 3726279 字节**（约 3.6 MB） |
+| 通过适配器 | **0 处** | **没有泄漏** |
 
-每次调用漏掉的 510 KB 是 `AVFormatContext` 和 FFmpeg 为解析 MP4 分配的各种缓冲区。缩略图功能要处理成百上千个文件时，这就是一个会慢慢耗光内存的 bug。下面的演示对比了两条路径上资源的去向：
+两个平台的字节数不同，是因为 FFmpeg 的版本和内存分配器不一样，结论是相同的。在 macOS 上，每次调用漏掉约 510 KB，主要是 `AVFormatContext` 和 FFmpeg 为解析 MP4 分配的各种缓冲区。缩略图功能要处理成百上千个文件时，这就是一个会慢慢耗光内存的 bug。下面的演示对比了两条路径上资源的去向：
 
 <div class="dsviz" data-viz="dp-adapter"></div>
 
@@ -504,7 +504,7 @@ int main() {
 - **对象适配器**：实现目标接口，内部持有被适配者，把调用翻译过去。优先使用
 - **类适配器**：公有继承目标接口，私有继承被适配者。只在需要重写被适配者的虚函数、或访问其 `protected` 成员时使用
 - 把 C API 适配成 C++ 接口：资源交给 `unique_ptr` 加自定义删除器，错误码翻译成 `optional` 或错误信息。实测：读测试视频得到 240 个视频包、470 个音频包，与 ffprobe 一致
-- 实测：提前返回的场景，直接用 C API 10 次调用泄漏了 5226720 字节（820 处），通过适配器 0 处
+- 实测：提前返回的场景，直接用 C API 10 次调用泄漏了约 5 MB（macOS）/ 3.6 MB（Linux），通过适配器没有泄漏
 - 推转拉适配器：回调把数据放进队列，`next()` 从队列取；用 `void* user` 把 C 回调接回 C++ 对象
 - 标准库里的 `stack`、`back_inserter`、`reverse_iterator` 都是适配器
 - 包了一层之后接口变了才是适配器；不变的是装饰器或代理，包一整个子系统的是外观
