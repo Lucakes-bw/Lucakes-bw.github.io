@@ -1,4 +1,4 @@
-/* 全站音乐播放器。歌单来自 source/_data/music.yml；不自动播放、不依赖第三方服务。 */
+/* 全站音乐播放器。歌单来自 source/_data/music.yml，支持在线音源与备用源。 */
 (() => {
   'use strict';
   const root = document.getElementById('music');
@@ -18,11 +18,15 @@
   catch (_) { return; }
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem('lt-music') || '{}') || {}; } catch (_) {}
-  const previous = tracks.findIndex(t => t.src === saved.src);
+  const previous = tracks.findIndex(t => (saved.id && t.id === saved.id) ||
+    (saved.src && (t.src === saved.src || t.id === saved.src)));
   let index = Math.max(0, previous);
   let resume = previous >= 0 && Number.isFinite(saved.time) ? Math.max(0, saved.time) : 0;
   let single = saved.single === true;
   let loaded = false;
+  let usingFallback = false;
+  let wantsPlayback = false;
+  let bufferTimer;
   let request = 0;
   let lastSave = 0;
   audio.volume = Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : 0.65;
@@ -34,12 +38,36 @@
   };
   function save() {
     try {
-      localStorage.setItem('lt-music', JSON.stringify({ src: tracks[index]?.src,
-        time: loaded ? audio.currentTime : resume, volume: audio.volume, muted: audio.muted, single }));
+      localStorage.setItem('lt-music', JSON.stringify({ id: tracks[index]?.id, src: tracks[index]?.src,
+        time: resume || (loaded ? audio.currentTime : 0), volume: audio.volume, muted: audio.muted, single }));
     } catch (_) { /* 隐私模式或存储空间已满仍可播放 */ }
     lastSave = Date.now();
   }
   function message(text = '') { status.textContent = text; status.hidden = !text; }
+  function useFallback() {
+    const track = tracks[index];
+    if (!wantsPlayback || usingFallback || !track.fallback || track.fallback === track.src) return false;
+    resume = audio.currentTime || resume;
+    ++request;
+    usingFallback = true;
+    loaded = false;
+    audio.pause();
+    start();
+    return true;
+  }
+  function clearBufferWatch() {
+    clearTimeout(bufferTimer);
+    bufferTimer = undefined;
+  }
+  function watchBuffer() {
+    if (bufferTimer !== undefined) return;
+    bufferTimer = setTimeout(() => {
+      bufferTimer = undefined;
+      if (wantsPlayback && !audio.paused && !audio.ended && !useFallback()) {
+        message('网络较慢，正在继续缓冲…');
+      }
+    }, 12000);
+  }
   function setOpen(open, returnFocus = false) {
     panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
@@ -48,7 +76,7 @@
     else if (returnFocus) toggle.focus({ preventScroll: true });
   }
   function renderPlaying() {
-    const playing = !audio.paused && !audio.ended;
+    const playing = !audio.paused && !audio.ended && !audio.error;
     root.classList.toggle('is-playing', playing);
     play.setAttribute('aria-label', playing ? '暂停' : '播放');
     $('[data-music-play-icon]').setAttribute('d', playing ? 'M6 5h4v14H6zm8 0h4v14h-4z' : 'm9 5 11 7-11 7z');
@@ -103,23 +131,36 @@
   }
   async function start() {
     const ticket = ++request;
+    wantsPlayback = true;
     message();
     if (!loaded || audio.error) {
+      if (audio.error) resume = audio.currentTime || resume;
       loaded = true;
-      audio.src = tracks[index].src;
+      audio.src = usingFallback ? tracks[index].fallback : tracks[index].src;
     }
+    watchBuffer();
     try { await audio.play(); }
     catch (error) {
       if (ticket !== request || error.name === 'AbortError') return;
-      message(error.name === 'NotAllowedError' ? '请再点一次播放。' : '这首歌暂时无法播放，可以重试或切换下一首。');
+      clearBufferWatch();
+      if (error.name === 'NotAllowedError') {
+        wantsPlayback = false;
+        message('请再点一次播放。');
+      } else if (!useFallback()) {
+        wantsPlayback = false;
+        message('这首歌暂时无法播放，可以重试或切换下一首。');
+      }
     }
   }
   function select(next) {
     ++request;
+    wantsPlayback = false;
+    clearBufferWatch();
     audio.pause();
     index = (next + tracks.length) % tracks.length;
     resume = 0;
     loaded = false;
+    usingFallback = false;
     audio.removeAttribute('src');
     audio.load();
     renderTrack();
@@ -166,8 +207,14 @@
       list.append(li);
     });
     play.addEventListener('click', () => {
-      if (audio.paused) start();
-      else { ++request; audio.pause(); }
+      if (audio.paused || audio.error || audio.ended) start();
+      else {
+        ++request;
+        wantsPlayback = false;
+        clearBufferWatch();
+        message();
+        audio.pause();
+      }
     });
     $('[data-music-prev]').addEventListener('click', () => select(index - 1));
     $('[data-music-next]').addEventListener('click', () => select(index + 1));
@@ -185,10 +232,22 @@
     audio.addEventListener('timeupdate', () => { renderTime(); if (Date.now() - lastSave > 5000) save(); });
     audio.addEventListener('durationchange', renderTime);
     audio.addEventListener('play', renderPlaying);
-    audio.addEventListener('playing', () => { message(); renderPlaying(); });
+    audio.addEventListener('playing', () => { clearBufferWatch(); message(); renderPlaying(); });
     audio.addEventListener('pause', () => { renderPlaying(); save(); });
-    audio.addEventListener('waiting', () => message('正在缓冲…'));
-    audio.addEventListener('error', () => message('这首歌暂时无法播放，可以重试或切换下一首。'));
+    const buffering = () => {
+      if (wantsPlayback && audio.readyState < 3) { message('正在缓冲…'); watchBuffer(); }
+    };
+    audio.addEventListener('waiting', buffering);
+    audio.addEventListener('stalled', buffering);
+    audio.addEventListener('error', () => {
+      if (!audio.error) return;
+      clearBufferWatch();
+      if (!useFallback()) {
+        wantsPlayback = false;
+        message('这首歌暂时无法播放，可以重试或切换下一首。');
+      }
+      renderPlaying();
+    });
     audio.addEventListener('volumechange', () => { renderVolume(); save(); });
     audio.addEventListener('ended', () => {
       if (single || tracks.length === 1) { audio.currentTime = 0; start(); }

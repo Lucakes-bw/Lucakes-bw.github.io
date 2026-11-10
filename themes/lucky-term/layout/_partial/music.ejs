@@ -1,7 +1,9 @@
 <%
   const music = site.data.music || {};
   const tracks = (Array.isArray(music.tracks) ? music.tracks : []).filter(t => t && t.title && t.src).map(t => ({
+    id: url_for(String(t.id || t.src)),
     title: String(t.title), artist: String(t.artist || ''), src: url_for(String(t.src)),
+    fallback: t.fallback ? url_for(String(t.fallback)) : '',
     cover: t.cover ? url_for(String(t.cover)) : '',
     source: t.source ? url_for(String(t.source)) : '',
     license: String(t.license || ''), licenseUrl: t.license_url ? url_for(String(t.license_url)) : ''
