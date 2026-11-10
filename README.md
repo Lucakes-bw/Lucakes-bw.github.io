@@ -87,9 +87,14 @@ npx hexo server        # 打开 http://localhost:4000
 
 ## 音乐歌单
 
-当前收录 Brad Sucks 的《You're Not Going Anywhere》《Certain Death》和 Josh Woodward 的《I'm Letting Go》，均为英语人声的独立流行 / 摇滚作品。Brad Sucks 的两首歌默认通过[音乐人官网](https://www.bradsucks.net/releases/out-of-it)的官方 CDN 在线播放，使用约 220–230 kbps 的 VBR MP3。Josh Woodward 的官方音频地址目前返回 403，默认使用本地 320 kbps MP3。
+当前收录 13 首英文人声歌曲，包括 Brad Sucks《Out of It》专辑的 10 首歌、Josh Woodward 的《I'm Letting Go》《I Want To Destroy Something Beautiful》，以及 Sean Fournier 的《Falling For You (Piano Version)》。
 
-本地 MP3 从厂牌 [blocSonic 的 netBloc Vol. 18](https://blocsonic.com/releases/various-artists/netbloc-volume-18-frais-fresco-frisch-fresh-mmmmmmmmmmm-good/) 原始 FLAC 编码取得，位于 `source/music/`。外链加载失败或连续缓冲 12 秒时，播放器自动尝试本地 MP3 备用源，继续原有播放进度。原始 FLAC 同目录存档。每首歌的原始页面及 CC BY-SA 许可证链接在播放器中显示，也保存在歌单配置中。
+- Brad Sucks 的 10 首歌使用音乐人官方 CDN 的 VBR MP3，约 220–245 kbps。新增曲目包括《Dropping out of School》《Fake It》《Bad Sign》《There's Something Wrong》《Gasoline》《Total Breakdown》《Understood by Your Dad》《Out of It》，沿用原版专辑的 CC BY-SA 3.0 许可。[专辑与播放源](https://www.bradsucks.net/releases/out-of-it) · [原版许可说明](https://creativecommons.org/2008/09/29/brad-sucks/)
+- 《I Want To Destroy Something Beautiful》使用 GitHub 曲库中的完整 MP3，通过 jsDelivr 在线播放，备用地址使用 GitHub Raw。两个地址均固定到同一提交，音频文件内的署名标记与 FMA 页面均注明 CC BY 3.0 US。[GitHub 曲库](https://github.com/worldveil/dejavu/tree/e56a4a221ad204654a191d217f92aebf3f058b62/mp3) · [歌曲与许可](https://freemusicarchive.org/music/Josh_Woodward/Dirty_Wings/JoshWoodward-DW-01-IWantToDestroySomethingBeautiful/)
+- 《Falling For You (Piano Version)》优先使用 GitHub Raw 播放，以同一固定提交的 jsDelivr 地址作为备用源，使用约 174 kbps 的 VBR MP3，保留原始音频及其 CC BY-NC-ND 3.0 署名信息。[歌曲与许可](https://freemusicarchive.org/music/Sean_Fournier/none_given_1385/Falling_For_You_Piano_Version/)
+- 《I'm Letting Go》继续使用本地 320 kbps MP3。三首原有歌曲的本地 MP3 从厂牌原始 FLAC 编码取得，位于 `source/music/`，原始 FLAC 同目录存档。[原始发行页面](https://blocsonic.com/releases/various-artists/netbloc-volume-18-frais-fresco-frisch-fresh-mmmmmmmmmmm-good/)
+
+配置了 `fallback` 的歌曲在外链加载失败或连续缓冲 12 秒时自动尝试备用源，继续原有播放进度。新增 Brad Sucks 歌曲直接使用官网音源。每首歌的原始页面及许可证链接在播放器中显示，也保存在歌单配置中。
 
 专辑封面由 blocSonic 提供，使用其 [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) 许可的原始网页图片，文件为 `source/img/music/netbloc-18.webp`。
 
