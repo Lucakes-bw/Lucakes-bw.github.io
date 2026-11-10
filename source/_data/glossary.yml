@@ -163,6 +163,21 @@
   en: God Class
   desc: 什么都知道、什么都管的类：几十个公开函数、几千行，任何需求都要改它。外观、管理器、Utils 类最容易长成这样，解决办法是按使用场景拆开，每个类只因为一种原因修改。
   post: dp-facade
+- term: 享元模式
+  alias: [Flyweight 模式, 蝇量模式]
+  en: Flyweight
+  desc: 大量相似的小对象把能共享的部分（内部状态）抽出来，由工厂按键缓存、只存一份，各个使用者只保存不能共享的部分（外部状态）和一个指向享元的指针或引用。享元被所有使用者共享，所以必须不可变。字幕渲染里的字形缓存就是享元：19440 个字只需要 2315 张位图。
+  post: dp-flyweight
+- term: 内部状态与外部状态
+  alias: [内部状态, 外部状态, intrinsic state, extrinsic state]
+  en: intrinsic / extrinsic state
+  desc: 享元模式对对象状态的划分。内部状态只取决于享元自己是什么（字体、字号、字、字形位图），可以共享、存在享元里；外部状态因使用场合而异（位置、颜色、显示时间），由使用者保存，用的时候再传给享元。把外部状态放进享元，改一处就会改到所有共享它的地方。
+  post: dp-flyweight
+- term: 字符串驻留
+  alias: [interning, 字符串池]
+  en: string interning
+  desc: 内容相同的字符串只存一份，其他地方只保存指向它的指针或 string_view。省内存，而且判断相等只要比较地址。Java 的 String.intern()、Python 的 sys.intern() 都是这么做的，是享元模式最常见的形式。
+  post: dp-flyweight
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
