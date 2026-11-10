@@ -134,6 +134,11 @@
   en: Adapter
   desc: 把一个类的接口转换成客户需要的另一个接口，让接口不兼容的类能一起工作。C++ 里常用来把 C 库包装成带 RAII 的接口；包了一层之后接口变了才是适配器，不变的是装饰器或代理。
   post: dp-adapter
+- term: 桥接模式
+  alias: [桥接]
+  en: Bridge
+  desc: 把抽象部分和实现部分分成两个继承体系，抽象持有一个指向实现接口的指针（桥），两边各自扩展。用来处理两个独立变化的维度：用继承要 M × N 个类，桥接只要 M + N 个，还能在运行时换实现。Pimpl 是只有一种实现的桥接。
+  post: dp-bridge
 - term: 组合模式
   alias: [Composite 模式]
   en: Composite
