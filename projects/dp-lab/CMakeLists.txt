@@ -22,7 +22,7 @@ foreach(dir ${chapters})
     get_filename_component(name ${src} NAME_WE)
     add_executable(${dir}_${name} ${src})
     target_link_libraries(${dir}_${name} PRIVATE Threads::Threads)
-    file(STRINGS ${src} first LIMIT_COUNT 1)
+    file(STRINGS ${src} first LIMIT_COUNT 1 ENCODING UTF-8)   # 不写 ENCODING 时遇到中文就截断
     if(first MATCHES "C\\+\\+20")             # 第一行注释写着 C++20 的程序用 C++20 编译
       set_target_properties(${dir}_${name} PROPERTIES CXX_STANDARD 20)
     endif()

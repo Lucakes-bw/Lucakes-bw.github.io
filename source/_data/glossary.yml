@@ -305,6 +305,36 @@
   en: call super
   desc: 约定子类重写某个虚函数时必须先调用基类的版本，因为基类的版本里有公共的工作。约定只写在文档里，编译器管不了，漏调一次就会漏掉公共的工作（比如关闭文件）。改法是把公共的工作留在非虚的模板方法里，只给子类开钩子。
   post: dp-template-method
+- term: 迭代器模式
+  alias: [Iterator 模式, 游标]
+  en: Iterator pattern
+  desc: 行为型模式：提供一种方法顺序访问容器中的元素，而不暴露容器的内部结构。容器自己提供迭代器，调用方只会说「当前这个」「下一个」「到头了没有」。C++ 标准库把它做成了约定：begin()/end()，迭代器支持 *、++、==。
+  post: dp-iterator
+- term: 迭代器分类
+  alias: [iterator category, 迭代器类别]
+  en: iterator category
+  desc: 按能力把迭代器分成 input（只能走一遍）、forward（能多遍）、bidirectional（能 --）、random_access（能 it + n、相减）和 C++20 的 contiguous（元素连续）。算法读 iterator_traits 里的分类，在编译期选最快的实现（标签分派），所以分类写低了算法会走慢路，写高了是错误。
+  post: dp-iterator
+- term: iterator_traits
+  alias: [标签分派, tag dispatch]
+  en: std::iterator_traits
+  desc: 标准库读取迭代器的五个类型别名（iterator_category、value_type、difference_type、pointer、reference）的模板，原始指针也有特化。算法用里面的 iterator_category 选重载，这种按类型标签选实现的写法叫标签分派。
+  post: dp-iterator
+- term: 迭代器失效
+  alias: [悬空迭代器, iterator invalidation]
+  en: iterator invalidation
+  desc: 容器的结构变了，之前取得的迭代器不能再用。vector 扩容后所有迭代器都指向已释放的内存，读到垃圾也不一定崩，用 AddressSanitizer 或 GCC 的 -D_GLIBCXX_DEBUG 能抓到；环形缓冲区覆盖旧帧时迭代器没悬空，却指向了另一帧，只能靠迭代器自带序号检查。
+  post: dp-iterator
+- term: 内部迭代器
+  alias: [外部迭代器, internal iterator, external iterator]
+  en: internal / external iterator
+  desc: 内部迭代器是容器提供 forEach(回调)，自己控制循环；外部迭代器是调用方拿着迭代器自己决定何时前进（STL 的写法）。内部迭代器好写，外部迭代器灵活：能提前 break、能同时走两个序列（比如按 dts 合并音视频包）、能配合标准算法。
+  post: dp-iterator
+- term: 生成器
+  alias: [generator, co_yield]
+  en: generator
+  desc: 用协程实现的惰性序列：函数每 co_yield 一个值就暂停，调用方 ++ 时再从暂停处继续，局部变量就是迭代器的状态。C++23 有 std::generator，C++20 可以自己写一个最小的。适合每个元素都要读文件或解析的场合，只能走一遍。
+  post: dp-iterator
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
