@@ -355,6 +355,21 @@
   en: table-driven
   desc: 把逻辑写成数据表而不是代码分支：状态机写成「当前状态 × 事件 → 下一个状态」的表，运行时查表。整张状态图在一处，可以审查、导出成图、从配置读入；带条件的转换和转换动作不好放进表里。
   post: dp-state
+- term: 责任链
+  alias: [责任链模式, 职责链, Chain of Responsibility]
+  en: Chain of Responsibility
+  desc: 行为型模式：把能处理请求的对象连成一条链，请求从链头开始传，每个处理者要么处理它（并停止传递），要么交给下一个。发送者不知道最后是谁处理的，处理者的组成和顺序可以在运行时改。播放器的按键分发、解码器的硬解到软解回退、日志过滤、HTTP 中间件都是这种结构。
+  post: dp-chain
+- term: 回退链
+  alias: [fallback chain, 降级链]
+  en: fallback chain
+  desc: 按优先级排好的一串方案，前一个不可用就试下一个，直到有一个成功。比如解码器 VideoToolbox → VAAPI → CUDA → 软解：硬件不支持或设备打不开就往后退，链尾是几乎总能成功的兜底方案。
+  post: dp-chain
+- term: 中间件
+  alias: [middleware, 洋葱模型]
+  en: middleware
+  desc: 责任链的一种写法：每个处理者拿到请求和一个 next，可以在调用 next 之前和之后各做一些事（日志、计时），也可以不调用 next 直接返回（缓存命中、参数检查失败）。一层套一层，请求从外往里走、结果从里往外回，所以也叫洋葱模型。Express、Koa、ASP.NET Core 都这样组织请求处理。
+  post: dp-chain
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
