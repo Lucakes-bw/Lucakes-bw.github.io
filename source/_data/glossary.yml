@@ -280,6 +280,31 @@
   en: command log / journal
   desc: 把执行过的命令按顺序序列化、追加写到文件里。崩溃后从上一个检查点（保存的工程文件、数据库快照）开始把日志重放一遍，就能恢复状态。要求命令是确定的（不读时间、随机数），浮点数要按能精确读回的格式写（如 %.17g）。数据库的 WAL、Redis 的 AOF 都是这个思路。
   post: dp-command
+- term: 模板方法模式
+  alias: [模板方法, Template Method 模式]
+  en: Template Method
+  desc: 在基类里写好一个算法的流程（模板方法），流程中会变的几个步骤做成虚函数，由子类实现。几个任务流程相同、只有几步不同时用它消除复制粘贴：公共的需求只改基类，子类不动。和策略的区别：模板方法用继承换「步骤」，策略用组合换整个算法。
+  post: dp-template-method
+- term: 钩子方法
+  alias: [钩子, hook]
+  en: hook method
+  desc: 模板方法里有默认实现（通常什么都不做）的步骤，子类想插手时才重写，比如「处理一帧」「完成后通知」「清理临时文件」。和必须由子类实现的纯虚步骤（基本操作）相比，钩子更省事，但子类忘了写、签名写错了都不会报错，重写时要加 override。
+  post: dp-template-method
+- term: NVI
+  alias: [非虚接口, Non-Virtual Interface]
+  en: non-virtual interface
+  desc: C++ 写模板方法的惯用法：公有函数是非虚的，由它调用私有或受保护的虚函数。基类守住公有入口，参数检查、加锁、计时、进度回调都能加在这里，所有子类自动得到。标准库的 streambuf（sputc 调 overflow）、locale facet（put 调 do_put）都是这样。
+  post: dp-template-method
+- term: 好莱坞原则
+  alias: [Hollywood Principle]
+  en: Hollywood Principle
+  desc: 「别打电话给我们，我们会打给你」：底层组件（子类、插件）只提供被调用的函数，由高层（基类、框架）决定什么时候调用它们。模板方法和框架都是这样，子类不调用基类的流程。也叫控制反转。
+  post: dp-template-method
+- term: call super 反模式
+  alias: [调用基类]
+  en: call super
+  desc: 约定子类重写某个虚函数时必须先调用基类的版本，因为基类的版本里有公共的工作。约定只写在文档里，编译器管不了，漏调一次就会漏掉公共的工作（比如关闭文件）。改法是把公共的工作留在非虚的模板方法里，只给子类开钩子。
+  post: dp-template-method
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
