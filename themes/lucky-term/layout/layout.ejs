@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="<%= config.language %>">
 <%- partial('_partial/head') %>
-<body class="<%= [page.ide ? 'is-ide' : '', is_post() ? 'is-post' : '', theme.music && theme.music.enable ? 'has-music' : ''].filter(Boolean).join(' ') %>">
+<body class="<%= [page.ide ? 'is-ide' : '', theme.music && theme.music.enable ? 'has-music' : ''].filter(Boolean).join(' ') %>">
   <div class="read-progress" id="read-progress"></div>
   <%- partial('_partial/header') %>
   <main class="site-main">
