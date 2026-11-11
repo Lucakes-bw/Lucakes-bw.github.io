@@ -566,15 +566,35 @@
     });
     // 当前小节 = 最后一个已经滚过顶部附近的标题。直接按位置算，快速滑过一大段也不会漏掉
     const heads = Array.from(map.keys());
+    const tocBox = $('#toc');
+    // 目录一屏放不下时折叠：只展开当前章节的小节（CSS 里 aside.toc.is-folded），不出现滚动条
+    const fold = () => {
+      tocBox.classList.remove('is-folded');
+      if (tocBox.scrollHeight > tocBox.clientHeight + 1) tocBox.classList.add('is-folded');
+    };
     let ticking = false;
     const update = () => {
       ticking = false;
       let current = null;
       for (const h of heads) { if (h.getBoundingClientRect().top < 120) current = h; else break; }
       tocLinks.forEach(a => a.classList.remove('is-active'));
-      if (current) map.get(current).classList.add('is-active');
-      if (fabText) fabText.textContent = current ? map.get(current).textContent.trim() : '目录';
+      const link = current ? map.get(current) : tocLinks[0];
+      if (current) link.classList.add('is-active');
+      $$('.toc-level-2', tocBox).forEach(li => li.classList.toggle('is-current', li.contains(link)));
+      if (fabText) fabText.textContent = current ? link.textContent.trim() : '目录';
+      // 折叠后还放不下（窗口很矮）时，滚动目录本身，让当前小节留在可见范围内
+      if (!link || !tocBox.clientHeight) return;
+      const r = link.getBoundingClientRect(), box = tocBox.getBoundingClientRect();
+      const top = r.top - box.top + tocBox.scrollTop, bottom = top + r.height;
+      if (top < tocBox.scrollTop + 40) tocBox.scrollTop = top - 40;
+      else if (bottom > tocBox.scrollTop + tocBox.clientHeight - 40) tocBox.scrollTop = bottom - tocBox.clientHeight + 40;
     };
+    if (tocBox) {
+      fold();
+      window.addEventListener('resize', () => { fold(); update(); });
+      // 切换界面风格（终端 / iOS）后字号和行距变了，重新判断要不要折叠
+      new MutationObserver(() => { fold(); update(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-ui'] });
+    }
     window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
     update();
   }
