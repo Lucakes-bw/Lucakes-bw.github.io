@@ -201,6 +201,26 @@
   en: smart reference
   desc: 用起来像指针或引用、背后多做一些事的对象：shared_ptr 在 -> 之外还维护引用计数；vector<bool>::reference 代表一个二进制位。用 auto 接住这种代理对象时，得到的不是值的拷贝，而是代理本身，容器销毁后就悬空了。
   post: dp-proxy
+- term: 策略模式
+  alias: [Strategy 模式]
+  en: Strategy
+  desc: 把一族可以互相替换的算法分别封装成类，它们实现同一个接口；使用它们的上下文只持有接口，具体用哪一种可以由客户选、也可以在运行时换。加一种算法是新增一个类，不用改已有的 switch。和状态模式的区别：策略之间互不知道，由外面来选。
+  post: dp-strategy
+- term: 策略类
+  alias: [policy class, 基于策略的设计]
+  en: policy-based design
+  desc: 把一个类的某个行为抽成模板参数，在编译期选定，比如 std::sort 的比较函数、unique_ptr 的删除器、容器的分配器。不能在运行时换，但没有间接调用，编译器可以内联；空的策略类借助空基类优化不占空间。
+  post: dp-strategy
+- term: 空基类优化
+  alias: [EBO]
+  en: empty base optimization
+  desc: 没有数据成员的类作为成员时也要占 1 个字节（对齐后往往更多），作为基类时却可以不占空间。unique_ptr<T, 空删除器> 和裸指针一样大就是靠它；C++20 的 [[no_unique_address]] 让成员也能做到。
+  post: dp-strategy
+- term: 小对象优化
+  alias: [SBO, SOO]
+  en: small buffer optimization
+  desc: std::function、std::string 等在对象内部留一小块缓冲区，内容放得下就不去堆上分配。实测 libc++ 和 libstdc++ 的 std::function 都是 32 字节，lambda 捕获不超过 16 字节时不分配，超过就 new 一次。
+  post: dp-strategy
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
