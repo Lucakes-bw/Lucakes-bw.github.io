@@ -767,7 +767,7 @@ html[data-ui="ios"] .ui-term { display: none; }
 .post-tags a:hover { color: var(--accent); text-decoration: none; }
 .focus-btn { margin-left: auto; }
 
-.post-body { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 40px; margin-top: 24px; align-items: start; }
+.post-body { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 40px; margin-top: 24px; align-items: start; }
 .post-content {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -775,12 +775,20 @@ html[data-ui="ios"] .ui-term { display: none; }
   box-shadow: var(--shadow);
   padding: 40px 52px 44px;
 }
-.toc {
+/* 只给外层的 aside：Hexo 生成的 <ol> 也带 class="toc"，同样加上 max-height 和 overflow 的话，目录超过一屏时会出现两条滚动条 */
+aside.toc {
   position: sticky; top: calc(var(--header-h) + 24px);
   max-height: calc(100vh - var(--header-h) - 48px);
   overflow: auto;
+  scrollbar-width: none;            /* 目录不显示滚动条：放不下时由 main.js 折叠小节、并让当前小节保持可见 */
   font-size: 13px;
   padding-top: 8px;
+}
+aside.toc::-webkit-scrollbar { display: none; }
+/* 目录一屏放不下时（main.js 加 is-folded）：只展开当前章节的小节 */
+@media (min-width: 1001px) {
+  aside.toc.is-folded .toc-level-2 > ol { display: none; }
+  aside.toc.is-folded .toc-level-2.is-current > ol { display: block; }
 }
 .toc-title { font: 700 12px/1.5 var(--mono); color: var(--fg-2); margin-bottom: 10px; letter-spacing: .5px; }
 .toc ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--border); }
