@@ -255,6 +255,31 @@
   en: copy-on-write
   desc: 共享的数据只读时大家共用一份，要修改时先复制一份再改、改完替换上去。多线程的观察者名单常用它：通知时只复制一个 shared_ptr 就能拿到一份不会变的名单，在锁外调用回调；订阅、退订时才复制整张表。适合读多写少的场景。
   post: dp-observer
+- term: 命令模式
+  alias: [Command 模式]
+  en: Command
+  desc: 把一个请求（做什么、对谁做、参数是什么）封装成对象，调用者只认识 Command 接口。有了对象，操作就能被存下来撤销、重做，合并成宏，放进队列在别的线程执行，或者写进日志重放。可撤销的命令通常有 execute() 和 undo() 两个方法，execute 时记下旧值，undo 时恢复。
+  post: dp-command
+- term: 撤销栈
+  alias: [撤销重做, undo/redo, 重做栈]
+  en: undo stack
+  desc: 实现撤销 / 重做的两个栈：做过的命令压进撤销栈；撤销时从撤销栈弹出、调用 undo()、压进重做栈；重做时反过来。撤销之后做了新命令，重做栈要清空，因为被撤销的命令是在旧状态上记下的。Qt 的 QUndoStack 就是这个结构，还带合并、宏、上限和保存点。
+  post: dp-command
+- term: 宏命令
+  alias: [组合命令, macro command]
+  en: macro command
+  desc: 由一串命令组成、本身也实现 Command 接口的命令（组合模式用在命令上），让用户的一次操作（比如波纹删除）在撤销栈里只占一格。执行时按顺序，撤销时必须倒着来；中途有一条失败，要把已经执行的倒着撤销掉。
+  post: dp-command
+- term: 命令合并
+  alias: [mergeWith]
+  en: command merging / coalescing
+  desc: 把连续的同类命令合成一条，比如一次拖动产生的上百个移动、连续打的一串字。做法是新命令执行后问撤销栈顶能不能把它并进去：能就只更新栈顶的终值、保留它的旧值，新命令丢掉。这样一次 Ctrl+Z 就回到操作之前。
+  post: dp-command
+- term: 操作日志
+  alias: [命令日志, journal, 预写日志, WAL]
+  en: command log / journal
+  desc: 把执行过的命令按顺序序列化、追加写到文件里。崩溃后从上一个检查点（保存的工程文件、数据库快照）开始把日志重放一遍，就能恢复状态。要求命令是确定的（不读时间、随机数），浮点数要按能精确读回的格式写（如 %.17g）。数据库的 WAL、Redis 的 AOF 都是这个思路。
+  post: dp-command
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
