@@ -335,6 +335,26 @@
   en: generator
   desc: 用协程实现的惰性序列：函数每 co_yield 一个值就暂停，调用方 ++ 时再从暂停处继续，局部变量就是迭代器的状态。C++23 有 std::generator，C++20 可以自己写一个最小的。适合每个元素都要读文件或解析的场合，只能走一遍。
   post: dp-iterator
+- term: 状态模式
+  alias: [State Pattern]
+  en: State
+  desc: 行为型模式：对象的行为随内部状态变化时，把每个状态的全部行为写成一个状态类，对象只持有当前状态对象、把事件转交给它，由状态对象处理事件并决定下一个状态。加状态只需新写一个类，不用在每个函数的 if / switch 里加分支。
+  post: dp-state
+- term: 状态机
+  alias: [有限状态机, FSM]
+  en: finite state machine
+  desc: 由有限个状态、事件和转换组成的模型：处在某个状态时来了某个事件，就转换到另一个状态（或者不变），转换时可以执行动作。常画成状态图，也可以写成「状态 × 事件 → 下一个状态」的转换表。播放器、网络连接、协议解析器都是状态机。
+  post: dp-state
+- term: 进入动作
+  alias: [退出动作, entry action, exit action]
+  en: entry / exit action
+  desc: 状态机里和状态绑定的动作：进入某个状态时执行进入动作，离开时执行退出动作，不管是从哪条转换进来或出去的。适合管理属于这个状态的资源，比如进入播放时打开音频设备、离开播放时关闭，和 RAII 的思路一样。
+  post: dp-state
+- term: 表驱动
+  alias: [转换表, table-driven]
+  en: table-driven
+  desc: 把逻辑写成数据表而不是代码分支：状态机写成「当前状态 × 事件 → 下一个状态」的表，运行时查表。整张状态图在一处，可以审查、导出成图、从配置读入；带条件的转换和转换动作不好放进表里。
+  post: dp-state
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
