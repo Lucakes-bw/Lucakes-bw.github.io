@@ -355,6 +355,21 @@
   en: table-driven
   desc: 把逻辑写成数据表而不是代码分支：状态机写成「当前状态 × 事件 → 下一个状态」的表，运行时查表。整张状态图在一处，可以审查、导出成图、从配置读入；带条件的转换和转换动作不好放进表里。
   post: dp-state
+- term: 访问者模式
+  alias: [Visitor Pattern]
+  en: Visitor
+  desc: 行为型模式：元素类只提供一个 accept(Visitor&)，每种操作写成一个访问者类，里面给每种元素各写一个 visit。加操作只要新写一个访问者，不用改元素类；代价是加一种元素要改访问者接口和每个访问者。适合元素种类稳定、操作经常增加的结构，比如语法树、字幕元素树。
+  post: dp-visitor
+- term: 双分派
+  alias: [double dispatch, 多分派]
+  en: double dispatch
+  desc: 按两个对象的运行时类型选择要调用的函数。C++ 的虚函数只按 this 一个对象分派，重载按静态类型在编译期选，都做不到；访问者用 accept 里的 v.visit(*this) 先按元素类型、再按访问者类型分派两次。std::visit 传入多个 variant 时可以按它们的类型组合分派。
+  post: dp-visitor
+- term: 表达式问题
+  alias: [expression problem]
+  en: expression problem
+  desc: 「元素种类 × 操作」这张表，在静态类型语言里很难做到加一行（新类型）、加一列（新操作）都只写新代码而不改旧代码。虚函数让加类型容易、加操作难，访问者和 std::variant 正好相反。
+  post: dp-visitor
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
