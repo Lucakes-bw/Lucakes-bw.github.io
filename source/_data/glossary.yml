@@ -221,6 +221,40 @@
   en: small buffer optimization
   desc: std::function、std::string 等在对象内部留一小块缓冲区，内容放得下就不去堆上分配。实测 libc++ 和 libstdc++ 的 std::function 都是 32 字节，lambda 捕获不超过 16 字节时不分配，超过就 new 一次。
   post: dp-strategy
+- term: 观察者模式
+  alias: [Observer 模式, 监听器]
+  en: Observer
+  desc: 被观察的对象（Subject）保存一张观察者名单，状态变化时逐个通知；观察者自己订阅、自己退订，Subject 只认识观察者接口，不认识具体是谁。界面刷新、事件监听、Qt 的信号与槽都是它。C++ 里要特别注意观察者的生命周期和「通知途中增删观察者」。
+  post: dp-observer
+- term: 推模型和拉模型
+  alias: [推模型, 拉模型]
+  en: push model / pull model
+  desc: 观察者模式里传数据的两种方式。推模型把数据随通知一起发给观察者，简单、数据是通知时的快照，但加一项数据就要改接口；拉模型只告诉观察者「哪方面变了」，观察者自己回来查询需要的数据，灵活，但回来查的时候状态可能已经又变了。
+  post: dp-observer
+- term: 订阅句柄
+  alias: [Connection, scoped connection]
+  en: subscription handle
+  desc: 订阅时返回的一个 RAII 对象，它析构时自动退订。观察者把句柄存成自己的成员，自己析构时订阅就跟着断开，不会在 Subject 的名单里留下悬空指针。Boost.Signals2 的 scoped_connection 就是这种东西；返回句柄的函数要标 [[nodiscard]]，否则临时句柄当场析构、当场退订。
+  post: dp-observer
+- term: 延迟删除
+  en: deferred removal
+  desc: 遍历容器的过程中有人要删除元素时，先只做标记（置空或标成失效），等遍历结束、没人在用迭代器时再统一删掉。观察者模式里用它处理「回调里退订自己」，避免 erase 让正在用的迭代器失效。
+  post: dp-observer
+- term: 重入
+  alias: [可重入]
+  en: reentrancy
+  desc: 一个函数还没执行完，又被（直接或间接地）调用了一次。观察者的回调里如果又修改了 Subject 的状态，就会在外层通知还没结束时发出嵌套的通知，观察者收到的事件顺序和状态真实变化的顺序不一致。常见的解决办法是排队通知：正在通知时只入队，由最外层按顺序发。
+  post: dp-observer
+- term: 发布-订阅
+  alias: [事件总线, pub/sub]
+  en: publish-subscribe
+  desc: 在发布者和订阅者中间加一个事件总线（或消息队列）：发布者只管把事件发给总线，订阅者只向总线订阅某类事件，双方互相不知道对方存在。比观察者解耦得更彻底，代价是谁发、谁收从代码里看不出来，调试要靠日志。
+  post: dp-observer
+- term: 写时复制
+  alias: [COW, copy-on-write]
+  en: copy-on-write
+  desc: 共享的数据只读时大家共用一份，要修改时先复制一份再改、改完替换上去。多线程的观察者名单常用它：通知时只复制一个 shared_ptr 就能拿到一份不会变的名单，在锁外调用回调；订阅、退订时才复制整张表。适合读多写少的场景。
+  post: dp-observer
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
