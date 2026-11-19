@@ -51,6 +51,101 @@
   --accent-soft: color-mix(in srgb, var(--accent) 14%, var(--bg));
   --mark: color-mix(in srgb, var(--warn) 28%, var(--bg));
   --shadow: none;
+  --cta-bg: var(--fg);
+  --cta-fg: var(--bg);
+  --glow: color-mix(in srgb, var(--accent) 11%, transparent);
+  --inset: inset 0 1px 0 color-mix(in srgb, var(--fg) 6%, transparent);
+  --ambient: radial-gradient(880px 400px at 50% -10%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 72%);
+}
+
+/* Linear 暮光（默认深色）—— Linear / Raycast 标志性深石墨 + 暮光靛蓝微光 */
+[data-scheme="linear-dusk"] {
+  color-scheme: dark;
+  --bg: #08090c; --panel: #101116; --panel-2: #171921;
+  --fg: #f7f8f8; --fg-2: #9ca3b0; --muted: #6e7687;
+  --border: rgba(255, 255, 255, .08); --border-2: rgba(129, 140, 248, .26);
+  --accent: #818cf8; --accent-soft: rgba(129, 140, 248, .12); --link: #a5b4fc;
+  --warn: #f59e0b; --danger: #f87171;
+  --code-bg: #0c0d12; --mark: rgba(245, 158, 11, .24);
+  --cta-bg: #f7f8f8; --cta-fg: #08090c;
+  --shadow: 0 20px 44px -22px rgba(0, 0, 0, .82);
+  --inset: inset 0 1px 0 rgba(255, 255, 255, .06);
+  --glow: rgba(129, 140, 248, .10);
+  --ambient: radial-gradient(920px 420px at 50% -12%, rgba(99, 102, 241, .14), transparent 72%);
+  --hl-comment: #666d7c; --hl-keyword: #c4b5fd; --hl-type: #7dd3fc; --hl-string: #86efac;
+  --hl-number: #fcd34d; --hl-func: #93c5fd; --hl-meta: #f0abfc;
+}
+
+/* Vercel 黑曜石 —— 21st.dev / Vercel 极致纯黑中性色阶 */
+[data-scheme="obsidian"] {
+  color-scheme: dark;
+  --bg: #09090b; --panel: #111113; --panel-2: #18181b;
+  --fg: #fafafa; --fg-2: #a1a1aa; --muted: #71717a;
+  --border: rgba(255, 255, 255, .085); --border-2: rgba(255, 255, 255, .17);
+  --accent: #e4e4e7; --accent-soft: rgba(255, 255, 255, .08); --link: #e4e4e7;
+  --warn: #fbbf24; --danger: #f87171;
+  --code-bg: #0c0c0e; --mark: rgba(251, 191, 36, .22);
+  --cta-bg: #fafafa; --cta-fg: #09090b;
+  --shadow: 0 18px 40px -20px rgba(0, 0, 0, .8);
+  --inset: inset 0 1px 0 rgba(255, 255, 255, .06);
+  --glow: rgba(255, 255, 255, .07);
+  --ambient: radial-gradient(900px 400px at 50% -10%, rgba(255, 255, 255, .06), transparent 70%);
+  --hl-comment: #71717a; --hl-keyword: #f472b6; --hl-type: #67e8f9; --hl-string: #86efac;
+  --hl-number: #fde047; --hl-func: #93c5fd; --hl-meta: #c4b5fd;
+}
+
+/* Apple 极简白（默认浅色）—— Apple / 21st.dev Light 洁净冷白 + 墨黑反色按钮 */
+[data-scheme="alabaster"] {
+  color-scheme: light;
+  --bg: #f8f9fb; --panel: #ffffff; --panel-2: #f1f3f6;
+  --fg: #09090b; --fg-2: #52525b; --muted: #71717a;
+  --border: rgba(9, 9, 11, .085); --border-2: rgba(9, 9, 11, .16);
+  --accent: #4f46e5; --accent-soft: rgba(79, 70, 229, .09); --link: #4f46e5;
+  --warn: #d97706; --danger: #dc2626;
+  --code-bg: #f4f5f7; --mark: #fef08a;
+  --cta-bg: #18181b; --cta-fg: #ffffff;
+  --shadow: 0 8px 24px -10px rgba(9, 9, 11, .07), 0 1px 2px rgba(9, 9, 11, .04);
+  --inset: inset 0 1px 0 rgba(255, 255, 255, .95);
+  --glow: rgba(79, 70, 229, .065);
+  --ambient: radial-gradient(900px 380px at 50% -10%, rgba(79, 70, 229, .055), transparent 70%);
+  --hl-comment: #8b949e; --hl-keyword: #be185d; --hl-type: #0369a1; --hl-string: #15803d;
+  --hl-number: #b45309; --hl-func: #4338ca; --hl-meta: #7e22ce;
+}
+
+/* Designeer 暖纸白 —— 杂志感暖米纸 + 深炭黑 + 陶土红棕点缀 */
+[data-scheme="warm-ivory"] {
+  color-scheme: light;
+  --bg: #f7f5f0; --panel: #ffffff; --panel-2: #efece4;
+  --fg: #1a1917; --fg-2: #57534e; --muted: #78716c;
+  --border: rgba(28, 25, 23, .09); --border-2: rgba(28, 25, 23, .18);
+  --accent: #c85a32; --accent-soft: rgba(200, 90, 50, .10); --link: #b44c27;
+  --warn: #b45309; --danger: #c4372f;
+  --code-bg: #f3f0e8; --mark: #fde68a;
+  --cta-bg: #1c1917; --cta-fg: #fafaf9;
+  --shadow: 0 8px 24px -12px rgba(28, 25, 23, .08), 0 1px 2px rgba(28, 25, 23, .04);
+  --inset: inset 0 1px 0 rgba(255, 255, 255, .95);
+  --glow: rgba(200, 90, 50, .07);
+  --ambient: radial-gradient(900px 380px at 50% -10%, rgba(200, 90, 50, .06), transparent 70%);
+  --hl-comment: #8c857d; --hl-keyword: #9f2d20; --hl-type: #0f766e; --hl-string: #3f6212;
+  --hl-number: #b45309; --hl-func: #1d4ed8; --hl-meta: #7c3aed;
+}
+
+/* 黑金钛灰 —— 深碳黑 + 哑光香槟金克制点缀 */
+[data-scheme="carbon-gold"] {
+  color-scheme: dark;
+  --bg: #0a0a09; --panel: #121210; --panel-2: #1a1916;
+  --fg: #f5f4f0; --fg-2: #a8a49c; --muted: #757068;
+  --border: rgba(245, 240, 225, .08); --border-2: rgba(212, 176, 106, .28);
+  --accent: #d4b06a; --accent-soft: rgba(212, 176, 106, .12); --link: #e3c88e;
+  --warn: #d4b06a; --danger: #f87171;
+  --code-bg: #0e0e0c; --mark: rgba(212, 176, 106, .24);
+  --cta-bg: #f5f4f0; --cta-fg: #0a0a09;
+  --shadow: 0 20px 44px -20px rgba(0, 0, 0, .85);
+  --inset: inset 0 1px 0 rgba(255, 248, 230, .06);
+  --glow: rgba(212, 176, 106, .09);
+  --ambient: radial-gradient(880px 400px at 50% -12%, rgba(212, 176, 106, .10), transparent 70%);
+  --hl-comment: #736f67; --hl-keyword: #e3c88e; --hl-type: #93c5fd; --hl-string: #a7f3d0;
+  --hl-number: #fcd34d; --hl-func: #f5d0fe; --hl-meta: #fdba74;
 }
 
 /* Default Light —— 原来的浅色 */
@@ -313,10 +408,10 @@ kbd {
 }
 ::selection { background: var(--accent); color: var(--bg); }
 
-/* 同一处两套文案：终端风格显示 .ui-term，iOS 风格显示 .ui-ios */
+/* 同一处两套文案：终端风格显示 .ui-term，iOS 与现代风格显示 .ui-ios */
 .ui-ios { display: none; }
-html[data-ui="ios"] .ui-ios { display: inline; }
-html[data-ui="ios"] .ui-term { display: none; }
+html[data-ui="ios"] .ui-ios, html[data-ui="modern"] .ui-ios { display: inline; }
+html[data-ui="ios"] .ui-term, html[data-ui="modern"] .ui-term { display: none; }
 .mark-read .when-read, .mark-read.is-read .when-unread { display: none; }
 .mark-read.is-read .when-read { display: inline; }
 .wrap { max-width: var(--page-w); margin: 0 auto; padding: 0 var(--gutter); }

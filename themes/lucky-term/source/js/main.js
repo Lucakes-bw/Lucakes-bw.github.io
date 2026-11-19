@@ -50,21 +50,42 @@
   };
   if (darkMQ.addEventListener) darkMQ.addEventListener('change', followSystem);
 
-  /* 界面风格（终端 / iOS）和配色分开存：lt-ui */
+  /* 界面风格（现代 / 终端 / iOS）和配色分开存：lt-ui */
   function setUi(ui) {
-    if (ui === 'ios') html.setAttribute('data-ui', 'ios'); else html.removeAttribute('data-ui');
+    if (ui === 'ios' || ui === 'modern') html.setAttribute('data-ui', ui); else html.removeAttribute('data-ui');
     $$('[data-ui-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.uiV === ui)));
     try { localStorage.setItem('lt-ui', ui); } catch (e) { /* ignore */ }
-    // 终端风格整页用等宽字体；iOS 风格只有代码要用
-    if (ui !== 'ios' || $('pre, code, .ide, .dsviz')) window.LT.loadMono();
+    // 终端风格整页用等宽字体；现代 / iOS 风格在有代码或数据标签时加载等宽字体
+    if (ui === 'term' || $('pre, code, .ide, .dsviz, .gh-pill, .post-no')) window.LT.loadMono();
   }
-  const curUi = html.getAttribute('data-ui') === 'ios' ? 'ios' : 'term';
+  const attrUi = html.getAttribute('data-ui');
+  const curUi = (attrUi === 'ios' || attrUi === 'modern') ? attrUi : 'term';
   $$('[data-ui-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.uiV === curUi)));
   $$('[data-ui-switch]').forEach(g => g.addEventListener('click', e => {
     const b = e.target.closest('[data-ui-v]');
     if (b) setUi(b.dataset.uiV);
   }));
-  if (curUi === 'ios' && $('pre, code, .ide, .dsviz')) window.LT.loadMono();
+  if (curUi !== 'term' && $('pre, code, .ide, .dsviz, .gh-pill, .post-no')) window.LT.loadMono();
+
+  /* 现代风格（Magic Bento）：卡片鼠标聚光灯（轻量级事件委托 + rAF 节流） */
+  let spotTarget = null, spotX = 0, spotY = 0, spotRaf = 0;
+  document.addEventListener('pointermove', e => {
+    if (html.getAttribute('data-ui') !== 'modern' || e.pointerType !== 'mouse') return;
+    const card = e.target && e.target.closest('.gh-card, .gh-side, .post-content, .post-problems, .mark-read, .series-nav a, .rm-link, .pb-card');
+    if (!card) return;
+    spotTarget = card;
+    spotX = e.clientX;
+    spotY = e.clientY;
+    if (!spotRaf) {
+      spotRaf = requestAnimationFrame(() => {
+        spotRaf = 0;
+        if (!spotTarget) return;
+        const r = spotTarget.getBoundingClientRect();
+        spotTarget.style.setProperty('--mx', (spotX - r.left) + 'px');
+        spotTarget.style.setProperty('--my', (spotY - r.top) + 'px');
+      });
+    }
+  }, { passive: true });
 
   const picker = $('[data-scheme-picker]');
   if (picker) {
@@ -288,10 +309,10 @@
       let scheme = null, ui = null;
       try { scheme = localStorage.getItem('lt-scheme'); ui = localStorage.getItem('lt-ui'); } catch (e) { /* ignore */ }
       if (scheme && scheme !== savedScheme && schemeById.has(scheme)) { savedScheme = scheme; applyScheme(scheme); }
-      if (ui === 'ios' || ui === 'term') {
-        if (ui === 'ios') html.setAttribute('data-ui', 'ios'); else html.removeAttribute('data-ui');
+      if (ui === 'modern' || ui === 'ios' || ui === 'term') {
+        if (ui === 'ios' || ui === 'modern') html.setAttribute('data-ui', ui); else html.removeAttribute('data-ui');
         $$('[data-ui-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.uiV === ui)));
-        if (ui !== 'ios' || $('pre, code, .ide, .dsviz')) window.LT.loadMono();
+        if (ui === 'term' || $('pre, code, .ide, .dsviz, .gh-pill, .post-no')) window.LT.loadMono();
       }
     }, { once: true });
   }
