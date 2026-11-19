@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="<%= config.language %>">
+<html lang="<%= config.language %>" data-ui="ios">
 <%- partial('_partial/head') %>
 <body class="<%= [page.ide ? 'is-ide' : '', theme.music && theme.music.enable ? 'has-music' : ''].filter(Boolean).join(' ') %>">
   <div class="read-progress" id="read-progress"></div>

@@ -33,31 +33,26 @@
   <meta property="og:image:height" content="630"><% } %>
   <% if (isPost) { %><meta property="article:published_time" content="<%= date_xml(page.date) %>"><% } %>
   <meta name="twitter:card" content="<%= ogImage ? 'summary_large_image' : 'summary' %>">
-  <meta name="theme-color" content="#08090c">
+  <meta name="theme-color" content="#0e1116">
   <script>
     window.LT = { root: <%- JSON.stringify(config.root) %>, search: <%- JSON.stringify(url_for('search.json')) %>, schemes: <%- JSON.stringify(schemes) %> };
-    // 首屏前定好配色，避免闪一下默认色
+    // 首屏前定好配色，避免闪一下默认色；全站统一使用 iOS 风格
     (function () {
-      var S = window.LT.schemes, id, ui, mode = {};
+      var S = window.LT.schemes, id, mode = {};
       S.list.forEach(function (s) { mode[s.id] = s.mode; });
       try {
         id = localStorage.getItem('lt-scheme');
-        ui = localStorage.getItem('lt-ui');
         // 旧版只存了 light / dark
         var old = localStorage.getItem('lt-theme');
         if (!id && (old === 'light' || old === 'dark')) { id = S[old]; localStorage.setItem('lt-scheme', id); }
         localStorage.removeItem('lt-theme');
-        // 旧版选 iOS 配色就等于 iOS 风格；风格单独存之后，替这些读者记成 iOS
-        if (!ui && /^ios-/.test(id)) { ui = 'ios'; localStorage.setItem('lt-ui', ui); }
+        localStorage.removeItem('lt-ui');
       } catch (e) {}
       if (!mode[id]) id = S[matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'];
-      if (ui !== 'modern' && ui !== 'ios' && ui !== 'term') {
-        ui = (S.ui === 'modern' || S.ui === 'ios' || S.ui === 'term') ? S.ui : 'modern';
-      }
       var root = document.documentElement;
       root.setAttribute('data-scheme', id);
       root.setAttribute('data-theme', mode[id] || 'light');
-      if (ui === 'ios' || ui === 'modern') root.setAttribute('data-ui', ui);
+      root.setAttribute('data-ui', 'ios');
       // 有没有学习记录（读完文章、通过题目、跟练）：首页的热力图和学习动态据此在首屏前就决定显示还是收起，
       // 不用等 main.js 算完再改，避免整块跳动。判断和 main.js 里的 events 保持一致（只看带时间的记录）
       try {
@@ -81,9 +76,7 @@
         l.href = <%- JSON.stringify(url_for('/fonts/jetbrains-mono-latin-400-normal.woff2')) %>;
         document.head.appendChild(l);
       };
-      if (ui === 'term') window.LT.loadMono();
     })();
   </script>
   <link rel="stylesheet" href="<%- asset_url('/css/style.css') %>">
-  <link rel="stylesheet" href="<%- asset_url('/css/modern.css') %>">
 </head>

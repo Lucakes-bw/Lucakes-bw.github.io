@@ -20,20 +20,15 @@ hero:
 
 # 配色方案（颜色定义在 themes/lucky-term/source/css/style.css 里）
 # light / dark：访客没选过时，按系统深浅色用哪一个
-# ui：默认界面风格，modern（现代 Bento）、term（终端）或 ios；访客可以在配色菜单顶部自己切换，和配色互不影响
+# ui：界面风格固定为 ios
 # list：菜单里出现的方案和顺序；mode 决定评论区等跟随深色还是浅色
 schemes:
-  ui: modern
-  light: alabaster
-  dark: linear-dusk
+  ui: ios
+  light: ios-light
+  dark: ios-dark
   # featured：菜单里直接列出的常用方案，其余收进「更多配色」（当前用着的方案在里面时会自动展开）
-  featured: [linear-dusk, obsidian, alabaster, warm-ivory, carbon-gold, default-light, default-dark]
+  featured: [ios-light, ios-dark, default-light, default-dark, github-light, one-dark]
   list:
-    - { id: linear-dusk, name: Linear 暮光, mode: dark }
-    - { id: obsidian, name: Vercel 黑曜石, mode: dark }
-    - { id: alabaster, name: Apple 极简白, mode: light }
-    - { id: warm-ivory, name: Designeer 暖纸, mode: light }
-    - { id: carbon-gold, name: 黑金钛灰, mode: dark }
     - { id: ios-light, name: iOS Light, mode: light }
     - { id: ios-dark, name: iOS Dark, mode: dark }
     - { id: default-light, name: Default Light, mode: light }
