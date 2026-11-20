@@ -390,6 +390,16 @@
   en: Mediator
   desc: 行为型模式：用一个中介对象封装一组对象之间的双向交互，把多对多的网状引用变成星形结构。同事只认识中介者，彼此不直接持有指针；联动规则集中在中介者里，要注意防止重入、悬空同事和中介者长成上帝类。
   post: dp-mediator
+- term: 备忘录模式
+  alias: [备忘录, Memento Pattern]
+  en: Memento
+  desc: 行为型模式：在不破坏封装的前提下，捕获并外部保存一个对象的内部状态，以后可以恢复到该状态。C++ 里常用私有构造 + friend class 区分原发器的宽接口和看管者的窄接口；大对象用 shared_ptr<const T> 做写时复制可大幅节省内存与时间。
+  post: dp-memento
+- term: 解释器模式
+  alias: [解释器, Interpreter Pattern]
+  en: Interpreter
+  desc: 行为型模式：为一门简单语言定义文法，并用一组表达式类组成抽象语法树（AST）来解释执行句子。适合规则引擎、查询过滤等小型 DSL；务必解析一次、求值多次，复杂语法应改用解析器生成工具或嵌入脚本语言。
+  post: dp-interpreter
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
