@@ -400,6 +400,26 @@
   en: Interpreter
   desc: 行为型模式：为一门简单语言定义文法，并用一组表达式类组成抽象语法树（AST）来解释执行句子。适合规则引擎、查询过滤等小型 DSL；务必解析一次、求值多次，复杂语法应改用解析器生成工具或嵌入脚本语言。
   post: dp-interpreter
+- term: Scope Guard
+  alias: [作用域守卫]
+  en: Scope Guard
+  desc: 基于 RAII 的一次性清理工具：把清理或回滚动作写成 lambda 交给栈上的守卫对象，离开作用域自动执行；操作全部成功时调用 dismiss() 取消回滚。适合临时状态恢复或事务清理，不必为每种动作专门写包装类。
+  post: dp-raii
+- term: Pimpl
+  alias: [编译防火墙, Pointer to Implementation]
+  en: Pointer to Implementation
+  desc: C++ 惯用法：在公开头文件里只放一个前向声明 struct Impl 和 std::unique_ptr<Impl>，把所有私有成员与重型依赖藏进 .cpp 文件。能显著减少改私有成员时的级联重编，并保持类的 sizeof 与 ABI 稳定；注意析构函数必须在 .cpp 里定义。
+  post: dp-pimpl
+- term: CRTP
+  alias: [奇异递归模板, 静态多态]
+  en: Curiously Recurring Template Pattern
+  desc: "C++ 惯用法：派生类把自己作为模板参数传给基类（struct Derived : Base<Derived>）。基类通过 static_cast<Derived*>(this) 在编译期调用派生类实现，零虚表、可完全内联，也常用来做对象计数、自动生成 clone() 等 Mixin 能力注入。"
+  post: dp-crtp
+- term: 类型擦除
+  alias: [Type Erasure]
+  en: Type Erasure
+  desc: C++ 惯用法：通过内部 Concept/Model 包装器（或手写静态 VTable + 小对象优化 SBO），把互不继承公共基类的任意类型统一塞进同一个值类型容器里多态调用，兼顾非侵入性、值语义和运行时多态。std::function、std::any 都是它的代表。
+  post: dp-type-erasure
 - term: 散弹式修改
   en: shotgun surgery
   desc: 一个需求要在很多地方各改一点，比如每加一种格式，就要把散落在各处的 if-else 全部找出来加一个分支。改的地方越多越容易漏，漏掉的那处编译器往往发现不了。
